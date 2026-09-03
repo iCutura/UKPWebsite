@@ -32,7 +32,30 @@ npm run dev         # http://127.0.0.1:4321
 npm run build       # = data + astro build -> dist/ (164 pages)
 npm run build:offline   # astro build without refetching
 ./deploy.sh [--dry-run|--wipe]   # FTPS upload to SiteGround; --wipe once to retire WordPress (asks for confirmation)
+
+npm test            # unit tests (vitest, tests/unit) - pure logic, no browser
+npm run test:e2e    # browser tests (playwright, tests/e2e) - builds and previews first
+npm run test:all    # both
 ```
+
+## Tests
+
+Two layers, because the bugs this site actually shipped were not logic bugs.
+
+- **`tests/unit`** (vitest, 88 tests) covers the pure functions: Croatian dates and plurals, fee
+  wording, slugs that fold č/ć/ž/š/đ, the season boundaries that must stay identical to the iOS
+  app, card HTML (venue-led titles, the date stated once, status and escaping), the location order
+  and the three-hour window that drops a quiz once it has started.
+- **`tests/e2e`** (playwright, 58 tests × desktop and phone) runs against a real production build,
+  never the dev server, which has served stale scoped CSS more than once. It asserts what a reader
+  sees: that filtering actually removes cards from view rather than only changing the counter, that
+  a heading never lands on the label above it, that nothing is cut off the side of any page, that
+  no page can be dragged sideways, and that the registration flow steps from the apps to the form.
+
+Both of the bugs that reached the site were CSS-resolution problems that no unit test could catch:
+a card's `display: flex` outranking `[hidden]`, and a caron overflowing its line box. The e2e layer
+exists for that class. When adding a fix, add the check that fails without it, then confirm it
+fails: reintroducing the three known bugs turns 11 phone and 10 desktop tests red.
 
 Key files:
 - `src/components/Hero.astro` + `src/scripts/hero3d.ts` - the **layered hero**: the designer's split "Presentation mode" scene (`brand/UKP Brand guidlines/Presentation mode/<Season>/`, five PNGs: bg, foliage, glow, mascot, UKP letters) converted by `scripts/build-layers.mjs` into `public/img/layers/<season>/` (mascot and letters trimmed to their content box). Stack order bg → glow → letters → mascot → Three.js canvas → foliage → text. `motion.ts` `hero()` adds scroll parallax on each `.layer` (far layers lag, `data-depth` 0..1), pointer parallax on the inner `.drift`, a float on the mascot and a breathing glow; `hero3d.ts` renders additive golden dust with mouse repulsion plus shader light rays from the top-right, DPR capped at 1.5, paused when off-screen or hidden, skipped without WebGL or under reduced motion / `?motion=off`. Phone layout stacks letters and mascot above the headline on a dark scrim; desktop puts text left, scene right. The old single-image seasonal hero assets in `public/img/seasons/*-hero-*.webp` are unused now but kept.

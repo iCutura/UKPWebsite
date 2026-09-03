@@ -110,7 +110,7 @@ const withEvents = locations.filter(l => l.upcomingCount > 0).length;
   .filter-chips, .filter-cities { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
   /* On a phone the city shortcuts otherwise stack into five rows of chrome before the first location. */
   @media (max-width: 759px) {
-    .filter-cities { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; padding-block: 2px;
+    .filter-cities { flex-wrap: nowrap; overflow-x: auto; min-width: 0; max-width: 100vw; scrollbar-width: none; padding-block: 2px;
       margin-inline: calc(-1 * var(--gutter)); padding-inline: var(--gutter);
       -webkit-mask-image: linear-gradient(90deg, transparent, #000 16px, #000 calc(100% - 24px), transparent);
       mask-image: linear-gradient(90deg, transparent, #000 16px, #000 calc(100% - 24px), transparent); }

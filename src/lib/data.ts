@@ -1,6 +1,7 @@
 /** Build-time access to the API snapshots in public/data (written by scripts/fetch-data.mjs). */
 import fs from 'node:fs';
 import path from 'node:path';
+import { sortLocations } from './order';
 
 export interface Img { full: string; small: string }
 export interface City { id: number | null; name: string; slug: string; country: string | null; locations: number; upcoming: number }
@@ -37,15 +38,8 @@ function load<T>(file: string, fallback: T): T {
   cache.set(file, v);
   return v;
 }
-/** Locations with a scheduled quiz lead: a visitor came to find a quiz, not to read an alphabetical directory. */
-export const getLocations = () => load<Location[]>('locations.json', [])
-  .filter(l => l.isActive !== false)
-  .slice()
-  .sort((a, b) =>
-    (b.upcomingCount > 0 ? 1 : 0) - (a.upcomingCount > 0 ? 1 : 0) ||
-    (a.nextEventDate ?? '9999').localeCompare(b.nextEventDate ?? '9999') ||
-    a.city.name.localeCompare(b.city.name, 'hr') ||
-    a.name.localeCompare(b.name, 'hr'));
+/** Locations with a scheduled quiz lead; see sortLocations in ./order. */
+export const getLocations = () => sortLocations(load<Location[]>('locations.json', []).filter(l => l.isActive !== false));
 export const getEvents = () => load<EventItem[]>('events.json', []);
 export const getNews = () => load<NewsItem[]>('news.json', []);
 export const getCities = () => load<City[]>('cities.json', []);
