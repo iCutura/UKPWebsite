@@ -107,7 +107,7 @@ const coords = Object.fromEntries(locations.map(l => [l.id, { lat: l.lat, lng: l
       bar.querySelectorAll<HTMLElement>('[data-filter-country]').forEach(b => { const on = (b.dataset.filterCountry || '') === state.country; b.classList.toggle('is-active', on); b.setAttribute('aria-pressed', String(on)); });
       bar.querySelectorAll<HTMLElement>('[data-filter-city]').forEach(b => { const on = b.dataset.filterCity === state.city; b.classList.toggle('is-active', on); b.setAttribute('aria-pressed', String(on)); });
       const up = bar.querySelector<HTMLElement>('[data-filter-upcoming]')!; up.classList.toggle('is-active', state.upcoming); up.setAttribute('aria-pressed', String(state.upcoming));
-      const url = new URL(location.href); state.city ? url.searchParams.set('grad', state.city) : url.searchParams.delete('grad'); history.replaceState(null, '', url);
+      const url = new URL(location.href); state.city ? url.searchParams.set('grad', state.city) : url.searchParams.delete('grad'); history.replaceState(history.state, '', url);
     }
     q.addEventListener('input', () => { state.q = q.value; apply(); });
     select.addEventListener('change', () => { state.city = select.value; apply(); });
@@ -182,6 +182,7 @@ const coords = Object.fromEntries(locations.map(l => [l.id, { lat: l.lat, lng: l
   /* The header hides on scroll-down and returns on scroll-up; the bar follows it so the search
      field is never parked underneath. */
   :global(.header.is-hidden) ~ :global(.main) .filter-bar { top: 0; }
+  .city-select { position: relative; }
   .city-select .input { min-height: 36px; padding: 0 12px; border-radius: var(--r-pill); font-size: .8125rem; font-weight: 600; width: auto; max-width: 150px; background: rgb(var(--rule) / .045); border-color: rgb(var(--rule) / .09); }
   .results-line { font-size: var(--fs-small); margin-bottom: 20px; }
   .loc-grid { align-items: stretch; }
