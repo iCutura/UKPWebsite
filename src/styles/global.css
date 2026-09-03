@@ -99,20 +99,29 @@ body::after {
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 .6 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
 }
 img, svg, video { display: block; max-width: 100%; height: auto; }
+/* Cards set display:flex, which outranks the browser's own [hidden] rule, so filters marked
+   cards hidden and nothing disappeared. */
+[hidden] { display: none !important; }
 a { color: var(--accent-deep); text-decoration: none; text-underline-offset: .16em; }
 a:hover { color: var(--accent-dark); text-decoration: underline; }
 button { font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; }
 input, select, textarea { font: inherit; color: inherit; }
 :focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; border-radius: var(--r-xs); }
 ::selection { background: var(--accent); color: var(--on-dark); }
-h1, h2 { margin: 0; font-family: var(--font-display); font-weight: 900; letter-spacing: -.015em; line-height: .98; text-wrap: balance; }
+/* Š Č Ć Ž Đ carry marks above the cap height; .98 line-height would let them ride into whatever
+   sits above, so headings keep a little more room. */
+h1, h2 { margin: 0; font-family: var(--font-display); font-weight: 900; letter-spacing: -.015em; line-height: 1.04; text-wrap: balance; }
 h3, h4 { margin: 0; font-weight: 800; letter-spacing: -.02em; line-height: 1.15; text-wrap: balance; }
 h1 { font-size: var(--fs-h1); } h2 { font-size: var(--fs-h2); } h3 { font-size: var(--fs-h3); }
 p { margin: 0; text-wrap: pretty; }
 p + p { margin-top: 1em; }
-.display { font-family: var(--font-display); font-size: var(--fs-display); font-weight: 900; letter-spacing: -.02em; line-height: .94; }
+.display { font-family: var(--font-display); font-size: var(--fs-display); font-weight: 900; letter-spacing: -.02em; line-height: 1.0; }
 .lead { font-size: var(--fs-lead); line-height: 1.45; color: var(--ink-md); max-width: 60ch; }
 .eyebrow { font-size: var(--fs-eyebrow); font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: var(--accent-deep); }
+/* Š Č Ć Ž Đ put marks above the cap height, and at display sizes they overflow the line box by
+   roughly a tenth of the font size. A heading that follows an eyebrow needs room for that, or the
+   caron on "Što" lands in the label above it. Padding scales with the heading; the margin does not. */
+.eyebrow + h1, .eyebrow + h2, .eyebrow + .display { margin-top: 14px; padding-top: .1em; }
 .on-dark .eyebrow, .card-dark .eyebrow, .band-dark .eyebrow { color: var(--accent-soft); }
 .num { font-family: var(--font-display); font-weight: 900; letter-spacing: -.01em; }
 .num-ui { font-family: var(--font-rounded); font-weight: 800; font-variant-numeric: tabular-nums; letter-spacing: -.02em; }

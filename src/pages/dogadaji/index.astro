@@ -49,3 +49,17 @@ const cities = [...new Map(events.map(e => [e.city.name, e.city])).values()].sor
   }
   document.addEventListener('astro:page-load', init);
 </script>
+
+<style>
+  /* One row that scrolls, rather than several rows of chrome before the first quiz. */
+  @media (max-width: 759px) {
+    .filter-chips {
+      flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; padding-block: 2px;
+      margin-inline: calc(-1 * var(--gutter)); padding-inline: var(--gutter);
+      -webkit-mask-image: linear-gradient(90deg, transparent, #000 16px, #000 calc(100% - 24px), transparent);
+      mask-image: linear-gradient(90deg, transparent, #000 16px, #000 calc(100% - 24px), transparent);
+    }
+    .filter-chips::-webkit-scrollbar { display: none; }
+    .filter-chips > * { flex: none; }
+  }
+</style>
