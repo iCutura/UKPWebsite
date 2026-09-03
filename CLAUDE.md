@@ -140,3 +140,28 @@ Facts gathered 2026-09-02, details and content extracts in `../UKPWebsiteBackup/
 - No em dashes in any user-facing text (house rule shared with the PubQuiz repo).
 - Brand: follow `PubQuiz/brand/brand_guidelines.html` for logo usage, typography (Sao Torpes display, Bahnschrift/DM Sans body) and marketing colours. This is a marketing site, so the brand doc applies here (unlike in-app UI, which uses seasonal themes).
 - Scripts that touch the legacy host live in `../UKPWebsiteBackup/scripts/` and must be read-only against the server. They read credentials from this repo's `.env`.
+
+## Mail
+
+The site sends as **noreply@kvizovi.hr**, a SiteGround mailbox. Host `mail.kvizovi.hr`, SMTP 465
+(implicit TLS, `SMTP_SSL`), IMAP 993. Credentials live in `.env` (`UKP_MAIL_*`) and nowhere else:
+this repo is public.
+
+**The mailbox cannot receive.** `kvizovi.hr` MX points at Google Workspace, so every message
+addressed to the domain is delivered there, not to SiteGround. A message sent to noreply@ from
+noreply@ is accepted by SiteGround, handed to Google and never appears over IMAP. Treat the
+account as send-only, put `organizacija@kvizovi.hr` (a Workspace mailbox someone reads) in
+`Reply-To`, and never point anything at noreply@ expecting an answer to arrive.
+
+Two things send mail:
+- the contact form, via SiteGround PHP `mail()` (`server/api/kontakt.php`, `mail_from` /
+  `mail_to` in `server/config.template.php`),
+- the external-registration confirmation codes, from the .NET API, which must authenticate to
+  `mail.kvizovi.hr:465` as this mailbox. The API runs on another host, so SMTP AUTH through
+  SiteGround is what keeps SPF passing without editing DNS.
+
+SPF today is `v=spf1 +a +mx +ip4:35.214.130.152 include:kvizovi.hr.spf.auto.dnssmarthost.net ~all`
+(the include expands to `_spf.mailspamprotection.com`, SiteGround's outbound). There is no
+`include:_spf.google.com`, so mail sent from Workspace itself leans on `+mx`, which covers Google's
+inbound hosts rather than its sending ones. Worth checking against the headers of a real delivery
+before trusting it.
