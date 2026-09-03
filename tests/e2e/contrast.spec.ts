@@ -104,3 +104,21 @@ test('no visible text is set in the faintest ink', async ({ page }) => {
   }
   expect(faint, `text at under half ink:\n${faint.join('\n')}`).toEqual([]);
 });
+
+test('the primary button clears AA in every season', async ({ page }) => {
+  await open(page, '/');
+  for (const season of ['fall', 'spring', 'summer', 'winter']) {
+    await page.evaluate(s => document.documentElement.setAttribute('data-season', s), season);
+    await page.waitForTimeout(120);
+    const { fg, bg } = await page.evaluate(() => {
+      const cs = getComputedStyle(document.querySelector('.btn-accent')!);
+      return { fg: cs.color, bg: cs.backgroundColor };
+    });
+    const ratio = (() => {
+      const [a, b] = [luminance(fg), luminance(bg)];
+      return (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05);
+    })();
+    // The light seasonal accent gives 3.1:1, which is why the button uses the deeper one.
+    expect(ratio, `${season}: white on ${bg} is ${ratio.toFixed(2)}:1`).toBeGreaterThanOrEqual(4.5);
+  }
+});

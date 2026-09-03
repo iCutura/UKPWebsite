@@ -172,8 +172,12 @@ p + p { margin-top: 1em; }
 }
 .btn:active { transform: scale(.97); }
 .btn svg { width: 20px; height: 20px; flex: none; }
-.btn-accent { background: var(--accent); color: var(--on-dark) !important; box-shadow: var(--sh-accent); }
-.btn-accent:hover { background: var(--accent-dark); box-shadow: 0 14px 34px -8px rgb(var(--accent-rgb) / .65); transform: translateY(-1px); }
+/* The deeper seasonal accent, not the light one: white on --accent measured 3.1:1, under the
+   4.5 that 15-17px text needs, and this is the primary button on every page. The hover step is
+   mixed rather than taken from --accent-deep, which is identical to --accent-dark in three of
+   the four seasons and would have left the button with no hover feedback at all. */
+.btn-accent { background: var(--accent-dark); color: var(--on-dark) !important; box-shadow: var(--sh-accent); }
+.btn-accent:hover { background: color-mix(in srgb, var(--accent-dark) 86%, #1A0F0A); box-shadow: 0 14px 34px -8px rgb(var(--accent-rgb) / .65); transform: translateY(-1px); }
 .btn-dark { background: var(--dark); color: var(--on-dark) !important; }
 .btn-dark:hover { background: #2a1c17; transform: translateY(-1px); }
 .btn-light { background: var(--on-dark); color: var(--ink) !important; }
