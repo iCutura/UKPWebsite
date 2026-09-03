@@ -22,9 +22,16 @@
   mask-image: linear-gradient(90deg, #000 calc(100% - 20px), transparent);
 }
 .ev-chips > * { flex: none; }
-.chip-status.chip-few, .chip-status.chip-full, .chip-status.chip-closed, .chip-status.chip-cancelled { background: rgb(216 90 90 / .22) !important; color: #FFD3D3 !important; }
-.chip-status.chip-open { background: rgb(90 174 136 / .22) !important; color: #CDEFDD !important; }
-.chip-status.chip-results { background: rgb(212 165 68 / .22) !important; color: #F3DFA8 !important; }
+/* Two readings of the same status: dark text on a light tint, pale text on a dark card. The
+   pale one used to apply everywhere, which left "Prijave otvorene" barely visible on paper. */
+.chip-status.chip-few, .chip-status.chip-full, .chip-status.chip-closed, .chip-status.chip-cancelled { background: rgb(216 90 90 / .16) !important; color: #8E2F2F !important; }
+.chip-status.chip-open { background: rgb(90 174 136 / .18) !important; color: #1F5540 !important; }
+.chip-status.chip-results { background: rgb(212 165 68 / .2) !important; color: #6B4F12 !important; }
+
+.card-dark .chip-status.chip-few, .card-dark .chip-status.chip-full, .card-dark .chip-status.chip-closed, .card-dark .chip-status.chip-cancelled,
+.on-dark .chip-status.chip-few, .on-dark .chip-status.chip-full, .on-dark .chip-status.chip-closed, .on-dark .chip-status.chip-cancelled { background: rgb(216 90 90 / .22) !important; color: #FFD3D3 !important; }
+.card-dark .chip-status.chip-open, .on-dark .chip-status.chip-open { background: rgb(90 174 136 / .22) !important; color: #CDEFDD !important; }
+.card-dark .chip-status.chip-results, .on-dark .chip-status.chip-results { background: rgb(212 165 68 / .22) !important; color: #F3DFA8 !important; }
 .ev-arrow { flex: none; width: 32px; height: 32px; display: grid; place-items: center; border-radius: 50%; background: var(--glass-light); color: var(--on-dark); transition: background-color .3s, transform .35s var(--ease-out); }
 .card-light .ev-arrow { background: rgb(var(--rule) / .06); color: var(--ink); }
 .ev-card:hover .ev-arrow, .loc-card:hover .ev-arrow, .news-card:hover .ev-arrow { background: var(--accent); color: var(--on-dark); transform: translate(2px, -2px); }
@@ -38,7 +45,7 @@
 .loc-rhythm { font-weight: 700; color: var(--accent-deep); text-transform: capitalize; font-size: var(--fs-small); }
 .loc-foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: auto; padding-top: 13px; border-top: 1px solid rgb(var(--rule) / .08); }
 .loc-next { display: flex; flex-direction: column; gap: 2px; min-width: 0; font-size: var(--fs-small); color: var(--ink); }
-.loc-next-label { font-size: var(--fs-caption); font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: var(--ink-lo); }
+.loc-next-label { font-size: var(--fs-caption); font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: var(--ink-md); }
 .loc-card.is-quiet .loc-next { color: var(--ink-md); }
 
 .news-card { display: flex; flex-direction: column; overflow: hidden; min-height: 100%; text-decoration: none !important; }

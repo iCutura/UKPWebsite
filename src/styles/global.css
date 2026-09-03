@@ -180,8 +180,8 @@ p + p { margin-top: 1em; }
 .btn-light:hover { background: #fff; transform: translateY(-1px); }
 .btn-ghost { background: transparent; color: var(--ink) !important; border: 1.5px solid rgb(var(--rule) / .18); }
 .btn-ghost:hover { background: rgb(var(--rule) / .05); border-color: rgb(var(--rule) / .32); }
-.on-dark .btn-ghost, .band-dark .btn-ghost { background: var(--glass-light); color: var(--on-dark) !important; border-color: rgb(255 255 255 / .18); }
-.on-dark .btn-ghost:hover, .band-dark .btn-ghost:hover { background: rgb(255 255 255 / .2); }
+.on-dark .btn-ghost, .band-dark .btn-ghost, .card-dark .btn-ghost { background: var(--glass-light); color: var(--on-dark) !important; border-color: rgb(255 255 255 / .18); }
+.on-dark .btn-ghost:hover, .band-dark .btn-ghost:hover, .card-dark .btn-ghost:hover { background: rgb(255 255 255 / .2); }
 .btn-sm { --btn-h: 44px; padding: 0 18px; font-size: .9375rem; }
 .btn-lg { --btn-h: 60px; padding: 0 30px; font-size: 1.0625rem; }
 .btn-block { width: 100%; }
@@ -229,8 +229,8 @@ a.card-light:hover { transform: translateY(-3px); border-color: rgb(var(--accent
 .input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 4px rgb(var(--accent-rgb) / .18); }
 textarea.input { min-height: 140px; resize: vertical; line-height: 1.5; }
 .on-dark .input, .card-dark .input { background: rgb(255 255 255 / .06); border-color: rgb(255 255 255 / .14); color: var(--on-dark); }
-.on-dark .input::placeholder { color: var(--on-dark-lo); }
-.on-dark .input:focus { background: rgb(255 255 255 / .1); }
+.on-dark .input::placeholder, .card-dark .input::placeholder, .band-dark .input::placeholder { color: var(--on-dark-md); }
+.on-dark .input:focus, .card-dark .input:focus, .band-dark .input:focus { background: rgb(255 255 255 / .1); }
 .hint { font-size: var(--fs-caption); color: var(--ink-md); } .on-dark .hint, .card-dark .hint, .band-dark .hint { color: var(--on-dark-md); }
 .card-dark a:not(.btn) { color: var(--accent-soft); }
 
