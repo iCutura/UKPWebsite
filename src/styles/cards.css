@@ -7,7 +7,7 @@
   display: grid; justify-items: center; flex: none; min-width: 52px; padding: 7px 9px; line-height: 1;
   border-radius: var(--r-md); background: var(--glass-light); color: var(--on-dark);
 }
-.ev-card.is-urgent .ev-date { background: var(--accent); }
+.ev-card.is-urgent .ev-date { background: var(--accent-dark); }
 .ev-dow, .ev-mon { font-family: var(--font-sans); font-size: .625rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--on-dark-md); }
 .ev-card.is-urgent .ev-dow, .ev-card.is-urgent .ev-mon { color: rgb(255 255 255 / .85); }
 .ev-day { font-size: 1.5rem; margin: 1px 0; }
@@ -16,11 +16,7 @@
 .ev-loc { display: flex; align-items: center; gap: 5px; font-size: var(--fs-caption); color: var(--on-dark-md); }
 .ev-loc svg { flex: none; }
 .ev-foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: auto; padding-top: 13px; border-top: 1px solid var(--dark-divider); }
-.ev-chips {
-  display: flex; flex-wrap: nowrap; gap: 6px; min-width: 0; overflow: hidden;
-  -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 20px), transparent);
-  mask-image: linear-gradient(90deg, #000 calc(100% - 20px), transparent);
-}
+.ev-chips { display: flex; flex-wrap: wrap; gap: 6px; min-width: 0; }
 .ev-chips > * { flex: none; }
 /* Two readings of the same status: dark text on a light tint, pale text on a dark card. The
    pale one used to apply everywhere, which left "Prijave otvorene" barely visible on paper. */
@@ -33,6 +29,10 @@
 .card-dark .chip-status.chip-open, .on-dark .chip-status.chip-open { background: rgb(90 174 136 / .22) !important; color: #CDEFDD !important; }
 .card-dark .chip-status.chip-results, .on-dark .chip-status.chip-results { background: rgb(212 165 68 / .22) !important; color: #F3DFA8 !important; }
 .ev-arrow { flex: none; width: 32px; height: 32px; display: grid; place-items: center; border-radius: 50%; background: var(--glass-light); color: var(--on-dark); transition: background-color .3s, transform .35s var(--ease-out); }
+/* .news-card has no padding of its own, unlike .ev-card, so an unpositioned arrow sat inside the
+   corner radius and was clipped by it. */
+.news-card { position: relative; }
+.news-card .ev-arrow { position: absolute; right: 18px; bottom: 18px; }
 .card-light .ev-arrow { background: rgb(var(--rule) / .06); color: var(--ink); }
 .ev-card:hover .ev-arrow, .loc-card:hover .ev-arrow, .news-card:hover .ev-arrow { background: var(--accent); color: var(--on-dark); transform: translate(2px, -2px); }
 
@@ -53,12 +53,12 @@
 .news-card.is-featured .news-img { aspect-ratio: 3 / 2; }
 .news-body { display: flex; flex-direction: column; gap: 10px; padding: 22px 22px 26px; }
 .news-meta { font-size: var(--fs-caption); font-weight: 600; text-transform: uppercase; letter-spacing: .04em; color: var(--accent-soft); }
-.news-title { font-size: 1.3rem; line-height: 1.14; color: var(--on-dark); padding-right: 28px; }
+.news-title { font-size: 1.3rem; line-height: 1.14; color: var(--on-dark); }
 .news-card.is-featured .news-title { font-size: clamp(1.5rem, 2.4vw, 2.1rem); }
-.news-summary { font-size: var(--fs-small); color: var(--on-dark-md); padding-right: 40px; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.news-summary { font-size: var(--fs-small); color: var(--on-dark-md); display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
 
 /* Horizontal snap rail used on the home page */
-.rail { display: grid; grid-auto-flow: column; grid-auto-columns: min(80vw, 320px); gap: 16px; overflow-x: auto; scroll-snap-type: x mandatory; padding: 8px var(--gutter) 12px; margin-inline: calc(-1 * var(--gutter)); scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+.rail { display: grid; grid-auto-flow: column; grid-auto-columns: min(80vw, 320px); gap: 16px; overflow-x: auto; scroll-snap-type: x mandatory; padding: 8px var(--gutter) 12px; margin-inline: calc(-1 * var(--gutter)); scrollbar-width: none; -webkit-overflow-scrolling: touch; scroll-padding-inline: var(--gutter); }
 .rail::-webkit-scrollbar { display: none; }
 .rail > * { scroll-snap-align: start; }
 @media (min-width: 1000px) { .rail { grid-auto-columns: 340px; } }

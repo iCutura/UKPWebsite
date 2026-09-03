@@ -42,7 +42,13 @@ function bind() {
     const state: { requestId: number | null; resendAt: number; timer: number | null } = { requestId: null, resendAt: 0, timer: null };
 
     const show = (step: string) => { panel.dataset.step = step; panels.forEach(p => { p.hidden = p.dataset.stepPanel !== step; }); panel.querySelector<HTMLElement>(`[data-step-panel="${step}"] .prijava-msg`)?.setAttribute('hidden', ''); if (step === 'code') setTimeout(() => codeForm.querySelector<HTMLInputElement>('input[name=code]')?.focus(), 50); };
-    const msg = (f: HTMLElement, text: string, kind: 'ok' | 'error' | 'info') => { const el = f.querySelector<HTMLElement>('.prijava-msg')!; el.hidden = false; el.textContent = text; el.className = `prijava-msg is-${kind}`; };
+    const msg = (f: HTMLElement, text: string, kind: 'ok' | 'error' | 'info') => {
+      const el = f.querySelector<HTMLElement>('.prijava-msg')!;
+      el.hidden = false; el.textContent = text; el.className = `prijava-msg is-${kind}`;
+      // A message nobody scrolls to is the same as no message at all.
+      const r = el.getBoundingClientRect();
+      if (r.top < 0 || r.bottom > innerHeight) el.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    };
     const busy = (f: HTMLFormElement, on: boolean, label?: string) => { const b = f.querySelector<HTMLButtonElement>('button[type=submit]')!; b.disabled = on; if (label) b.textContent = label; };
 
     const tickResend = () => {
@@ -61,9 +67,20 @@ function bind() {
     form.addEventListener('submit', async ev => {
       ev.preventDefault();
       const fd = new FormData(form); const d = Object.fromEntries(fd.entries()) as Record<string, string>;
-      if (!d.teamName?.trim() || !d.contactName?.trim() || !d.contactEmail?.trim() || !d.contactPhone?.trim()) return msg(form, MSG.invalid_input, 'error');
-      if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(d.contactEmail)) return msg(form, 'Provjeri e-mail adresu.', 'error');
-      if (!fd.get('consent')) return msg(form, 'Potvrdi da se slažeš s korištenjem podataka za prijavu.', 'error');
+      /** Mark the offending fields and put the cursor in the first one, so the message has somewhere to point. */
+      const flag = (names: string[], text: string) => {
+        form.querySelectorAll('.input.is-invalid').forEach(el => el.classList.remove('is-invalid'));
+        const fields = names.map(n => form.querySelector<HTMLElement>(`[name="${n}"]`)).filter(Boolean) as HTMLElement[];
+        fields.forEach(el => el.classList.add('is-invalid'));
+        msg(form, text, 'error');
+        fields[0]?.focus({ preventScroll: true });
+        return undefined;
+      };
+      const blank = ['teamName', 'contactName', 'contactEmail', 'contactPhone'].filter(n => !d[n]?.trim());
+      if (blank.length) return flag(blank, MSG.invalid_input);
+      if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(d.contactEmail)) return flag(['contactEmail'], 'Provjeri e-mail adresu.');
+      if (!fd.get('consent')) return flag(['consent'], 'Potvrdi da se slažeš s korištenjem podataka za prijavu.');
+      form.querySelectorAll('.input.is-invalid').forEach(el => el.classList.remove('is-invalid'));
       busy(form, true, 'Šaljemo kod…');
       try {
         const j = await call({ action: 'start', eventId, teamName: d.teamName, contactName: d.contactName, contactEmail: d.contactEmail, contactPhone: d.contactPhone, playerCount: d.playerCount ? Number(d.playerCount) : null, website: d.website || '' });

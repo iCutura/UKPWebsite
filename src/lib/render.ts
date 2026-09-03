@@ -27,7 +27,8 @@ export interface EventCardOpts { now?: Date; showLocation?: boolean; relative?: 
 
 export function eventStatus(e: EventItem, now = new Date()): { key: 'cancelled' | 'full' | 'closed' | 'few' | 'open' | 'results'; label: string } {
   if (e.isCancelled) return { key: 'cancelled', label: 'Otkazano' };
-  if (e.resultsPublished) return { key: 'results', label: 'Rezultati objavljeni' };
+  // A quiz that has not been played yet cannot have results, whatever the flag says.
+  if (e.resultsPublished && parseApiDate(e.date) < now) return { key: 'results', label: 'Rezultati objavljeni' };
   if (e.registrationDeadline && new Date(e.registrationDeadline) < now) return { key: 'closed', label: 'Prijave zatvorene' };
   if (e.spotsRemaining != null && e.spotsRemaining <= 0) return { key: 'full', label: 'Popunjeno' };
   if (e.spotsRemaining != null && e.spotsRemaining <= 3) return { key: 'few', label: `Još ${plural(e.spotsRemaining, 'mjesto', 'mjesta', 'mjesta')}` };
@@ -76,9 +77,24 @@ export function eventCardHTML(e: EventItem, o: EventCardOpts = {}): string {
 </a>`;
 }
 
+/**
+ * The extra line under a venue name, when the quiz series is called something else. Suppressed
+ * when it only repeats the weekday the rhythm line already carries ("Gossip Ponedjeljkom" above
+ * "Ponedjeljkom · 20:00"), which was making those cards 37px taller than their row siblings.
+ */
+function seriesLine(l: Location, day: string | null): string | null {
+  if (l.name === l.venueName || l.name.startsWith(l.venueName)) return null;
+  if (day && l.name.toLowerCase().includes(day.toLowerCase())) return null;
+  return l.name;
+}
+
 export function locationCardHTML(l: Location, o: { now?: Date; relative?: boolean } = {}): string {
   const now = o.now ?? new Date();
-  const rhythm = [l.weekday != null ? weekdayInstrumental(new Date(2024, 0, 7 + l.weekday)) : null, l.defaultStartTime ? time(l.defaultStartTime) : (l.nextEventStartTime ? time(l.nextEventStartTime) : null)].filter(Boolean).join(' · ');
+  // A time on its own says nothing about when the quiz runs, so the weekday carries the line: no
+  // weekday, no rhythm. 43 of 137 locations used to render a naked "20:00" here.
+  const day = l.weekday != null ? weekdayInstrumental(new Date(2024, 0, 7 + l.weekday)) : null;
+  const at = l.defaultStartTime ? time(l.defaultStartTime) : (l.nextEventStartTime ? time(l.nextEventStartTime) : null);
+  const rhythm = day ? [day, at].filter(Boolean).join(' · ') : '';
   let next: string;
   if (l.nextEventDate) {
     const d = parseApiDate(l.nextEventDate);
@@ -88,7 +104,7 @@ export function locationCardHTML(l: Location, o: { now?: Date; relative?: boolea
   <div class="loc-top">${logoTile(l.logo, l.venueName, 48)}<span class="chip">${svg.pin} ${esc(l.city.name)}</span></div>
   <div class="loc-body">
     <h3 class="loc-title">${esc(l.venueName)}</h3>
-    ${l.name !== l.venueName && !l.name.startsWith(l.venueName) ? `<p class="loc-series">${esc(l.name)}</p>` : ''}
+    ${seriesLine(l, day) ? `<p class="loc-series">${esc(seriesLine(l, day)!)}</p>` : ''}
     ${rhythm ? `<p class="loc-rhythm">${esc(rhythm)}</p>` : ''}
   </div>
   <div class="loc-foot">

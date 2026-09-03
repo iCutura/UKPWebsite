@@ -76,8 +76,8 @@ const team = [
 <style>
   .about-hero { width: 100%; height: auto; border-radius: var(--r-hero); box-shadow: var(--sh-quiz); }
   .story { display: flex; flex-direction: column; gap: clamp(48px, 8vw, 96px); }
-  .story-row { display: grid; gap: 28px; align-items: center; }
-  @media (min-width: 900px) { .story-row { grid-template-columns: 1fr 1fr; gap: 64px; } .story-row.is-flipped .story-copy { order: 2; } }
+  .story-row { display: grid; grid-template-columns: minmax(0, 1fr); gap: 28px; align-items: center; }
+  @media (min-width: 900px) { .story-row { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 64px; } .story-row.is-flipped .story-copy { order: 2; } }
   .story-img { width: 100%; height: auto; border-radius: var(--r-xl); box-shadow: var(--sh-quiz); }
   .team { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
   @media (min-width: 760px) { .team { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 24px; } }
@@ -87,5 +87,5 @@ const team = [
   .member figcaption { margin-top: 12px; font-weight: 700; font-size: 1.1rem; }
   .partner-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 12px; }
   .partner-tile { display: grid; place-items: center; min-height: 88px; padding: 16px; border-radius: var(--r-lg); background: #fff; border: 1px solid rgb(var(--rule) / .08); }
-  .partner-tile img { height: 40px; width: auto; max-width: 100%; object-fit: contain; }
+  .partner-tile img { max-height: 56px; max-width: 80%; height: auto; width: auto; object-fit: contain; }
 </style>

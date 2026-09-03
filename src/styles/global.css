@@ -135,6 +135,8 @@ p + p { margin-top: 1em; }
 .stack { display: flex; flex-direction: column; }
 .cluster { display: flex; flex-wrap: wrap; align-items: center; }
 .grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 20px; }
+/* "Nothing here" is about the whole list, not about one column of it. */
+.grid > .empty { grid-column: 1 / -1; }
 @media (min-width: 700px) { .grid-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); } .grid-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
 @media (min-width: 1000px) { .grid-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); } .grid-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
 
@@ -188,7 +190,9 @@ p + p { margin-top: 1em; }
 .on-dark .btn-ghost:hover, .band-dark .btn-ghost:hover, .card-dark .btn-ghost:hover { background: rgb(255 255 255 / .2); }
 .btn-sm { --btn-h: 44px; padding: 0 18px; font-size: .9375rem; }
 .btn-lg { --btn-h: 60px; padding: 0 30px; font-size: 1.0625rem; }
-.btn-block { width: 100%; }
+.btn-block { width: 100%; padding-inline: 16px; }
+/* A label that cannot wrap will push the page sideways on a 320px screen instead. */
+.btn-lg, .btn-block { white-space: normal; }
 
 .chip {
   display: inline-flex; align-items: center; gap: 6px; min-height: 30px; padding: 0 12px; border-radius: var(--r-pill);
@@ -271,3 +275,12 @@ textarea.input { min-height: 140px; resize: vertical; line-height: 1.5; }
 .w-full { width: 100%; }
 @media (max-width: 759px) { .hide-mobile { display: none !important; } }
 @media (min-width: 760px) { .hide-desktop { display: none !important; } }
+
+/* Print. Reveal animations leave blocks at opacity 0 until they scroll into view, which on paper
+   means most of the page comes out blank. */
+@media print {
+  .js [data-reveal] { opacity: 1 !important; transform: none !important; }
+  .header, .nav-panel, .skip, .rail-nav { display: none !important; }
+  .band-dark, .card-dark, .on-dark { background: #fff !important; color: #000 !important; }
+  a[href^="http"]::after { content: " (" attr(href) ")"; font-size: .85em; word-break: break-all; }
+}

@@ -65,6 +65,14 @@ const mapped = locations.length - missing;
 <style>
   .map { position: relative; margin: 0; }
   .map svg { display: block; width: 100%; height: auto; max-height: 68svh; overflow: visible; }
+  /* The SVG scales with the viewport, so on a phone every pin shrank to 8px and its count to 5px.
+     The user-unit sizes are scaled back up, and the height cap that squeezed the map is lifted. */
+  @media (max-width: 759px) {
+    .map svg { max-height: none; }
+    .pin, .pin-live { r: 17; }
+    .pin-halo { r: 24; stroke-width: 4; }
+    .pin-count { font-size: 26px; }
+  }
   .land { fill: color-mix(in srgb, var(--ink) 7%, transparent); stroke: color-mix(in srgb, var(--ink) 14%, transparent); stroke-width: 1; vector-effect: non-scaling-stroke; }
   .land-primary { fill: color-mix(in srgb, var(--accent) 20%, transparent); stroke: var(--accent-deep); stroke-width: 1.5; vector-effect: non-scaling-stroke; }
 

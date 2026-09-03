@@ -67,8 +67,8 @@ const alts = ['Ekipe za stolovima', 'Voditelj otvara kviz', 'Kolege raspravljaju
   </section>
 </Base>
 <style>
-  .tb-head { display: grid; gap: 32px; align-items: center; }
-  @media (min-width: 900px) { .tb-head { grid-template-columns: 1.1fr .9fr; gap: 64px; } }
+  .tb-head { display: grid; grid-template-columns: minmax(0, 1fr); gap: 32px; align-items: center; }
+  @media (min-width: 900px) { .tb-head { grid-template-columns: minmax(0, 1.1fr) minmax(0, .9fr); gap: 64px; } }
   .tb-head h1 { margin-top: 12px; }
   .tb-hero-img { width: 100%; height: auto; border-radius: var(--r-hero); box-shadow: var(--sh-quiz); }
   .tb-n { display: inline-block; font-size: 2.5rem; color: var(--accent-soft); line-height: 1; margin-bottom: 12px; }

@@ -126,8 +126,16 @@ describe('eventStatus', () => {
     expect(future.key).toBe('open');
   });
 
-  it('reports published results', () => {
-    expect(eventStatus(event({ resultsPublished: true }), NOW).key).toBe('results');
+  it('reports published results for a quiz that has been played', () => {
+    expect(eventStatus(event({ date: '2026-09-01', resultsPublished: true }), NOW).key).toBe('results');
+  });
+
+  it('refuses to call a future quiz played, whatever the flag says', () => {
+    // Two events in the live feed carried resultsPublished with a date a week out, so their cards
+    // read "Rezultati objavljeni" and the detail page would not take registrations.
+    const future = eventStatus(event({ date: '2026-09-14', resultsPublished: true, maxTeams: 18, registered: 12 }), NOW);
+    expect(future.key).toBe('open');
+    expect(future.label).toBe('12/18 ekipa');
   });
 
   it('says registration is open when no capacity is recorded', () => {

@@ -59,12 +59,22 @@ const seasonIcon: Record<string, 'leaf' | 'sun' | 'leaf-fall' | 'snowflake'> = {
 <style>
   .footer { padding-block: clamp(56px, 8vw, 96px) 32px; margin-top: calc(var(--section) * .5); }
   .footer-top { display: grid; gap: 40px; grid-template-columns: 1fr; }
-  @media (min-width: 720px) { .footer-top { grid-template-columns: 1.4fr repeat(auto-fit, minmax(0, 1fr)); gap: 32px; } }
+  /* An auto-fit repeat may not sit beside an fr track: the browser threw the whole declaration
+     away and every column stacked, at every width, into a 1060px footer. Auto-flow gives the same
+     result without the parse error, and takes a fourth column (the season picker) without edits. */
+  @media (min-width: 900px) {
+    .footer-top { grid-template-columns: 1.4fr; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 32px; }
+  }
+  /* Two columns in between, where a third would squeeze the e-mail address past its edge. */
+  @media (min-width: 620px) and (max-width: 899px) {
+    .footer-top { grid-template-columns: 1fr 1fr; gap: 32px 40px; }
+    .footer-brand { grid-column: 1 / -1; }
+  }
   .footer-mark { width: 64px; height: 64px; opacity: .95; }
   .footer-claim { margin-top: 20px; max-width: 34ch; color: var(--on-dark-md); font-size: var(--fs-small); line-height: 1.6; }
   .footer-h { font-size: var(--fs-eyebrow); font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: var(--on-dark-md); margin-bottom: 14px; }
   .footer-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
-  .footer-list a, .footer-plain { display: inline-flex; align-items: center; gap: 8px; color: var(--on-dark); font-weight: 500; text-decoration: none; }
+  .footer-list a, .footer-plain { display: inline-flex; align-items: center; gap: 8px; min-height: 40px; color: var(--on-dark); font-weight: 500; text-decoration: none; }
   .footer-list a:hover { color: var(--accent-soft); }
   .social { width: 44px; height: 44px; display: grid; place-items: center; border-radius: 50%; background: var(--glass-light); color: var(--on-dark); transition: background-color .25s, transform .25s var(--ease-out); }
   .social:hover { background: var(--accent); transform: translateY(-2px); color: var(--on-dark); }
@@ -76,5 +86,5 @@ const seasonIcon: Record<string, 'leaf' | 'sun' | 'leaf-fall' | 'snowflake'> = {
   .footer-bottom { display: flex; flex-direction: column; gap: 12px; padding-top: 24px; }
   @media (min-width: 900px) { .footer-bottom { flex-direction: row; justify-content: space-between; align-items: flex-start; gap: 32px; } }
   .footer-legal { font-size: var(--fs-caption); color: var(--on-dark-md); line-height: 1.6; max-width: 70ch; }
-  .footer-legal a { color: var(--on-dark-md); }
+  .footer-legal a { color: var(--on-dark); text-decoration: underline; text-underline-offset: 3px; padding: 6px 0; display: inline-block; }
 </style>

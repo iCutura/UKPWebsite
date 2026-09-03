@@ -6,6 +6,20 @@ import AppBadges from '../../components/AppBadges.astro';
 import { getNews, type NewsItem } from '../../lib/data';
 import { newsArticleHTML } from '../../lib/detail';
 import { newsCardHTML } from '../../lib/render';
+import sharp from 'sharp';
+import { existsSync } from 'node:fs';
+
+/** The article image's real proportions, read off the file at build time so the browser reserves
+ *  the right box. The previous hard-coded 16:9 on a 4:5 photo jumped the page 531px on load. */
+async function imageSize(src?: string) {
+  if (!src || !src.startsWith('/')) return undefined;
+  const file = 'public' + src;
+  if (!existsSync(file)) return undefined;
+  try {
+    const { width, height } = await sharp(file).metadata();
+    return width && height ? { w: width, h: height } : undefined;
+  } catch { return undefined; }
+}
 
 export function getStaticPaths() { return getNews().map(n => ({ params: { id: String(n.id) }, props: { n } })); }
 const { n } = Astro.props as { n: NewsItem };
@@ -15,7 +29,7 @@ const more = getNews().filter(x => x.id !== n.id).slice(0, 3);
   <section class="page-head">
     <div class="container">
       <nav class="crumbs article" aria-label="Putanja" data-reveal><a href="/novosti/">Novosti</a><Icon name="arrow-right" /><span>{n.title.slice(0, 40)}{n.title.length > 40 ? '…' : ''}</span></nav>
-      <div class="mt-4" data-reveal><Fragment set:html={newsArticleHTML(n)} /></div>
+      <div class="mt-4" data-reveal><Fragment set:html={newsArticleHTML(n, await imageSize(n.image?.full))} /></div>
       <div class="article mt-6" data-reveal>
         <div class="card-dark card-pad">
           <span class="eyebrow">UKP Quiz aplikacija</span>

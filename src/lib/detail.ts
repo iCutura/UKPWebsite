@@ -66,7 +66,7 @@ export function registrationPanelHTML(e: EventItem, enabled: boolean): string {
 
   <section data-step-panel="apps">
     <h2 class="h3">Najbrže kroz UKP Quiz aplikaciju.</h2>
-    <p class="mt-2 muted">Skeniraj kod, preuzmi aplikaciju i prijavi ekipu u par dodira. U aplikaciji su i rezultati, lige i podsjetnici za svaki kviz.</p>
+    <p class="mt-2 muted">Preuzmi aplikaciju i prijavi ekipu u par dodira. U aplikaciji su i rezultati, lige i podsjetnici za svaki kviz.</p>
     <div class="qr-grid mt-3">
       <a class="qr-tile" href="${SITE.apps.ios}" rel="noopener" target="_blank"><img src="/img/qr/app-store.svg" alt="QR kod za App Store" width="132" height="132" loading="lazy"><span>App Store</span></a>
       <a class="qr-tile" href="${SITE.apps.android}" rel="noopener" target="_blank"><img src="/img/qr/google-play.svg" alt="QR kod za Google Play" width="132" height="132" loading="lazy"><span>Google Play</span></a>
@@ -79,16 +79,16 @@ export function registrationPanelHTML(e: EventItem, enabled: boolean): string {
     <h2 class="h3">Prijava bez aplikacije.</h2>
     <p class="hint mt-1">Na e-mail ti šaljemo četveroznamenkasti kod. Prijava vrijedi tek kad ga upišeš.</p>
     <div class="stack gap-2 mt-3">
+      <p class="prijava-msg" role="status" aria-live="polite" hidden></p>
       <div class="field"><label for="p-team">Ime ekipe</label><input id="p-team" name="teamName" class="input" required minlength="2" maxlength="100" autocomplete="off" placeholder="npr. Pametnjakovići"></div>
-      <div class="field"><label for="p-name">Ime i prezime kapetana</label><input id="p-name" name="contactName" class="input" required minlength="2" maxlength="100" autocomplete="name"></div>
+      <div class="field"><label for="p-name">Ime i prezime kapetana</label><input id="p-name" name="contactName" class="input" required minlength="2" maxlength="100" autocomplete="name" placeholder="npr. Ana Anić"></div>
       <div class="field"><label for="p-email">E-mail</label><input id="p-email" name="contactEmail" class="input" type="email" required autocomplete="email" placeholder="ti@primjer.hr"></div>
       <div class="field"><label for="p-phone">Mobitel</label><input id="p-phone" name="contactPhone" class="input" type="tel" required minlength="6" autocomplete="tel" inputmode="tel" placeholder="+385 9x xxx xxxx"></div>
       <div class="field"><label for="p-count">Broj igrača <span class="muted">(nije obavezno)</span></label><select id="p-count" name="playerCount" class="input"><option value="">Još ne znamo</option>${opts}</select></div>
       <input type="text" name="website" class="hp" tabindex="-1" autocomplete="off" aria-hidden="true">
-      <label class="consent"><input type="checkbox" name="consent" required> <span>Slažem se da UKP koristi ove podatke za prijavu na kviz. <a href="/pravila-privatnosti/">Pravila privatnosti</a></span></label>
+      <label class="consent"><input type="checkbox" name="consent" required> <span>Slažem se da UKP koristi ove podatke za prijavu na kviz, kako je opisano u <a href="/pravila-privatnosti/">pravilima privatnosti</a>.</span></label>
       <button class="btn btn-accent btn-lg btn-block" type="submit">Pošalji kod za potvrdu</button>
       <button class="link-btn" type="button" data-step-go="apps">Natrag na aplikaciju</button>
-      <p class="prijava-msg" role="status" aria-live="polite" hidden></p>
     </div>
   </form>
 
@@ -114,11 +114,49 @@ export function registrationPanelHTML(e: EventItem, enabled: boolean): string {
 </div>`;
 }
 
-export function textToHTML(text: string): string {
-  return text.split(/\n\s*\n/).map(p => `<p>${esc(p.trim()).replace(/\n/g, '<br>').replace(/(https?:\/\/[^\s<]+)/g, '<a href="$1" rel="noopener" target="_blank">$1</a>')}</p>`).join('');
+/** Inline markup allowed inside a paragraph or a list item: links, and **bold**. */
+function inline(t: string): string {
+  return esc(t)
+    .replace(/(https?:\/\/[^\s<]+)/g, '<a href="$1" rel="noopener" target="_blank">$1</a>')
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
 }
 
-export function newsArticleHTML(n: NewsItem): string {
+/**
+ * Article bodies come from the admin's Markdown editor, but were printed as plain text: bullets
+ * arrived as literal "• " and "- " inside ordinary paragraphs, and a heading line like
+ * "PROGRAM FINALA:" sat on the same rhythm as prose. This renders the small subset that actually
+ * appears in the content: headings, bullet lists, and paragraphs.
+ */
+export function textToHTML(text: string, skip?: string): string {
+  const bullet = /^\s*(?:[•*\u2022-]|\d+[.)])\s+/;
+  const strip = (t: string) => t.replace(/^\s*(?:[•*\u2022-]|\d+[.)])\s+/, '').trim();
+  const normalise = (t: string) => strip(t).replace(/\s+/g, ' ').toLowerCase();
+  const skipKey = skip ? normalise(skip) : null;
+
+  return text.split(/\n\s*\n/).map(block => {
+    const lines = block.trim().split('\n').map(l => l.trim()).filter(Boolean);
+    if (!lines.length) return '';
+    // The summary is already printed as the lead; the body usually opens by repeating it.
+    if (skipKey && lines.length === 1 && normalise(lines[0]) === skipKey) return '';
+
+    const bullets = lines.filter(l => bullet.test(l));
+    if (bullets.length && bullets.length === lines.length)
+      return `<ul>${lines.map(l => `<li>${inline(strip(l))}</li>`).join('')}</ul>`;
+
+    // A short line ending in a colon, or one wrapped in markdown hashes, is a heading.
+    if (lines.length === 1 && /^#{1,3}\s+/.test(lines[0]))
+      return `<h2>${inline(lines[0].replace(/^#{1,3}\s+/, ''))}</h2>`;
+    if (lines.length === 1 && lines[0].length < 60 && /:$/.test(lines[0]) && !/[.!?]/.test(lines[0].slice(0, -1)))
+      return `<h2>${inline(lines[0].replace(/:$/, ''))}</h2>`;
+
+    // A run of lines that is not a list keeps its own line breaks (address and time blocks).
+    return `<p>${lines.map(inline).join('<br>')}</p>`;
+  }).filter(Boolean).join('')
+    // Bullets separated by blank lines arrive as one block each; they are one list to a reader.
+    .replace(/<\/ul><ul>/g, '');
+}
+
+export function newsArticleHTML(n: NewsItem, size?: { w: number; h: number }): string {
   const d = new Date(n.publishedDate);
   return `<article class="article">
   <header class="article-head">
@@ -126,8 +164,8 @@ export function newsArticleHTML(n: NewsItem): string {
     <h1>${esc(n.title)}</h1>
     ${n.summary ? `<p class="lead mt-3">${esc(n.summary)}</p>` : ''}
   </header>
-  ${n.image ? `<img class="article-img" src="${esc(n.image.full)}" alt="" width="1200" height="675" decoding="async">` : ''}
-  <div class="article-body">${textToHTML(n.content)}</div>
+  ${n.image ? `<img class="article-img" src="${esc(n.image.full)}" alt=""${size ? ` width="${size.w}" height="${size.h}"` : ''} decoding="async">` : ''}
+  <div class="article-body">${textToHTML(n.content, n.summary)}</div>
 </article>`;
 }
 

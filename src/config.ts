@@ -32,7 +32,7 @@ export const SITE = {
   partners: [
     { name: 'OTP banka', img: '/img/partners/otp-icon-1.webp' },
     { name: 'Jungle', img: '/img/partners/jungle.webp' },
-    { name: 'Badell', img: '/img/partners/badell.webp' },
+    { name: 'Badel', img: '/img/partners/badell.webp' },
     { name: 'Amazinga', img: '/img/partners/amazinga.webp' },
     { name: 'Friendly Fire', img: '/img/partners/friendly-fire.webp' },
     { name: 'Stock', img: '/img/partners/stock.webp' },

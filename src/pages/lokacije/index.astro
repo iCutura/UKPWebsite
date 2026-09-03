@@ -57,7 +57,7 @@ const coords = Object.fromEntries(locations.map(l => [l.id, { lat: l.lat, lng: l
 
   <section class="section-tight">
     <div class="container">
-      <p class="results-line muted" aria-live="polite"><span class="num" data-filter-count>{locations.length}</span> lokacija · <span class="num">{withEvents}</span> sa zakazanim terminom</p>
+      <p class="results-line muted" aria-live="polite"><span class="num" data-filter-count>{locations.length}</span> lokacija · <span class="num" data-filter-upcoming-count>{withEvents}</span> sa zakazanim terminom</p>
       <div data-view-panel="list">
         <div class="grid grid-3 loc-grid" data-live="locations" data-filter-grid set:html={locations.map(l => locationCardHTML(l)).join('')} />
         <div class="empty mt-4" data-filter-empty hidden>Nema lokacija za taj filter. Probaj drugi grad ili nas <a href="/kontakt/">pitaj kad stižemo k tebi</a>.</div>
@@ -77,6 +77,7 @@ const coords = Object.fromEntries(locations.map(l => [l.id, { lat: l.lat, lng: l
     const grid = document.querySelector<HTMLElement>('[data-filter-grid]')!;
     const empty = document.querySelector<HTMLElement>('[data-filter-empty]')!;
     const count = document.querySelector<HTMLElement>('[data-filter-count]')!;
+    const upcomingCount = document.querySelector<HTMLElement>('[data-filter-upcoming-count]');
     const state = { q: '', country: '', city: '', upcoming: false };
     const norm = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/đ/g, 'd').toLowerCase();
     const params = new URLSearchParams(location.search);
@@ -87,7 +88,7 @@ const coords = Object.fromEntries(locations.map(l => [l.id, { lat: l.lat, lng: l
     function apply() {
       const cards = Array.from(grid.querySelectorAll<HTMLElement>('[data-location-id]'));
       const byId = new Map((locations || []).map((l: any) => [String(l.id), l]));
-      let shown = 0; const nq = norm(state.q.trim());
+      let shown = 0; let scheduled = 0; const nq = norm(state.q.trim());
       for (const c of cards) {
         const l = byId.get(c.dataset.locationId!);
         const city = c.dataset.city || l?.city?.name || '';
@@ -98,8 +99,11 @@ const coords = Object.fromEntries(locations.map(l => [l.id, { lat: l.lat, lng: l
         if (state.city && city !== state.city) ok = false;
         if (state.upcoming && l && !(l.upcomingCount > 0)) ok = false;
         c.hidden = !ok; if (ok) shown++;
+        if (ok && l && l.upcomingCount > 0) scheduled++;
       }
-      count.textContent = String(shown); empty.hidden = shown > 0;
+      count.textContent = String(shown);
+      if (upcomingCount) upcomingCount.textContent = String(scheduled);
+      empty.hidden = shown > 0;
       bar.querySelectorAll<HTMLElement>('[data-filter-country]').forEach(b => { const on = (b.dataset.filterCountry || '') === state.country; b.classList.toggle('is-active', on); b.setAttribute('aria-pressed', String(on)); });
       bar.querySelectorAll<HTMLElement>('[data-filter-city]').forEach(b => { const on = b.dataset.filterCity === state.city; b.classList.toggle('is-active', on); b.setAttribute('aria-pressed', String(on)); });
       const up = bar.querySelector<HTMLElement>('[data-filter-upcoming]')!; up.classList.toggle('is-active', state.upcoming); up.setAttribute('aria-pressed', String(state.upcoming));
@@ -175,8 +179,11 @@ const coords = Object.fromEntries(locations.map(l => [l.id, { lat: l.lat, lng: l
   .fchip.is-active .fcount { color: var(--accent-soft); }
   .fcount { font-size: .75rem; color: var(--ink-md); }
   .fsep { width: 1px; height: 22px; background: rgb(var(--rule) / .15); margin: 0 4px; }
+  /* The header hides on scroll-down and returns on scroll-up; the bar follows it so the search
+     field is never parked underneath. */
+  :global(.header.is-hidden) ~ :global(.main) .filter-bar { top: 0; }
   .city-select .input { min-height: 36px; padding: 0 12px; border-radius: var(--r-pill); font-size: .8125rem; font-weight: 600; width: auto; max-width: 150px; background: rgb(var(--rule) / .045); border-color: rgb(var(--rule) / .09); }
   .results-line { font-size: var(--fs-small); margin-bottom: 20px; }
   .loc-grid { align-items: stretch; }
-  @media (min-width: 760px) { .filter-bar { position: sticky; top: 0; } .filter-tools { grid-area: tools; } .filter-inner { display: grid; grid-template-columns: minmax(240px, 420px) 1fr; grid-template-areas: "search chips" "tools tools" "cities cities"; align-items: center; gap: 10px 20px; } .search { grid-area: search; } .filter-chips { grid-area: chips; } .filter-cities { grid-area: cities; } }
+  @media (min-width: 760px) { .filter-bar { position: sticky; top: var(--header-h); transition: top .3s var(--ease-out); } .filter-tools { grid-area: tools; } .filter-inner { display: grid; grid-template-columns: minmax(240px, 420px) 1fr; grid-template-areas: "search chips" "tools tools" "cities cities"; align-items: center; gap: 10px 20px; } .search { grid-area: search; } .filter-chips { grid-area: chips; } .filter-cities { grid-area: cities; } }
 </style>

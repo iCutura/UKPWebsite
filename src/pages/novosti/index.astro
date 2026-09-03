@@ -19,5 +19,5 @@ const news = getNews();
   </section>
 </Base>
 <style is:global>
-  @media (min-width: 700px) { .news-grid .is-featured { grid-column: 1 / -1; display: grid; grid-template-columns: 1.2fr .8fr; } .news-grid .is-featured .news-img { height: 100%; aspect-ratio: auto; } }
+  @media (min-width: 700px) { .news-grid .is-featured { grid-column: 1 / -1; display: grid; grid-template-columns: 1.2fr .8fr; } .news-grid .is-featured .news-img { height: 100%; max-height: 520px; aspect-ratio: auto; object-fit: cover; } }
 </style>
