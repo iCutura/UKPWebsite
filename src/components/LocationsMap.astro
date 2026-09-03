@@ -1,8 +1,11 @@
 ---
 /**
- * Where UKP plays, drawn from the committed Natural Earth outline: no map library, no tile
- * server, no third-party request. Pins are grouped by city so that 24 Zagreb venues read as one
- * place with 24 quizzes rather than a smudge.
+ * Where UKP plays. Drawn from the committed Natural Earth outline: no map library, no tile
+ * server, no third-party request, and a test that holds us to that.
+ *
+ * The view is the SVG viewBox, so panning and zooming stay vector-crisp at any scale and cost
+ * nothing but an attribute write. Cities cluster at low zoom and split into their venues once
+ * the view is close enough for that to mean something.
  */
 import outline from '../data/map-outline.json';
 import { project, hasCoords } from '../lib/geo';
@@ -12,46 +15,91 @@ interface Props { locations: Location[] }
 const { locations } = Astro.props;
 const { viewBox, width, height, bounds, countries } = outline as any;
 
-type Group = { key: string; city: string; x: number; y: number; total: number; scheduled: number; url: string };
+type Group = { key: string; city: string; x: number; y: number; total: number; scheduled: number };
+type Venue = { id: number; city: string; name: string; x: number; y: number; url: string; live: boolean };
+
 const byCity = new Map<string, Group>();
+const venues: Venue[] = [];
 for (const l of locations) {
   if (!hasCoords(l)) continue;
-  const key = l.city.name;
   const p = project(l.lat as number, l.lng as number, bounds, width, height);
-  const g = byCity.get(key);
+  venues.push({ id: l.id, city: l.city.name, name: l.venueName, x: p.x, y: p.y, url: l.url, live: l.upcomingCount > 0 });
+  const g = byCity.get(l.city.name);
   if (g) {
     g.total++; if (l.upcomingCount > 0) g.scheduled++;
     // Keep the marker on the city, not on whichever venue came first.
     g.x = (g.x * (g.total - 1) + p.x) / g.total;
     g.y = (g.y * (g.total - 1) + p.y) / g.total;
-    if (l.upcomingCount > 0 && g.scheduled === 1) g.url = l.url;
   } else {
-    byCity.set(key, { key, city: key, x: p.x, y: p.y, total: 1, scheduled: l.upcomingCount > 0 ? 1 : 0, url: l.url });
+    byCity.set(l.city.name, { key: l.city.name, city: l.city.name, x: p.x, y: p.y, total: 1, scheduled: l.upcomingCount > 0 ? 1 : 0 });
   }
 }
 const groups = [...byCity.values()].sort((a, b) => a.y - b.y);
+// Pins are drawn at a constant screen size, so one sitting on the outline's edge overhangs the
+// panel and gets clipped. A little air around the whole map gives every pin room to sit in.
+const [ox, oy, ow, oh] = String(viewBox).split(' ').map(Number);
+const pad = ow * 0.035;
+const homeBox = `${ox - pad} ${oy - pad} ${ow + pad * 2} ${oh + pad * 2}`;
 const missing = locations.filter(l => !hasCoords(l)).length;
 const mapped = locations.length - missing;
 ---
-<figure class="map" data-map>
-  <svg viewBox={viewBox} role="img" aria-labelledby="map-title" preserveAspectRatio="xMidYMid meet">
-    <title id="map-title">Karta s {groups.length} gradova u kojima igramo kvizove</title>
-    <g class="map-land">
-      {countries.map((c: any) => <path d={c.d} class={c.primary ? 'land land-primary' : 'land'} />)}
-    </g>
-    <g class="map-pins">
-      {groups.map(g => (
-        <a href={`/lokacije/?grad=${encodeURIComponent(g.city)}`} class="pin-hit" data-pin data-city={g.city}
-           aria-label={`${g.city}: ${g.total} ${g.total === 1 ? 'lokacija' : 'lokacija'}${g.scheduled ? `, ${g.scheduled} sa zakazanim kvizom` : ''}`}>
-          <circle cx={g.x} cy={g.y} r={Math.min(26, 10 + g.total * 0.85)} class={g.scheduled ? 'pin pin-live' : 'pin'} />
-          {g.scheduled > 0 && <circle cx={g.x} cy={g.y} r={Math.min(26, 10 + g.total * 0.85)} class="pin-halo" />}
-          <text x={g.x} y={g.y} class="pin-count" text-anchor="middle" dominant-baseline="central">{g.total}</text>
-        </a>
-      ))}
-    </g>
-  </svg>
+<figure class="map" data-map data-home={homeBox}>
+  <div class="map-stage" data-map-stage>
+    <svg viewBox={homeBox} data-map-svg role="application" tabindex="0"
+         aria-label={`Karta s ${groups.length} gradova u kojima igramo kvizove. Strelice pomiču kartu, plus i minus zumiraju.`}
+         preserveAspectRatio="xMidYMid meet">
+      <defs>
+        <linearGradient id="land-fill" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="var(--land-top)" />
+          <stop offset="100%" stop-color="var(--land-bottom)" />
+        </linearGradient>
+        <filter id="land-lift" x="-8%" y="-8%" width="116%" height="116%">
+          <feDropShadow dx="0" dy="7" stdDeviation="9" flood-color="#2A1A14" flood-opacity=".16" />
+        </filter>
+      </defs>
 
-  <div class="map-tip" data-map-tip hidden aria-hidden="true"></div>
+      <g class="map-land" filter="url(#land-lift)">
+        {countries.map((c: any) => <path d={c.d} class={c.primary ? 'land land-primary' : 'land'} />)}
+      </g>
+
+      {/* Decoration only, and deliberately not inside the buttons: the pulse doubles its radius,
+          which would both cover neighbouring cities and make each hit area breathe. */}
+      <g class="map-halos" aria-hidden="true">
+        {groups.filter(g => g.scheduled > 0).map(g => <circle cx={g.x} cy={g.y} r="14" class="pin-halo" data-halo={g.city} />)}
+      </g>
+
+      {/* City clusters: the map's default reading. */}
+      <g class="map-pins" data-layer="cities">
+        {groups.map(g => (
+          <g class="pin-hit" data-pin data-city={g.city} data-x={g.x} data-y={g.y} role="button" tabindex="0"
+             aria-label={`${g.city}: ${g.total} lokacija${g.scheduled ? `, ${g.scheduled} sa zakazanim kvizom` : ''}. Otvori grad.`}>
+            <circle cx={g.x} cy={g.y} r="14" class={g.scheduled ? 'pin pin-live' : 'pin'} />
+            <text x={g.x} y={g.y} class="pin-count" text-anchor="middle" dominant-baseline="central">{g.total}</text>
+          </g>
+        ))}
+      </g>
+
+      {/* Individual venues, revealed once the view is close enough to tell them apart. */}
+      <g class="map-venues" data-layer="venues" aria-hidden="true">
+        {venues.map(v => (
+          <a href={v.url} class="venue" data-venue data-city={v.city} tabindex="-1" aria-label={`${v.name}, ${v.city}`}>
+            <circle cx={v.x} cy={v.y} r="6" class={v.live ? 'venue-dot venue-live' : 'venue-dot'} />
+            <text x={v.x} y={v.y} class="venue-label" text-anchor="middle">{v.name}</text>
+          </a>
+        ))}
+      </g>
+    </svg>
+
+    <div class="map-tip" data-map-tip hidden aria-hidden="true"></div>
+
+    <div class="map-controls">
+      <button type="button" class="map-btn" data-zoom="in" aria-label="Približi">+</button>
+      <button type="button" class="map-btn" data-zoom="out" aria-label="Udalji">&#8722;</button>
+      <button type="button" class="map-btn map-btn-reset" data-zoom="reset" hidden>Sve</button>
+    </div>
+
+    <p class="map-hint" data-map-hint>Klikni grad za lokacije</p>
+  </div>
 
   <figcaption class="map-legend">
     <span class="legend-item"><span class="legend-dot legend-live"></span> grad s najavljenim kvizom</span>
@@ -63,75 +111,99 @@ const mapped = locations.length - missing;
 </figure>
 
 <style>
-  .map { position: relative; margin: 0; }
-  .map svg { display: block; width: 100%; height: auto; max-height: 68svh; overflow: visible; }
-  /* The SVG scales with the viewport, so on a phone every pin shrank to 8px and its count to 5px.
-     The user-unit sizes are scaled back up, and the height cap that squeezed the map is lifted. */
-  @media (max-width: 759px) {
-    .map svg { max-height: none; }
-    .pin, .pin-live { r: 17; }
-    .pin-halo { r: 24; stroke-width: 4; }
-    .pin-count { font-size: 26px; }
+  .map { margin: 0; }
+  .map-stage {
+    position: relative; border-radius: var(--r-lg); overflow: hidden;
+    aspect-ratio: 5 / 4; max-height: 72svh;
+    border: 1px solid rgb(var(--rule) / .1);
+    background: linear-gradient(168deg, color-mix(in srgb, var(--paper-2) 78%, transparent), var(--paper) 70%);
+    --land-top: color-mix(in srgb, var(--accent) 22%, var(--paper-2));
+    --land-bottom: color-mix(in srgb, var(--accent-deep) 16%, var(--paper-2));
   }
-  .land { fill: color-mix(in srgb, var(--ink) 7%, transparent); stroke: color-mix(in srgb, var(--ink) 14%, transparent); stroke-width: 1; vector-effect: non-scaling-stroke; }
-  .land-primary { fill: color-mix(in srgb, var(--accent) 20%, transparent); stroke: var(--accent-deep); stroke-width: 1.5; vector-effect: non-scaling-stroke; }
+  /* pan-y so a single finger still scrolls the page; two fingers drive the map. */
+  .map-stage svg { display: block; width: 100%; height: 100%; touch-action: pan-y; cursor: grab; outline: none; }
+  .map-stage svg:focus-visible { box-shadow: inset 0 0 0 3px var(--accent); }
+  .map-stage.is-panning svg { cursor: grabbing; }
 
-  .pin-hit { cursor: pointer; }
-  .pin { fill: color-mix(in srgb, var(--ink) 50%, transparent); transition: fill .2s, r .2s var(--ease-out); }
+  .land { fill: color-mix(in srgb, var(--paper-2) 86%, transparent); stroke: rgb(var(--rule) / .09); stroke-width: 1; vector-effect: non-scaling-stroke; }
+  .land-primary { fill: url(#land-fill); stroke: color-mix(in srgb, var(--accent-deep) 55%, transparent); stroke-width: 1.4; vector-effect: non-scaling-stroke; }
+
+  /* Marks are counter-scaled by the script so they keep a constant on-screen size at any zoom. */
+  .pin-hit { cursor: pointer; outline: none; }
+  /* --k is written by the script: one property, every mark holds its on-screen size. */
+  .pin, .pin-halo, .pin-count, .venue-dot, .venue-label { transform-box: fill-box; transform-origin: center; }
+  .pin, .pin-count, .venue-dot { transform: scale(var(--k, 1)); }
+  .venue-label { transform: translate(0, calc(-15px * var(--k, 1))) scale(var(--k, 1)); }
+  .pin { fill: color-mix(in srgb, var(--ink) 52%, transparent); transition: fill .2s; }
   .pin-live { fill: var(--accent-deep); }
-  .pin-halo { fill: none; stroke: var(--accent); stroke-width: 2; opacity: .45; transform-box: fill-box; transform-origin: center; animation: pin-pulse 2.6s ease-out infinite; }
+  .pin-hit:hover .pin, .pin-hit:focus-visible .pin { fill: var(--accent-dark); }
+  .pin-hit:focus-visible .pin { stroke: var(--ink); stroke-width: 2.5; vector-effect: non-scaling-stroke; }
+  .map-halos { pointer-events: none; }
+  .pin-halo { fill: none; stroke: var(--accent); stroke-width: 2.5; opacity: .45; vector-effect: non-scaling-stroke; animation: pin-pulse 2.6s ease-out infinite; }
   .pin-count { font-family: var(--font-sans); font-size: 15px; font-weight: 800; fill: var(--paper); pointer-events: none; }
-  .pin-hit:hover .pin, .pin-hit:focus-visible .pin { fill: var(--accent); }
-  .pin-hit:focus-visible { outline: none; }
-  .pin-hit:focus-visible .pin { stroke: var(--ink); stroke-width: 2.5; }
-  @keyframes pin-pulse { 0% { transform: scale(1); opacity: .5; } 70%, 100% { transform: scale(1.9); opacity: 0; } }
+
+  .map-venues { opacity: 0; pointer-events: none; transition: opacity .35s var(--ease-out); }
+  .map-venues.is-on { opacity: 1; pointer-events: auto; }
+  .map-pins, .map-halos { transition: opacity .3s var(--ease-out); }
+  .map-pins.is-off, .map-halos.is-off { opacity: 0; pointer-events: none; }
+  /* A label only earns its place when it is not sitting on another one. */
+  .venue-label { opacity: 0; transition: opacity .25s; }
+  .venue-label.is-shown { opacity: 1; }
+  .venue-dot { fill: color-mix(in srgb, var(--ink) 42%, transparent); transition: fill .2s; }
+  .venue-live { fill: var(--accent-deep); }
+  .venue:hover .venue-dot, .venue:focus-visible .venue-dot { fill: var(--accent-dark); }
+  .venue-label {
+    font-size: 11px; font-weight: 700; fill: var(--ink);
+    paint-order: stroke; stroke: var(--paper); stroke-width: 3.5px; stroke-linejoin: round;
+  }
+
+  /* The pulse has to carry --k too, or the halo would fight the counter-scale. */
+  @keyframes pin-pulse {
+    0% { transform: scale(var(--k, 1)); opacity: .5 }
+    70%, 100% { transform: scale(calc(var(--k, 1) * 2)); opacity: 0 }
+  }
 
   .map-tip {
-    position: absolute; z-index: 2; transform: translate(-50%, calc(-100% - 14px)); pointer-events: none;
+    position: absolute; z-index: 3; transform: translate(-50%, calc(-100% - 14px)); pointer-events: none;
     padding: 8px 12px; border-radius: var(--r-md); background: var(--dark); color: var(--on-dark);
-    font-size: var(--fs-caption); font-weight: 600; line-height: 1.35; white-space: nowrap;
-    box-shadow: var(--sh-elevated);
+    font-size: var(--fs-caption); font-weight: 600; line-height: 1.35; white-space: nowrap; box-shadow: var(--sh-elevated);
   }
   .map-tip::after { content: ""; position: absolute; left: 50%; bottom: -5px; width: 10px; height: 10px; transform: translateX(-50%) rotate(45deg); background: var(--dark); }
   .map-tip strong { display: block; font-size: var(--fs-small); }
 
-  .map-legend { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 20px; margin-top: 18px; font-size: var(--fs-caption); color: var(--ink-md); }
+  .map-controls { position: absolute; right: 12px; bottom: 12px; z-index: 2; display: flex; flex-direction: column; gap: 6px; }
+  .map-btn {
+    width: 42px; height: 42px; border-radius: 13px; border: 1px solid rgb(var(--rule) / .12);
+    background: color-mix(in srgb, var(--paper) 90%, transparent); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+    color: var(--ink); font-size: 21px; font-weight: 700; line-height: 1; cursor: pointer;
+    display: grid; place-items: center; transition: background .2s, transform .2s;
+  }
+  .map-btn:hover { background: var(--paper); transform: translateY(-1px); }
+  .map-btn-reset { font-size: 12px; letter-spacing: .04em; text-transform: uppercase; }
+
+  .map-hint {
+    position: absolute; left: 12px; bottom: 12px; z-index: 2; margin: 0;
+    font-size: var(--fs-caption); color: var(--ink-md);
+    background: color-mix(in srgb, var(--paper) 80%, transparent); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+    padding: 7px 12px; border-radius: var(--r-pill); transition: opacity .4s;
+  }
+  .map-hint[hidden] { display: none; }
+
+  .map-legend { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 20px; margin-top: 18px; font-size: var(--fs-caption); color: var(--ink); }
   .legend-item { display: inline-flex; align-items: center; gap: 8px; }
   .legend-dot { width: 11px; height: 11px; border-radius: 50%; background: color-mix(in srgb, var(--ink) 42%, transparent); }
   .legend-live { background: var(--accent-deep); }
   .legend-note { color: var(--ink-md); }
 
+  @media (max-width: 759px) {
+    .map-stage { aspect-ratio: 1 / 1; }
+    .map-hint { left: 8px; bottom: 8px; padding: 6px 10px; }
+    .map-controls { right: 8px; bottom: 8px; }
+  }
   @media (prefers-reduced-motion: reduce) { .pin-halo { animation: none; } }
 </style>
 
 <script>
-  function initMap() {
-    const map = document.querySelector<HTMLElement>('[data-map]');
-    if (!map || map.dataset.bound) return;
-    map.dataset.bound = '1';
-    const tip = map.querySelector<HTMLElement>('[data-map-tip]')!;
-
-    const show = (pin: SVGGElement | HTMLElement) => {
-      const label = pin.getAttribute('aria-label') ?? '';
-      const [city, rest] = label.split(': ');
-      tip.innerHTML = `<strong></strong><span></span>`;
-      tip.querySelector('strong')!.textContent = city;
-      tip.querySelector('span')!.textContent = rest ?? '';
-      const box = (pin as SVGGraphicsElement).getBoundingClientRect();
-      const host = map.getBoundingClientRect();
-      tip.style.left = `${box.left + box.width / 2 - host.left}px`;
-      tip.style.top = `${box.top - host.top}px`;
-      tip.hidden = false;
-    };
-    const hide = () => { tip.hidden = true; };
-
-    map.querySelectorAll<HTMLElement>('[data-pin]').forEach(pin => {
-      pin.addEventListener('pointerenter', () => show(pin));
-      pin.addEventListener('focus', () => show(pin));
-      pin.addEventListener('pointerleave', hide);
-      pin.addEventListener('blur', hide);
-    });
-    map.addEventListener('pointerleave', hide);
-  }
-  document.addEventListener('astro:page-load', initMap);
+  import { initInteractiveMap } from '../scripts/map';
+  document.addEventListener('astro:page-load', initInteractiveMap);
 </script>

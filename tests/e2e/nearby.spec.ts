@@ -114,7 +114,7 @@ test.describe('map view', () => {
     await expect(page.locator('[data-view-panel="map"]')).toBeVisible();
   });
 
-  test('draws a pin for every city that has coordinates, and links it to that city', async ({ page }) => {
+  test('draws a pin for every city that has coordinates, and opens it on click', async ({ page }) => {
     await open(page, '/lokacije/');
     await page.locator('[data-view="map"]').click();
 
@@ -123,8 +123,16 @@ test.describe('map view', () => {
 
     const zagreb = page.locator('[data-pin][data-city="Zagreb"]');
     await expect(zagreb).toHaveCount(1);
-    await expect(zagreb).toHaveAttribute('href', '/lokacije/?grad=Zagreb');
     await expect(zagreb).toHaveAttribute('aria-label', /Zagreb/);
+    // A pin zooms into its city rather than leaving the map; the venues it stood for become the
+    // links, which is why it is a button and not an anchor.
+    await expect(zagreb).toHaveAttribute('role', 'button');
+
+    const before = await page.locator('[data-map-svg]').getAttribute('viewBox');
+    await zagreb.click();
+    await expect.poll(() => page.locator('[data-map-svg]').getAttribute('viewBox')).not.toBe(before);
+    await expect(page.locator('[data-layer="venues"]')).toHaveClass(/is-on/);
+    await expect(page.locator('[data-venue]').first()).toHaveAttribute('href', /\/lokacije\//);
   });
 
   test('pins sit inside the drawn map, not off its edge', async ({ page }) => {

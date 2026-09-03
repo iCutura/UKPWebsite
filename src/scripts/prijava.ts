@@ -1,8 +1,11 @@
+import gsap from 'gsap';
 /**
  * Website team registration (people without the app): apps step -> form -> e-mail code -> done.
  * Talks only to the same-origin PHP proxy (/api/prijava.php), which holds the API key and forwards to
  * /api/pub-quiz-events/{id}/external-registrations on the PubQuiz API.
  */
+const reducedMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
 const MSG: Record<string, string> = {
   invalid_input: 'Provjeri unesene podatke: ime ekipe, ime, e-mail i mobitel su obavezni.',
   event_not_found: 'Ovaj termin više ne postoji.',
@@ -55,7 +58,76 @@ function bind() {
       requestAnimationFrame(() => panel.scrollIntoView({ block: 'start', behavior: 'smooth' }));
     };
 
-    const show = (step: string) => { panel.dataset.step = step; panels.forEach(p => { p.hidden = p.dataset.stepPanel !== step; }); panel.querySelector<HTMLElement>(`[data-step-panel="${step}"] .prijava-msg`)?.setAttribute('hidden', ''); if (step === 'code') setTimeout(() => codeForm.querySelector<HTMLInputElement>('input[name=code]')?.focus(), 50); };
+    const boxes = Array.from(panel.querySelectorAll<HTMLInputElement>('[data-code-box]'));
+    const codeValue = panel.querySelector<HTMLInputElement>('[data-code-value]');
+
+    const syncCode = () => {
+      const digits = boxes.map(b => b.value.replace(/\D/g, '').slice(0, 1));
+      boxes.forEach((b, i) => b.classList.toggle('is-filled', digits[i] !== ''));
+      if (codeValue) codeValue.value = digits.join('');
+      return digits.join('');
+    };
+    const resetBoxes = () => { boxes.forEach(b => { b.value = ''; b.classList.remove('is-filled', 'is-invalid'); }); syncCode(); };
+
+    boxes.forEach((box, i) => {
+      box.addEventListener('input', () => {
+        box.value = box.value.replace(/\D/g, '').slice(-1);
+        boxes.forEach(b => b.classList.remove('is-invalid'));
+        const full = syncCode();
+        if (box.value && i < boxes.length - 1) boxes[i + 1].focus();
+        // Four digits in: submit, rather than asking for a click that adds nothing.
+        if (full.length === 4) codeForm.requestSubmit();
+      });
+      box.addEventListener('keydown', e => {
+        if (e.key === 'Backspace' && !box.value && i > 0) { e.preventDefault(); boxes[i - 1].value = ''; boxes[i - 1].focus(); syncCode(); }
+        if (e.key === 'ArrowLeft' && i > 0) { e.preventDefault(); boxes[i - 1].focus(); }
+        if (e.key === 'ArrowRight' && i < boxes.length - 1) { e.preventDefault(); boxes[i + 1].focus(); }
+      });
+      // A code copied out of the e-mail arrives in one box; spread it across all four.
+      box.addEventListener('paste', e => {
+        const text = e.clipboardData?.getData('text')?.replace(/\D/g, '') ?? '';
+        if (!text) return;
+        e.preventDefault();
+        boxes.forEach((b, j) => { b.value = text[j] ?? b.value; });
+        const full = syncCode();
+        boxes[Math.min(text.length, boxes.length - 1)]?.focus();
+        if (full.length === 4) codeForm.requestSubmit();
+      });
+    });
+
+    const drawTick = () => {
+      const mark = panel.querySelector<SVGElement>('[data-done-mark]');
+      if (!mark || reducedMotion()) return;
+      const shapes = mark.querySelectorAll<SVGGeometryElement>('circle, path');
+      shapes.forEach(shape => {
+        const len = shape.getTotalLength();
+        gsap.fromTo(shape,
+          { strokeDasharray: len, strokeDashoffset: len },
+          { strokeDashoffset: 0, duration: .6, ease: 'power2.out', delay: shape.tagName === 'path' ? .28 : 0 });
+      });
+    };
+
+    const ORDER = ['apps', 'form', 'code', 'done'];
+    const show = (step: string) => {
+      panel.dataset.step = step;
+      panels.forEach(p => { p.hidden = p.dataset.stepPanel !== step; });
+      panel.querySelector<HTMLElement>(`[data-step-panel="${step}"] .prijava-msg`)?.setAttribute('hidden', '');
+
+      // The spine: where you are, and how much is left.
+      const at = ORDER.indexOf(step);
+      panel.querySelectorAll<HTMLElement>('[data-step-dot]').forEach(dot => {
+        const i = ORDER.indexOf(dot.dataset.stepDot!);
+        dot.classList.toggle('is-now', i === at);
+        dot.classList.toggle('is-done', i < at);
+      });
+
+      const incoming = panel.querySelector<HTMLElement>(`[data-step-panel="${step}"]`);
+      if (incoming && !reducedMotion()) {
+        gsap.fromTo(incoming, { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: .45, ease: 'power3.out', clearProps: 'all' });
+      }
+      if (step === 'code') { resetBoxes(); setTimeout(() => boxes[0]?.focus(), 60); }
+      if (step === 'done') drawTick();
+    };
     const msg = (f: HTMLElement, text: string, kind: 'ok' | 'error' | 'info') => {
       const el = f.querySelector<HTMLElement>('.prijava-msg')!;
       el.hidden = false; el.textContent = text; el.className = `prijava-msg is-${kind}`;
@@ -119,6 +191,14 @@ function bind() {
         show('done');
       } catch (e) {
         const err = e as Error & { code?: string }; msg(codeForm, err.message, 'error');
+        // A wrong code should leave the boxes ready for another try, not make the reader clear
+        // four of them by hand.
+        boxes.forEach(b => b.classList.add('is-invalid'));
+        if (!reducedMotion()) gsap.fromTo(panel.querySelector('[data-code-boxes]'), { x: -7 }, { x: 0, duration: .5, ease: 'elastic.out(1, .4)' });
+        if (err.code !== 'request_not_found' && err.code !== 'request_used') {
+          resetBoxes();
+          setTimeout(() => boxes[0]?.focus(), 60);
+        }
         if (err.code === 'code_expired' || err.code === 'too_many_attempts') { state.resendAt = 0; tickResend(); }
         if (err.code === 'request_not_found' || err.code === 'request_used') setTimeout(() => show(err.code === 'request_used' ? 'apps' : 'form'), 1500);
       } finally { busy(codeForm, false, 'Potvrdi prijavu'); }

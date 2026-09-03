@@ -63,6 +63,11 @@ export function registrationPanelHTML(e: EventItem, enabled: boolean): string {
   const opts = Array.from({ length: max }, (_, i) => `<option value="${i + 1}">${i + 1}</option>`).join('');
   return `<div class="card-dark card-pad prijava-panel prijava" data-prijava data-event-id="${e.id}" data-step="apps">
   <p class="eyebrow">Prijava ekipe</p>
+  <ol class="steps" data-steps aria-hidden="true">
+    <li data-step-dot="form"><span class="steps-n">1</span>Podaci</li>
+    <li data-step-dot="code"><span class="steps-n">2</span>Kod</li>
+    <li data-step-dot="done"><span class="steps-n">3</span>Gotovo</li>
+  </ol>
 
   <section data-step-panel="apps">
     <h2 class="h3">Najbrže kroz UKP Quiz aplikaciju.</h2>
@@ -96,17 +101,26 @@ export function registrationPanelHTML(e: EventItem, enabled: boolean): string {
     <h2 class="h3">Upiši kod iz e-maila.</h2>
     <p class="hint mt-1">Poslali smo ga na <strong data-masked-email></strong>. Vrijedi 15 minuta; provjeri i neželjenu poštu.</p>
     <div class="stack gap-2 mt-3">
-      <div class="field"><label for="p-code">Kod za potvrdu</label><input id="p-code" name="code" class="input code-input" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]*" maxlength="4" minlength="4" required placeholder="••••"></div>
+      <p class="prijava-msg" role="status" aria-live="polite" hidden></p>
+      <div class="field">
+        <span class="field-label" id="code-label">Kod za potvrdu</span>
+        <div class="code-boxes" data-code-boxes role="group" aria-labelledby="code-label">
+          ${[0, 1, 2, 3].map(i => `<input class="code-box" data-code-box="${i}" inputmode="numeric" autocomplete="${i === 0 ? 'one-time-code' : 'off'}" pattern="[0-9]*" maxlength="1" aria-label="${i + 1}. znamenka">`).join('')}
+        </div>
+        <input type="hidden" name="code" data-code-value>
+      </div>
       <button class="btn btn-accent btn-lg btn-block" type="submit">Potvrdi prijavu</button>
       <div class="cluster gap-3">
         <button class="link-btn" type="button" data-resend>Pošalji novi kod</button>
         <button class="link-btn" type="button" data-step-go="form">Promijeni podatke</button>
       </div>
-      <p class="prijava-msg" role="status" aria-live="polite" hidden></p>
     </div>
   </form>
 
   <section data-step-panel="done" hidden>
+    <div class="done-mark" data-done-mark aria-hidden="true">
+      <svg viewBox="0 0 52 52" width="52" height="52"><circle cx="26" cy="26" r="23" /><path d="M15 27l8 8 15-16" /></svg>
+    </div>
     <h2 class="h3" data-done-title>Ekipa je prijavljena.</h2>
     <p class="mt-2 muted" data-done-text></p>
     <p class="hint mt-3">Za rezultate, lige i podsjetnike: <a href="${SITE.apps.ios}" rel="noopener" target="_blank">App Store</a> · <a href="${SITE.apps.android}" rel="noopener" target="_blank">Google Play</a></p>
