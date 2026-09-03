@@ -154,8 +154,8 @@ account as send-only, put `organizacija@kvizovi.hr` (a Workspace mailbox someone
 `Reply-To`, and never point anything at noreply@ expecting an answer to arrive.
 
 Two things send mail:
-- the contact form, via SiteGround PHP `mail()` (`server/api/kontakt.php`, `mail_from` /
-  `mail_to` in `server/config.template.php`),
+- the contact form, via SiteGround PHP `mail()` (`server/api/kontakt.php`), sending as
+  `noreply@kvizovi.hr` to `organizacija@kvizovi.hr`; both are in `server/config.template.php`,
 - the external-registration confirmation codes, from the .NET API, which must authenticate to
   `mail.kvizovi.hr:465` as this mailbox. The API runs on another host, so SMTP AUTH through
   SiteGround is what keeps SPF passing without editing DNS.

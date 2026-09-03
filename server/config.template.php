@@ -4,7 +4,7 @@ return [
   'api_base'  => '__UKP_API_BASE__',
   'api_key'   => '__UKP_API_KEY__',
   'mail_to'   => 'organizacija@kvizovi.hr',
-  'mail_from' => 'web@kvizovi.hr',
+  'mail_from' => 'noreply@kvizovi.hr',
   'registration_enabled' => __REGISTRATION_ENABLED__,
   'site_root' => __DIR__ . '/public_html',
 ];
