@@ -26,14 +26,13 @@ export function eventHeaderHTML(e: EventItem): string {
   const feeTxt = fee(e.feeType, e.feeAmount);
   return `<div class="evd-head">
   <p class="eyebrow">${e.isCancelled ? 'Otkazani kviz' : (e.category && e.category !== 'General' ? esc(e.category) + ' kviz' : 'Pub kviz')}</p>
-  <h1 class="evd-title">${esc(e.name || `Kviz ${DAY[d.getDay()].toLowerCase() === 'nedjelja' ? 'u nedjelju' : ''}`.trim() || 'Pub kviz')}</h1>
+  <h1 class="evd-title">${esc(e.name || e.venueName || 'Pub kviz')}</h1>
   <p class="evd-when num"><span class="evd-dow">${DAY[d.getDay()]}</span> <span class="evd-day">${d.getDate()}. ${MON[d.getMonth()]}</span> <span class="evd-time">${esc(time(e.startTime))}</span></p>
-  <a class="evd-loc" href="${esc(e.locationUrl || '/lokacije/')}">${logoTile(e.logo, e.venueName, 48)}<span><strong>${esc(e.venueName)}</strong><br><span class="muted">${esc(placeLine(e.address, e.city?.name) || e.locationName)}</span></span></a>
+  <a class="evd-loc" href="${esc(e.locationUrl || '/lokacije/')}">${logoTile(e.logo, e.venueName, 48)}<span>${e.name ? `<strong>${esc(e.venueName)}</strong><br>` : ''}<span class="muted">${esc(placeLine(e.address, e.city?.name) || e.locationName)}</span></span></a>
   <div class="cluster gap-1 mt-3">
     <span class="chip chip-status chip-${st.key}">${esc(st.label)}</span>
     ${feeTxt ? `<span class="chip">${esc(feeTxt)}</span>` : ''}
     ${e.maxPlayersPerTeam ? `<span class="chip">do ${e.maxPlayersPerTeam} igrača po ekipi</span>` : ''}
-    ${e.maxTeams ? `<span class="chip">najviše ${plural(e.maxTeams, 'ekipa', 'ekipe', 'ekipa')}</span>` : ''}
     ${e.requiresApproval ? `<span class="chip">voditelj potvrđuje prijave</span>` : ''}
     ${e.season ? `<span class="chip">${esc(e.season)}</span>` : ''}
   </div>

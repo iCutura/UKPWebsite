@@ -145,9 +145,11 @@ const coords = Object.fromEntries(locations.map(l => [l.id, { lat: l.lat, lng: l
   @media (max-width: 759px) {
     .filter-bar { padding: 8px 0; }
     /* One swipeable row each, instead of two wrapped rows and a stacked tool column. */
-    .filter-chips { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch; padding-bottom: 2px; }
-    .filter-chips::-webkit-scrollbar { display: none; }
-    .filter-chips .fchip { flex: 0 0 auto; }
+    .filter-chips, .filter-cities { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch; padding-bottom: 2px;
+      /* Fade the last chip out rather than slicing it, so the row reads as swipeable. */
+      mask-image: linear-gradient(90deg, #000 calc(100% - 28px), transparent 100%); }
+    .filter-chips::-webkit-scrollbar, .filter-cities::-webkit-scrollbar { display: none; }
+    .filter-chips .fchip, .filter-cities .fchip, .filter-cities .chip { flex: 0 0 auto; }
     .filter-tools { gap: 8px 10px; }
     .filter-tools .nearby { flex: 1 1 auto; min-width: 0; }
     /* The privacy line gets its own full-width line so it stays one line, not three. */
@@ -173,7 +175,7 @@ const coords = Object.fromEntries(locations.map(l => [l.id, { lat: l.lat, lng: l
   .fchip.is-active .fcount { color: var(--accent-soft); }
   .fcount { font-size: .75rem; color: var(--ink-md); }
   .fsep { width: 1px; height: 22px; background: rgb(var(--rule) / .15); margin: 0 4px; }
-  .city-select .input { min-height: 36px; padding: 0 12px; border-radius: var(--r-pill); font-size: .8125rem; font-weight: 600; width: auto; background: rgb(var(--rule) / .045); border-color: rgb(var(--rule) / .09); }
+  .city-select .input { min-height: 36px; padding: 0 12px; border-radius: var(--r-pill); font-size: .8125rem; font-weight: 600; width: auto; max-width: 150px; background: rgb(var(--rule) / .045); border-color: rgb(var(--rule) / .09); }
   .results-line { font-size: var(--fs-small); margin-bottom: 20px; }
   .loc-grid { align-items: stretch; }
   @media (min-width: 760px) { .filter-bar { position: sticky; top: 0; } .filter-tools { grid-area: tools; } .filter-inner { display: grid; grid-template-columns: minmax(240px, 420px) 1fr; grid-template-areas: "search chips" "tools tools" "cities cities"; align-items: center; gap: 10px 20px; } .search { grid-area: search; } .filter-chips { grid-area: chips; } .filter-cities { grid-area: cities; } }

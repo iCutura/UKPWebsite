@@ -25,7 +25,8 @@ const { grid, item = 'data-location-id', coords, label = 'Kvizovi blizu mene' } 
   .nearby-status.is-error { color: var(--error); }
   .nearby { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
   .nearby-note { margin: 0; font-size: var(--fs-caption); color: var(--ink-md); }
-  .nearby-note .link-btn { margin-left: 8px; font-size: var(--fs-caption); color: var(--ink-md); }
+  .nearby-note .link-btn { margin-left: 8px; font-size: var(--fs-caption); font-weight: 500; color: var(--ink-md); text-decoration: underline; text-underline-offset: .2em; text-decoration-color: rgb(var(--rule) / .3); }
+  .nearby-note .link-btn:hover { color: var(--ink); text-decoration-color: currentColor; }
   /* Both of these are real controls on a phone, so they get a real tap target. */
   .nearby .link-btn { min-height: 36px; padding: 0 4px; }
   .nearby[data-mode="hide"] .nearby-go { display: none; }

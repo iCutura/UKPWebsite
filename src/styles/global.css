@@ -110,12 +110,12 @@ input, select, textarea { font: inherit; color: inherit; }
 ::selection { background: var(--accent); color: var(--on-dark); }
 /* Š Č Ć Ž Đ carry marks above the cap height; .98 line-height would let them ride into whatever
    sits above, so headings keep a little more room. */
-h1, h2 { margin: 0; font-family: var(--font-display); font-weight: 900; letter-spacing: -.015em; line-height: 1.04; text-wrap: balance; }
+h1, h2 { margin: 0; font-family: var(--font-display); font-weight: 900; letter-spacing: -.015em; word-spacing: .07em; line-height: 1.04; text-wrap: balance; }
 h3, h4 { margin: 0; font-weight: 800; letter-spacing: -.02em; line-height: 1.15; text-wrap: balance; }
 h1 { font-size: var(--fs-h1); } h2 { font-size: var(--fs-h2); } h3 { font-size: var(--fs-h3); }
 p { margin: 0; text-wrap: pretty; }
 p + p { margin-top: 1em; }
-.display { font-family: var(--font-display); font-size: var(--fs-display); font-weight: 900; letter-spacing: -.02em; line-height: 1.0; }
+.display { font-family: var(--font-display); font-size: var(--fs-display); font-weight: 900; letter-spacing: -.02em; word-spacing: .075em; line-height: 1.0; }
 .lead { font-size: var(--fs-lead); line-height: 1.45; color: var(--ink-md); max-width: 60ch; }
 .eyebrow { font-size: var(--fs-eyebrow); font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: var(--accent-deep); }
 /* Š Č Ć Ž Đ put marks above the cap height, and at display sizes they overflow the line box by
