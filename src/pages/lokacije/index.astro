@@ -3,6 +3,8 @@ import Base from '../../layouts/Base.astro';
 import Icon from '../../components/Icon.astro';
 import { getLocations, getCities } from '../../lib/data';
 import { locationCardHTML } from '../../lib/render';
+import LocationsMap from '../../components/LocationsMap.astro';
+import NearbyControls from '../../components/NearbyControls.astro';
 
 // getLocations() already orders these: locations with a scheduled quiz first, soonest first, then by city.
 const locations = getLocations();
@@ -10,6 +12,7 @@ const cities = getCities();
 const countries = [...new Set(cities.map(c => c.country).filter(Boolean))] as string[];
 const top = [...cities].sort((a, b) => b.locations - a.locations || a.name.localeCompare(b.name, 'hr')).slice(0, 8);
 const withEvents = locations.filter(l => l.upcomingCount > 0).length;
+const coords = Object.fromEntries(locations.map(l => [l.id, { lat: l.lat, lng: l.lng }]));
 ---
 <Base title="Lokacije" description={`Pub kvizovi Urbane kviz priče na ${locations.length} lokacija u ${cities.length} gradova Hrvatske i Bosne i Hercegovine. Pronađi kviz u svom gradu.`}>
   <section class="page-head">
@@ -32,6 +35,13 @@ const withEvents = locations.filter(l => l.upcomingCount > 0).length;
         <span class="fsep" aria-hidden="true"></span>
         <button type="button" class="chip fchip" data-filter-upcoming aria-pressed="false"><Icon name="calendar" size={14} /> Samo sa zakazanim terminom</button>
       </div>
+      <div class="filter-tools">
+        <div class="view-switch" role="group" aria-label="Prikaz">
+          <button type="button" class="view-btn is-active" data-view="list" aria-pressed="true">Popis</button>
+          <button type="button" class="view-btn" data-view="map" aria-pressed="false">Karta</button>
+        </div>
+        <NearbyControls grid="[data-filter-grid]" item="data-location-id" coords={coords} />
+      </div>
       <div class="filter-cities" aria-label="Najveći gradovi">
         {top.map(c => <button type="button" class="chip fchip" data-filter-city={c.name} aria-pressed="false">{c.name} <span class="num fcount">{c.locations}</span></button>)}
         <label class="city-select">
@@ -48,8 +58,13 @@ const withEvents = locations.filter(l => l.upcomingCount > 0).length;
   <section class="section-tight">
     <div class="container">
       <p class="results-line muted" aria-live="polite"><span class="num" data-filter-count>{locations.length}</span> lokacija · <span class="num">{withEvents}</span> sa zakazanim terminom</p>
-      <div class="grid grid-3 loc-grid" data-live="locations" data-filter-grid set:html={locations.map(l => locationCardHTML(l)).join('')} />
-      <div class="empty mt-4" data-filter-empty hidden>Nema lokacija za taj filter. Probaj drugi grad ili nas <a href="/kontakt/">pitaj kad stižemo k tebi</a>.</div>
+      <div data-view-panel="list">
+        <div class="grid grid-3 loc-grid" data-live="locations" data-filter-grid set:html={locations.map(l => locationCardHTML(l)).join('')} />
+        <div class="empty mt-4" data-filter-empty hidden>Nema lokacija za taj filter. Probaj drugi grad ili nas <a href="/kontakt/">pitaj kad stižemo k tebi</a>.</div>
+      </div>
+      <div data-view-panel="map" hidden>
+        <LocationsMap locations={locations} />
+      </div>
     </div>
   </section>
 </Base>
@@ -97,6 +112,24 @@ const withEvents = locations.filter(l => l.upcomingCount > 0).length;
     bar.querySelector('[data-filter-upcoming]')!.addEventListener('click', () => { state.upcoming = !state.upcoming; apply(); });
     grid.addEventListener('ukp:live', apply);
     apply();
+
+    // List or map. The choice sticks for the visit, because someone who prefers the map
+    // usually prefers it on the way back too.
+    const panels = document.querySelectorAll<HTMLElement>('[data-view-panel]');
+    const setView = (view: string) => {
+      panels.forEach(p => { p.hidden = p.dataset.viewPanel !== view; });
+      bar.querySelectorAll<HTMLElement>('[data-view]').forEach(b => {
+        const on = b.dataset.view === view;
+        b.classList.toggle('is-active', on);
+        b.setAttribute('aria-pressed', String(on));
+      });
+      try { sessionStorage.setItem('ukp-lokacije-view', view); } catch {}
+    };
+    bar.querySelectorAll<HTMLElement>('[data-view]').forEach(b => b.addEventListener('click', () => setView(b.dataset.view!)));
+    try {
+      const saved = sessionStorage.getItem('ukp-lokacije-view');
+      if (saved === 'map') setView('map');
+    } catch {}
   }
   document.addEventListener('astro:page-load', init);
 </script>
@@ -108,6 +141,11 @@ const withEvents = locations.filter(l => l.upcomingCount > 0).length;
   .search svg { position: absolute; left: 16px; top: 50%; transform: translateY(-50%); color: var(--ink-md); pointer-events: none; }
   .search .input { padding-left: 46px; min-height: 48px; }
   .filter-chips, .filter-cities { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+  .filter-tools { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; }
+  .view-switch { display: inline-flex; padding: 3px; border-radius: var(--r-pill); background: rgb(var(--rule) / .06); border: 1px solid rgb(var(--rule) / .08); }
+  /* 38px keeps the switch comfortable to hit on a phone without making it loud on desktop. */
+  .view-btn { min-height: 38px; padding: 0 16px; border-radius: var(--r-pill); font-size: .8125rem; font-weight: 700; color: var(--ink-md); transition: background-color .2s, color .2s; }
+  .view-btn.is-active { background: var(--dark); color: var(--on-dark); }
   /* On a phone the city shortcuts otherwise stack into five rows of chrome before the first location. */
   @media (max-width: 759px) {
     .filter-cities { flex-wrap: nowrap; overflow-x: auto; min-width: 0; max-width: 100vw; scrollbar-width: none; padding-block: 2px;
@@ -127,5 +165,5 @@ const withEvents = locations.filter(l => l.upcomingCount > 0).length;
   .city-select .input { min-height: 36px; padding: 0 12px; border-radius: var(--r-pill); font-size: .8125rem; font-weight: 600; width: auto; background: rgb(var(--rule) / .045); border-color: rgb(var(--rule) / .09); }
   .results-line { font-size: var(--fs-small); margin-bottom: 20px; }
   .loc-grid { align-items: stretch; }
-  @media (min-width: 760px) { .filter-bar { position: sticky; top: 0; } .filter-inner { display: grid; grid-template-columns: minmax(240px, 420px) 1fr; grid-template-areas: "search chips" "cities cities"; align-items: center; gap: 10px 20px; } .search { grid-area: search; } .filter-chips { grid-area: chips; } .filter-cities { grid-area: cities; } }
+  @media (min-width: 760px) { .filter-bar { position: sticky; top: 0; } .filter-tools { grid-area: tools; } .filter-inner { display: grid; grid-template-columns: minmax(240px, 420px) 1fr; grid-template-areas: "search chips" "tools tools" "cities cities"; align-items: center; gap: 10px 20px; } .search { grid-area: search; } .filter-chips { grid-area: chips; } .filter-cities { grid-area: cities; } }
 </style>

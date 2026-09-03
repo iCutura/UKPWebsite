@@ -2,8 +2,10 @@
 import Base from '../../layouts/Base.astro';
 import { getEvents } from '../../lib/data';
 import { eventCardHTML } from '../../lib/render';
+import NearbyControls from '../../components/NearbyControls.astro';
 const events = getEvents();
 const cities = [...new Map(events.map(e => [e.city.name, e.city])).values()].sort((a, b) => a.name.localeCompare(b.name, 'hr'));
+const coords = Object.fromEntries(events.map(e => [e.id, { lat: e.lat, lng: e.lng }]));
 ---
 <Base title="Događaji" description="Svi nadolazeći pub kvizovi Urbane kviz priče: datumi, termini, slobodna mjesta i prijave.">
   <section class="page-head">
@@ -14,6 +16,9 @@ const cities = [...new Map(events.map(e => [e.city.name, e.city])).values()].sor
     </div>
   </section>
   <section class="filter-bar" data-ev-filter>
+    <div class="container nearby-row">
+      <NearbyControls grid="[data-ev-grid]" item="data-event-id" coords={coords} label="Najbliži kvizovi" />
+    </div>
     <div class="container filter-chips">
       <button type="button" class="chip fchip is-active" data-ev-city="" aria-pressed="true">Svi gradovi</button>
       {cities.map(c => <button type="button" class="chip fchip" data-ev-city={c.name} aria-pressed="false">{c.name}</button>)}
@@ -51,6 +56,7 @@ const cities = [...new Map(events.map(e => [e.city.name, e.city])).values()].sor
 </script>
 
 <style>
+  .nearby-row { padding-bottom: 10px; }
   /* One row that scrolls, rather than several rows of chrome before the first quiz. */
   @media (max-width: 759px) {
     /* This row is the .container itself, so it is widened to the full screen and given the gutter
@@ -63,5 +69,6 @@ const cities = [...new Map(events.map(e => [e.city.name, e.city])).values()].sor
     }
     .filter-chips::-webkit-scrollbar { display: none; }
     .filter-chips > * { flex: none; }
+    .nearby-row { padding-bottom: 8px; }
   }
 </style>

@@ -1,0 +1,34 @@
+---
+/** Ask for the visitor's position and reorder a grid by distance. Wired up by scripts/nearby.ts. */
+import Icon from './Icon.astro';
+interface Props { grid: string; item?: string; coords: Record<string | number, { lat: number | null; lng: number | null }>; label?: string }
+const { grid, item = 'data-location-id', coords, label = 'Kvizovi blizu mene' } = Astro.props;
+---
+<div class="nearby" data-nearby data-nearby-grid={grid} data-nearby-item={item} data-nearby-coords={JSON.stringify(coords)}>
+  <button type="button" class="chip fchip nearby-go" data-nearby-go>
+    <Icon name="pin" size={14} /> <span data-nearby-label>{label}</span>
+  </button>
+  <button type="button" class="link-btn nearby-reset" data-nearby-reset hidden>Poništi</button>
+  <p class="nearby-status" data-nearby-status hidden role="status" aria-live="polite"></p>
+</div>
+
+<style is:global>
+  .nearby { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
+  .nearby-go { cursor: pointer; }
+  .nearby-go:disabled { opacity: .6; cursor: default; }
+  .nearby-reset { color: var(--accent-deep); }
+  .nearby-status { flex-basis: 100%; margin: 0; font-size: var(--fs-caption); color: var(--ink-md); }
+  .nearby-status.is-error { color: var(--error); }
+  .nearby-badge {
+    display: inline-flex; align-items: center; height: 24px; padding: 0 9px; border-radius: var(--r-pill);
+    font-size: .75rem; font-weight: 700; letter-spacing: .02em; white-space: nowrap;
+    background: var(--accent); color: var(--on-dark);
+  }
+  .loc-top .nearby-badge { margin-left: auto; }
+  .ev-head .nearby-badge { flex: none; }
+</style>
+
+<script>
+  // Loaded only on the pages that render these controls.
+  import '../scripts/nearby';
+</script>

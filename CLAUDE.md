@@ -33,6 +33,8 @@ npm run build       # = data + astro build -> dist/ (164 pages)
 npm run build:offline   # astro build without refetching
 ./deploy.sh [--dry-run|--wipe]   # FTPS upload to SiteGround; --wipe once to retire WordPress (asks for confirmation)
 
+npm run map         # regenerate src/data/map-outline.json from Natural Earth (rarely; it is committed)
+
 npm test            # unit tests (vitest, tests/unit) - pure logic, no browser
 npm run test:e2e    # browser tests (playwright, tests/e2e) - builds and previews first
 npm run test:all    # both
@@ -69,6 +71,8 @@ Key files:
 - `scripts/fetch-data.mjs` (build) and `server/cron/refresh-data.php` (host cron) produce the **same JSON shape**; keep them in sync when adding fields. Both drop events more than 3 h past their start (the API's `from=<today>` still returns this morning's quiz, so a 03:00 termin was being advertised as "danas") and recompute each location's next quiz from what is genuinely ahead. `getLocations()` then sorts locations with a scheduled quiz first: a visitor came to find a quiz, not to read an alphabetical directory.
 - `docs/design-review/` - working files for the published design-review canvas (four artboards + `canvas.json`). Re-seed from these when the review is updated; the seeded `.html` is a build output.
 - `server/` - PHP endpoints (`api/kontakt.php` mail, `api/prijava.php` registration proxy), `.htaccess`, cron. Secrets go to `kvizovi.hr/ukp-config.php` outside the web root, generated from `.env` by `deploy.sh`. See `server/README.md`.
+- `src/components/LocationsMap.astro` + `src/lib/geo.ts` + `src/data/map-outline.json` - the **locations map**. The outline is generated once by `npm run map` from Natural Earth (public domain), simplified with Douglas-Peucker to 27 KB and committed, so the map needs no library, no tile server and no third-party request; a test asserts that. Pins are grouped by city, sized by how many venues it has, and an accent halo marks a city with a quiz coming. `project()` in `geo.ts` must stay identical to the projection in `scripts/build-map.mjs`, or pins drift off the coastline.
+- `src/components/NearbyControls.astro` + `src/scripts/nearby.ts` - **"quizzes near me"** on the locations and events pages. Asks for a position, reorders the grid by distance and badges each card. Locations without coordinates (43 of 137) keep their place behind the measured ones rather than disappearing, the original order is restored by Poništi, and a refused permission says so in Croatian and changes nothing.
 - `src/config.ts` - contacts, company data, social + app-store links, partners, nav, and the `registrationEnabled` flag.
 
 Assets: `public/img/seasons/` (hero 1920/1280/768, mascot 820x740 crop that stops above the baked-in wordmark, portrait gradients, icons), `public/img/brand/`, `public/og/`, salvaged `public/img/{partners,team,teambuilding,gallery,about}`. Raw sources in `assets-src/` are gitignored (20 MB PNGs); `public/img/api/` and `public/data/` are build outputs, also gitignored.

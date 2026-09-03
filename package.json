@@ -16,7 +16,8 @@
     "test": "vitest run tests/unit",
     "test:watch": "vitest tests/unit",
     "test:e2e": "playwright test",
-    "test:all": "npm run test && npm run test:e2e"
+    "test:all": "npm run test && npm run test:e2e",
+    "map": "node scripts/build-map.mjs"
   },
   "dependencies": {
     "astro": "^5.13.0",
