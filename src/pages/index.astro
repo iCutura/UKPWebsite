@@ -1,0 +1,172 @@
+---
+import Base from '../layouts/Base.astro';
+import Icon from '../components/Icon.astro';
+import Hero from '../components/Hero.astro';
+import SectionHead from '../components/SectionHead.astro';
+import AppBadges from '../components/AppBadges.astro';
+import { SITE } from '../config';
+import { getEvents, getNews, getMeta, getCities } from '../lib/data';
+import { eventCardHTML, newsCardHTML } from '../lib/render';
+import { seasonFor } from '../lib/seasons';
+
+const season = seasonFor();
+const events = getEvents().filter(e => !e.isCancelled).slice(0, 8);
+const news = getNews().slice(0, 3);
+const meta = getMeta();
+const cities = getCities();
+const countries = new Set(cities.map(c => c.country).filter(Boolean)).size || 2;
+const gallery = ['ukp-kviz', 'urbana-kviz-prica', 'ukp-kvizovi', 'ukp-kvizovi-hr', 'urban', 'urbana-kvart-prica-organiziranje-kviza'];
+---
+<Base title="Naslovna" onArt>
+  <Hero locations={meta.locations} />
+
+  <div class="container">
+    <dl class="hero-stats num" data-reveal>
+      <div><dt>Lokacija</dt><dd data-counter={meta.locations}>{meta.locations}</dd></div>
+      <div><dt>Gradova</dt><dd data-counter={meta.cities}>{meta.cities}</dd></div>
+      <div><dt>Ovaj tjedan</dt><dd data-live-count>{getEvents().length}</dd></div>
+      <div><dt>Održanih kvizova</dt><dd data-counter="10000" data-suffix="+">10.000+</dd></div>
+    </dl>
+  </div>
+
+  <!-- Upcoming -->
+  <section class="section-tight" id="ovaj-tjedan">
+    <div class="container">
+      <SectionHead eyebrow="Sljedeći termini" title="Kvizovi koji dolaze" href="/dogadaji/" linkLabel="Svi događaji" />
+    </div>
+    <div class="container">
+      <div class="rail" data-live="events" data-limit="8" data-empty="Trenutno nema zakazanih kvizova. Zaprati nas i javit ćemo ti se čim krene nova sezona." set:html={events.length ? events.map(e => eventCardHTML(e)).join('') : '<div class="empty">Trenutno nema zakazanih kvizova.</div>'} />
+    </div>
+  </section>
+
+  <!-- Format -->
+  <section class="section band-tint">
+    <div class="container format">
+      <div class="format-copy">
+        <span class="eyebrow" data-reveal>Kako izgleda kviz</span>
+        <h2 data-reveal>Tri kruga, petnaest pitanja, jedna ekipa do pet ljudi.</h2>
+        <p class="lead mt-3" data-reveal>Organiziramo intrigantne kvizove za sve tipove publike sa širokim spektrom kategorija i još brojnijim nagradama. Dobre atmosfere, odličnih pitanja i fenomenalnih nagrada svakoga tjedna neće nedostajati.</p>
+        <div class="format-grid num" data-reveal>
+          <div class="format-cell"><span class="format-n" data-counter="3">3</span><span class="format-l">kruga pitanja</span></div>
+          <div class="format-cell"><span class="format-n" data-counter="15">15</span><span class="format-l">pitanja u svakom krugu</span></div>
+          <div class="format-cell"><span class="format-n" data-counter="5">5</span><span class="format-l">članova ekipe najviše</span></div>
+          <div class="format-cell"><span class="format-n">10 €</span><span class="format-l">kotizacija po ekipi</span></div>
+        </div>
+        <p class="hint mt-2" data-reveal>Kotizacija i broj igrača mogu se razlikovati po lokaciji; točni uvjeti pišu uz svaki termin.</p>
+      </div>
+      <figure class="format-art" data-reveal data-tilt>
+        <img src={`/img/seasons/${season}-mascot-820.webp`} data-season-src="/img/seasons/{season}-mascot-820.webp" width="820" height="740" alt="UKP maskota: glava s mozgom, slušalicama i sunčanim naočalama" loading="lazy" decoding="async" data-parallax="-8" />
+      </figure>
+    </div>
+  </section>
+
+  <!-- Gallery -->
+  <section class="section-tight">
+    <div class="container"><SectionHead eyebrow="Kako to izgleda u praksi" title="Puni kafići, puni mozgovi." /></div>
+    <div class="gallery" data-reveal>
+      {gallery.map((g, i) => <img src={`/img/gallery/${g}-600.webp`} srcset={`/img/gallery/${g}-600.webp 600w, /img/gallery/${g}-1200.webp 1200w`} sizes="(min-width: 900px) 33vw, 70vw" width="600" height="400" alt={['Kvizaška večer u punom kafiću', 'Ekipe za stolovima tijekom kviza', 'Voditelj kviza s mikrofonom', 'Publika prati pitanja', 'Ekipa slavi točan odgovor', 'Kviz u tijeku'][i]} loading="lazy" decoding="async" class="gallery-img" style={`--r:${[-2, 1.5, -1, 2, -1.5, 1][i]}deg`} />)}
+    </div>
+  </section>
+
+  <!-- Teambuilding -->
+  <section class="section band-dark on-dark tb">
+    <div class="container tb-inner">
+      <div class="tb-copy">
+        <span class="eyebrow" data-reveal>Kvizaški team building</span>
+        <h2 data-reveal>Kviz koji iskače iz organizacijskih okvira na koje ste navikli.</h2>
+        <p class="lead mt-3" data-reveal style="color: var(--on-dark-md)">Osim kvizova za širu javnost, organiziramo i privatne evente na kojima se vi i vaše kolege natječete u personaliziranim pub kvizovima. Znanje, vještine i suradnja kroz igru koja potiče timski duh.</p>
+        <ul class="tb-list" data-reveal>
+          <li><Icon name="check" /> Personalizirano kvizaško iskustvo</li>
+          <li><Icon name="check" /> Interaktivni izazovi, ne samo pitanja i odgovori</li>
+          <li><Icon name="check" /> Iznenađenja i nagrade</li>
+        </ul>
+        <div class="cluster gap-2 mt-4" data-reveal>
+          <a href="/team-building/" class="btn btn-accent btn-lg" data-magnetic="12">Dogovori team building <Icon name="arrow-right" /></a>
+          <a href="/kontakt/" class="btn btn-ghost btn-lg">Pošalji upit</a>
+        </div>
+      </div>
+      <div class="tb-photos" data-reveal>
+        <img src="/img/teambuilding/gmd09892-700.webp" srcset="/img/teambuilding/gmd09892-700.webp 700w, /img/teambuilding/gmd09892-1400.webp 1400w" sizes="(min-width: 900px) 40vw, 90vw" width="700" height="467" alt="Team building kviz: ekipe za stolovima" loading="lazy" decoding="async" data-parallax="10" />
+        <img src="/img/teambuilding/gmd09483-700.webp" srcset="/img/teambuilding/gmd09483-700.webp 700w, /img/teambuilding/gmd09483-1400.webp 1400w" sizes="(min-width: 900px) 30vw, 60vw" width="700" height="467" alt="Voditelj vodi team building kviz" loading="lazy" decoding="async" data-parallax="-14" />
+      </div>
+    </div>
+  </section>
+
+  <!-- News -->
+  {news.length > 0 && (
+    <section class="section">
+      <div class="container">
+        <SectionHead eyebrow="Novosti" title="Što se događa u priči" href="/novosti/" linkLabel="Sve novosti" />
+        <div class="grid grid-3" data-live="news" data-limit="3" set:html={news.map(n => newsCardHTML(n)).join('')} />
+      </div>
+    </section>
+  )}
+
+  <!-- Partners -->
+  <section class="section-tight band-tint">
+    <div class="container"><SectionHead eyebrow="Partneri u priči" title="Nikad nismo bili sami." href="/partneri/" linkLabel="O partnerima" /></div>
+    <div class="marquee" data-reveal aria-label="Partneri">
+      <div class="marquee-track" style="--marquee-dur: 46s">
+        {[...SITE.partners, ...SITE.partners].map(p => <span class="partner"><img src={p.img} alt={p.name} height="40" loading="lazy" decoding="async" /></span>)}
+      </div>
+    </div>
+  </section>
+
+  <!-- App CTA -->
+  <section class="section-tight">
+    <div class="container">
+      <div class="card-dark app-cta" data-reveal>
+        <div class="app-cta-copy">
+          <span class="eyebrow">UKP Quiz aplikacija</span>
+          <h2>Prijave, rezultati i lige, sve u džepu.</h2>
+          <p class="mt-2" style="color: var(--on-dark-md); max-width: 46ch">Prijavi ekipu na kviz u par dodira, prati ljestvice svoje lige i igraj dnevni kviz kad nisi u kafiću.</p>
+          <div class="mt-4"><AppBadges light /></div>
+        </div>
+        <img class="app-cta-art" src={`/img/seasons/${season}-mascot-410.webp`} data-season-src="/img/seasons/{season}-mascot-410.webp" width="410" height="370" alt="" loading="lazy" decoding="async" data-hero-float />
+      </div>
+    </div>
+  </section>
+</Base>
+
+<style>
+  .hero-stats { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px 24px; margin: 0; padding: clamp(28px, 4vw, 44px) 0; border-bottom: 1px solid rgb(var(--rule) / .1); }
+  .hero-stats dt { font-family: var(--font-sans); font-size: var(--fs-caption); font-weight: 600; text-transform: uppercase; letter-spacing: .1em; color: var(--ink-md); }
+  .hero-stats dd { color: var(--ink); }
+  .hero-stats dd { margin: 4px 0 0; font-size: clamp(1.75rem, 3.4vw, 2.75rem); line-height: 1; }
+  @media (min-width: 760px) { .hero-stats { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+
+  .format { display: grid; gap: 40px; align-items: center; }
+  @media (min-width: 900px) { .format { grid-template-columns: 1.1fr .9fr; gap: 64px; } }
+  .format-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-top: 32px; }
+  .format-cell { display: flex; flex-direction: column; gap: 6px; padding: 20px; border-radius: var(--r-lg); background: #fff; border: 1px solid rgb(var(--rule) / .08); }
+  .format-n { font-size: clamp(2.2rem, 4vw, 3.25rem); line-height: 1; color: var(--accent-deep); }
+  .format-l { font-family: var(--font-sans); font-weight: 600; font-size: var(--fs-small); color: var(--ink-md); }
+  .format-art { margin: 0; border-radius: var(--r-hero); overflow: hidden; box-shadow: var(--sh-quiz); background: linear-gradient(160deg, var(--warm-0), var(--warm-2)); transform-style: preserve-3d; }
+  .format-art img { width: 100%; height: auto; transform: scale(1.06); }
+
+  .gallery { display: flex; gap: 16px; overflow-x: auto; padding: 16px var(--gutter) 32px; scrollbar-width: none; scroll-snap-type: x mandatory; }
+  .gallery::-webkit-scrollbar { display: none; }
+  .gallery-img { flex: none; width: min(70vw, 420px); aspect-ratio: 3 / 2; object-fit: cover; border-radius: var(--r-lg); box-shadow: 0 18px 40px -22px rgb(var(--rule) / .55); transform: rotate(var(--r)); scroll-snap-align: center; transition: transform .5s var(--ease-out); }
+  .gallery-img:hover { transform: rotate(0) scale(1.03); }
+  @media (min-width: 900px) { .gallery { justify-content: center; flex-wrap: wrap; overflow: visible; } .gallery-img { width: calc(33.333% - 16px); } }
+
+  .tb { margin-block: var(--section) 0; }
+  .tb-inner { display: grid; gap: 40px; align-items: center; }
+  @media (min-width: 900px) { .tb-inner { grid-template-columns: 1fr 1fr; gap: 64px; } }
+  .tb-list { list-style: none; margin: 28px 0 0; padding: 0; display: flex; flex-direction: column; gap: 12px; font-weight: 600; }
+  .tb-list li { display: flex; align-items: center; gap: 12px; }
+  .tb-list svg { width: 22px; height: 22px; padding: 3px; border-radius: 50%; background: var(--accent); color: var(--on-dark); flex: none; }
+  .tb-photos { position: relative; aspect-ratio: 4 / 3; }
+  .tb-photos img { position: absolute; border-radius: var(--r-xl); box-shadow: 0 24px 60px -20px rgb(0 0 0 / .6); object-fit: cover; }
+  .tb-photos img:first-child { left: 0; top: 0; width: 78%; height: 68%; }
+  .tb-photos img:last-child { right: 0; bottom: 0; width: 56%; height: 52%; border: 4px solid rgb(255 255 255 / .12); }
+
+  .partner { display: inline-flex; align-items: center; height: 56px; padding: 0 8px; opacity: .85; filter: grayscale(1) contrast(1.1); transition: opacity .3s, filter .3s; }
+  .partner:hover { opacity: 1; filter: none; }
+  .partner img { height: 40px; width: auto; max-width: 160px; object-fit: contain; }
+
+  .app-cta { display: grid; gap: 24px; padding: clamp(28px, 4vw, 48px); overflow: hidden; align-items: center; }
+  @media (min-width: 800px) { .app-cta { grid-template-columns: 1.3fr .7fr; } }
+  .app-cta h2 { margin-top: 12px; max-width: 16ch; }
+  .app-cta-art { width: min(100%, 340px); height: auto; justify-self: center; border-radius: var(--r-hero); }
+</style>

@@ -1,0 +1,23 @@
+---
+import Base from '../../layouts/Base.astro';
+import { getNews } from '../../lib/data';
+import { newsCardHTML } from '../../lib/render';
+const news = getNews();
+---
+<Base title="Novosti" description="Novosti iz Urbane kviz priče: finala, nove lokacije, tematski kvizovi i sve što se događa u priči.">
+  <section class="page-head">
+    <div class="container">
+      <span class="eyebrow" data-reveal>Novosti</span>
+      <h1 data-reveal>Što se događa u priči.</h1>
+      <p class="lead mt-3" data-reveal>Finala, nove lokacije, tematski kvizovi i ono što voditelji objave u aplikaciji.</p>
+    </div>
+  </section>
+  <section class="section-tight">
+    <div class="container">
+      <div class="grid grid-3 news-grid" data-live="news" data-featured-first="true" set:html={news.length ? news.map((n, i) => newsCardHTML(n, { featured: i === 0 })).join('') : '<div class="empty">Zasad nema objava. Zaprati nas na Instagramu za dnevne novosti.</div>'} />
+    </div>
+  </section>
+</Base>
+<style is:global>
+  @media (min-width: 700px) { .news-grid .is-featured { grid-column: 1 / -1; display: grid; grid-template-columns: 1.2fr .8fr; } .news-grid .is-featured .news-img { height: 100%; aspect-ratio: auto; } }
+</style>

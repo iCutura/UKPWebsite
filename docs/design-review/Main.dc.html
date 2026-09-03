@@ -1,0 +1,142 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anton&amp;display=swap">
+  <style>
+    body { margin: 0; background: #FBF6EC; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif; }
+    a { color: #744216; } a:hover { color: #8E5A24; }
+  </style>
+</helmet>
+<div style="width: 1120px; box-sizing: border-box; padding: 56px 64px 48px; background: #FBF6EC; color: #2A1A14;">
+
+  <div style="display: flex; flex-direction: column; gap: 14px; padding-bottom: 32px; border-bottom: 2px solid rgb(42 26 20 / .14);">
+    <div style="display: flex; align-items: center; gap: 12px; font-size: 12px; font-weight: 700; letter-spacing: .16em; text-transform: uppercase; color: #744216;">
+      <span>kvizovi.hr</span>
+      <span style="width: 4px; height: 4px; border-radius: 50%; background: #C28240;"></span>
+      <span>Design review</span>
+    </div>
+    <h1 style="margin: 0; font-family: Anton, Impact, sans-serif; font-size: 62px; line-height: .96; letter-spacing: -.01em; font-weight: 400; max-width: 18ch;">Six things the site was getting wrong</h1>
+    <p style="margin: 0; font-size: 17px; line-height: 1.55; color: rgb(42 26 20 / .65); max-width: 62ch;">Reviewed the built site at desktop and phone width, then fixed each finding in code. The fall theme and the layered hero were already right. What follows is everything underneath them that was not, including two problems that turned out to be in the data rather than the styling.</p>
+  </div>
+
+  <div style="display: flex; flex-direction: column; gap: 0; margin-top: 8px;">
+
+    <div style="display: grid; grid-template-columns: 64px minmax(0, 1fr); gap: 24px; padding: 28px 0; border-bottom: 1px solid rgb(42 26 20 / .1);">
+      <span style="font-family: Anton, Impact, sans-serif; font-size: 34px; line-height: 1; color: #D8A066;">01</span>
+      <div style="display: flex; flex-direction: column; gap: 14px;">
+        <h2 style="margin: 0; font-size: 24px; line-height: 1.2; letter-spacing: -.02em; font-weight: 800;">One flat brown wash carried the whole site</h2>
+        <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px;">
+          <div style="display: flex; flex-direction: column; gap: 6px; padding: 16px 18px; border-radius: 14px; background: rgb(42 26 20 / .04);">
+            <span style="font-size: 11px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: rgb(42 26 20 / .4);">Before</span>
+            <p style="margin: 0; font-size: 15px; line-height: 1.5; color: rgb(42 26 20 / .8);">Every section below the hero sat on the same seasonal gradient. Cards were translucent white on mid-brown, so their edges nearly vanished and the page read as muddy.</p>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 6px; padding: 16px 18px; border-radius: 14px; background: #fff; border: 1px solid rgb(42 26 20 / .09);">
+            <span style="font-size: 11px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: #744216;">After</span>
+            <p style="margin: 0; font-size: 15px; line-height: 1.5; color: rgb(42 26 20 / .8);">A surface system: warm paper as the ground, a tinted band for alternation, the gradient reserved for page heads, dark bands as punctuation. Light cards became solid white with a hairline, and the dark event card now reads against paper instead of dissolving into brown.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div style="display: grid; grid-template-columns: 64px minmax(0, 1fr); gap: 24px; padding: 28px 0; border-bottom: 1px solid rgb(42 26 20 / .1);">
+      <span style="font-family: Anton, Impact, sans-serif; font-size: 34px; line-height: 1; color: #D8A066;">02</span>
+      <div style="display: flex; flex-direction: column; gap: 14px;">
+        <h2 style="margin: 0; font-size: 24px; line-height: 1.2; letter-spacing: -.02em; font-weight: 800;">The brand's own display face was sitting unused</h2>
+        <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px;">
+          <div style="display: flex; flex-direction: column; gap: 6px; padding: 16px 18px; border-radius: 14px; background: rgb(42 26 20 / .04);">
+            <span style="font-size: 11px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: rgb(42 26 20 / .4);">Before</span>
+            <p style="margin: 0; font-size: 15px; line-height: 1.5; color: rgb(42 26 20 / .8);">Headlines rendered in the system font, so the site looked well built but anonymous. Cobe, the face the quiz presentation mode already uses, was in the brand package and never loaded.</p>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 6px; padding: 16px 18px; border-radius: 14px; background: #fff; border: 1px solid rgb(42 26 20 / .09);">
+            <span style="font-size: 11px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: #744216;">After</span>
+            <p style="margin: 0; font-size: 15px; line-height: 1.5; color: rgb(42 26 20 / .8);">Cobe Heavy self-hosted for headlines and figures, subset to the Croatian character set, which brings the file to 16 KB. Body copy stays on the system stack, which is the right tool for UI.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div style="display: grid; grid-template-columns: 64px minmax(0, 1fr); gap: 24px; padding: 28px 0; border-bottom: 1px solid rgb(42 26 20 / .1);">
+      <span style="font-family: Anton, Impact, sans-serif; font-size: 34px; line-height: 1; color: #D8A066;">03</span>
+      <div style="display: flex; flex-direction: column; gap: 14px;">
+        <h2 style="margin: 0; font-size: 24px; line-height: 1.2; letter-spacing: -.02em; font-weight: 800;">Every event card printed its date twice</h2>
+        <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px;">
+          <div style="display: flex; flex-direction: column; gap: 6px; padding: 16px 18px; border-radius: 14px; background: rgb(42 26 20 / .04);">
+            <span style="font-size: 11px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: rgb(42 26 20 / .4);">Before</span>
+            <p style="margin: 0; font-size: 15px; line-height: 1.5; color: rgb(42 26 20 / .8);">A date block reading <strong>PON 7 RUJ</strong> sat 60 px above an eyebrow reading <strong>PONEDJELJAK, 7. RUJNA</strong>. Chips were pinned to the card foot, leaving a hole in the middle of a card that held four short facts.</p>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 6px; padding: 16px 18px; border-radius: 14px; background: #fff; border: 1px solid rgb(42 26 20 / .09);">
+            <span style="font-size: 11px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: #744216;">After</span>
+            <p style="margin: 0; font-size: 15px; line-height: 1.5; color: rgb(42 26 20 / .8);">The date block is the only place the date appears, and it turns accent and reads <strong>danas</strong> or <strong>sutra</strong> when the quiz is imminent. The card was then rebuilt around one line instead of four stacked blocks, which halved its height.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div style="display: grid; grid-template-columns: 64px minmax(0, 1fr); gap: 24px; padding: 28px 0; border-bottom: 1px solid rgb(42 26 20 / .1);">
+      <span style="font-family: Anton, Impact, sans-serif; font-size: 34px; line-height: 1; color: #D8A066;">04</span>
+      <div style="display: flex; flex-direction: column; gap: 14px;">
+        <h2 style="margin: 0; font-size: 24px; line-height: 1.2; letter-spacing: -.02em; font-weight: 800;">Three cards in a row all said "Pub kviz"</h2>
+        <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px;">
+          <div style="display: flex; flex-direction: column; gap: 6px; padding: 16px 18px; border-radius: 14px; background: rgb(42 26 20 / .04);">
+            <span style="font-size: 11px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: rgb(42 26 20 / .4);">Before</span>
+            <p style="margin: 0; font-size: 15px; line-height: 1.5; color: rgb(42 26 20 / .8);">Most quiz nights carry no name of their own, because they are simply that location's weekly termin, and each fell back to the same generic title. The venue, the one thing identifying the card, was demoted to a grey line underneath.</p>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 6px; padding: 16px 18px; border-radius: 14px; background: #fff; border: 1px solid rgb(42 26 20 / .09);">
+            <span style="font-size: 11px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: #744216;">After</span>
+            <p style="margin: 0; font-size: 15px; line-height: 1.5; color: rgb(42 26 20 / .8);">An unnamed quiz night is titled by its venue, with the city beneath. Named quizzes keep their name and show venue plus city. The strip on the home page now reads Zeppelin pub, Caffe bar Urban, Ilpalco.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div style="display: grid; grid-template-columns: 64px minmax(0, 1fr); gap: 24px; padding: 28px 0; border-bottom: 1px solid rgb(42 26 20 / .1);">
+      <span style="font-family: Anton, Impact, sans-serif; font-size: 34px; line-height: 1; color: #D8A066;">05</span>
+      <div style="display: flex; flex-direction: column; gap: 14px;">
+        <h2 style="margin: 0; font-size: 24px; line-height: 1.2; letter-spacing: -.02em; font-weight: 800;">The locations page led with locations that had no quiz</h2>
+        <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px;">
+          <div style="display: flex; flex-direction: column; gap: 6px; padding: 16px 18px; border-radius: 14px; background: rgb(42 26 20 / .04);">
+            <span style="font-size: 11px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: rgb(42 26 20 / .4);">Before</span>
+            <p style="margin: 0; font-size: 15px; line-height: 1.5; color: rgb(42 26 20 / .8);">Sorted alphabetically by city, so the first screen was Banja Luka, Bihać and Bugojno, all reading "Trenutno nema zakazanih termina". Only 16 of 137 locations currently have a date.</p>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 6px; padding: 16px 18px; border-radius: 14px; background: #fff; border: 1px solid rgb(42 26 20 / .09);">
+            <span style="font-size: 11px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: #744216;">After</span>
+            <p style="margin: 0; font-size: 15px; line-height: 1.5; color: rgb(42 26 20 / .8);">Locations with a scheduled quiz lead, soonest first. The rest follow, on a slightly recessed card so the difference is visible without hiding anything.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div style="display: grid; grid-template-columns: 64px minmax(0, 1fr); gap: 24px; padding: 28px 0;">
+      <span style="font-family: Anton, Impact, sans-serif; font-size: 34px; line-height: 1; color: #D8A066;">06</span>
+      <div style="display: flex; flex-direction: column; gap: 14px;">
+        <h2 style="margin: 0; font-size: 24px; line-height: 1.2; letter-spacing: -.02em; font-weight: 800;">Quizzes that had already happened showed as "danas"</h2>
+        <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px;">
+          <div style="display: flex; flex-direction: column; gap: 6px; padding: 16px 18px; border-radius: 14px; background: rgb(42 26 20 / .04);">
+            <span style="font-size: 11px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: rgb(42 26 20 / .4);">Before</span>
+            <p style="margin: 0; font-size: 15px; line-height: 1.5; color: rgb(42 26 20 / .8);">The API returns everything from today onward, including quizzes that already finished this morning. One that started at 03:00 today was still advertised as happening <strong>danas</strong>, at the top of the list.</p>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 6px; padding: 16px 18px; border-radius: 14px; background: #fff; border: 1px solid rgb(42 26 20 / .09);">
+            <span style="font-size: 11px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: #744216;">After</span>
+            <p style="margin: 0; font-size: 15px; line-height: 1.5; color: rgb(42 26 20 / .8);">Anything more than three hours past its own start time is dropped, and each location's next quiz is recomputed from what is genuinely still ahead. Applied in both the build and the scheduled refresh on the host.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div style="display: flex; align-items: flex-start; gap: 12px; margin-top: 24px; padding: 18px 20px; border-radius: 14px; background: #2C1C10; color: #FFF7F0;">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#D8A066" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" style="flex: none; margin-top: 1px;" aria-hidden="true"><path d="M12 4.5 21 19.5H3L12 4.5Z"/><path d="M12 10v4M12 16.5v.5"/></svg>
+    <p style="margin: 0; font-size: 15px; line-height: 1.55; color: rgb(255 240 228 / .82);">Two things left that only the admin can fix, because they are entries rather than styling: a quiz on 10 September is scheduled to start at 04:00, and 35 of the 137 locations have neither a logo nor a photo. Both reach the site exactly as typed.</p>
+  </div>
+
+</div>
+</x-dc>
+</body>
+</html>

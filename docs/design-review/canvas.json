@@ -1,0 +1,13 @@
+{
+  "artboards": [
+    { "file": "Main.dc.html", "title": "Review", "x": 0, "y": 0, "w": 1120, "h": 2200 },
+    { "file": "Surfaces.dc.html", "title": "Surfaces", "x": 1240, "y": 0, "w": 1120, "h": 1020 },
+    { "file": "Type.dc.html", "title": "Typography", "x": 1240, "y": 1160, "w": 1120, "h": 1060 },
+    { "file": "EventCard.dc.html", "title": "Event card", "x": 1240, "y": 2360, "w": 1120, "h": 860 }
+  ],
+  "annotations": [
+    { "id": "how-to-read", "x": 0, "y": -160, "w": 520, "text": "Six findings from reviewing the built site at 1440 and 390 px.\nAll six are fixed in code. The three boards on the right carry the four fixes that became system rules rather than one-off patches." },
+    { "id": "season-note", "x": 1240, "y": -160, "w": 520, "text": "Values shown are the fall theme, the one the site is locked to until the other seasons' layered artwork arrives. Spring, summer and winter swap the same tokens." }
+  ],
+  "launch": { "view": "canvas" }
+}

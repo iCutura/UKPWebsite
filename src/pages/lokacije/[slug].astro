@@ -1,0 +1,94 @@
+---
+import Base from '../../layouts/Base.astro';
+import Icon from '../../components/Icon.astro';
+import SectionHead from '../../components/SectionHead.astro';
+import AppBadges from '../../components/AppBadges.astro';
+import { getLocations, eventsForLocation, type Location } from '../../lib/data';
+import { eventCardHTML, locationCardHTML } from '../../lib/render';
+import { mapsUrl, textToHTML } from '../../lib/detail';
+import { weekdayInstrumental, time, fee } from '../../lib/format';
+import { seasonFor } from '../../lib/seasons';
+
+export function getStaticPaths() {
+  return getLocations().map(l => ({ params: { slug: `${l.id}-${l.slug}` }, props: { l } }));
+}
+const { l } = Astro.props as { l: Location };
+const all = getLocations();
+const events = eventsForLocation(l.id);
+const next = events[0] ?? null;
+const sameCity = all.filter(x => x.id !== l.id && x.city.name === l.city.name);
+const dist = (a: Location, b: Location) => (a.lat && a.lng && b.lat && b.lng) ? Math.hypot((a.lat - b.lat) * 111, (a.lng - b.lng) * 78) : Infinity;
+const nearby = sameCity.length ? sameCity.slice(0, 3) : all.filter(x => x.id !== l.id && dist(l, x) < 60).sort((a, b) => dist(l, a) - dist(l, b)).slice(0, 3);
+const rhythm = [l.weekday != null ? weekdayInstrumental(new Date(2024, 0, 7 + l.weekday)) : null, l.defaultStartTime ? time(l.defaultStartTime) : null].filter(Boolean).join(' · ');
+const feeTxt = fee(l.defaultFeeType, l.defaultFeeAmount);
+const season = seasonFor();
+const title = `${l.venueName}, ${l.city.name}`;
+const desc = `Pub kviz Urbane kviz priče u ${l.city.name}: ${l.venueName}${rhythm ? ', ' + rhythm : ''}. Termini, prijave i informacije o lokaciji.`;
+---
+<Base title={title} description={desc}>
+  <section class="page-head">
+    <div class="container">
+      <nav class="crumbs" aria-label="Putanja" data-reveal><a href="/lokacije/">Lokacije</a><Icon name="arrow-right" /><a href={`/lokacije/?grad=${encodeURIComponent(l.city.name)}`}>{l.city.name}</a></nav>
+      <div class="locd-hero mt-4">
+        <div>
+          <div class="cluster gap-2" data-reveal>
+            {l.logo ? <img class="locd-logo" src={l.logo.small} width="88" height="88" alt="" /> : <span class="logo-tile locd-logo"><span class="logo-tile-fallback" style="font-size:2rem">{l.venueName.charAt(0)}</span></span>}
+            <div>
+              <span class="eyebrow">{l.city.name}{l.city.country ? ` · ${l.city.country}` : ''}</span>
+              <h1 class="mt-1">{l.venueName}</h1>
+            </div>
+          </div>
+          {l.name !== l.venueName && !l.name.startsWith(l.venueName) && <p class="muted mt-2" data-reveal>Kvizaški termin: <strong>{l.name}</strong></p>}
+          <div class="cluster gap-1 mt-3" data-reveal>
+            {rhythm && <span class="chip chip-dark"><Icon name="calendar" size={14} /> <span style="text-transform: capitalize">{rhythm}</span></span>}
+            {l.defaultMaxTeams && <span class="chip">najviše {l.defaultMaxTeams} ekipa</span>}
+            {l.defaultMaxPlayersPerTeam && <span class="chip"><Icon name="users" size={14} /> do {l.defaultMaxPlayersPerTeam} igrača</span>}
+            {feeTxt && <span class="chip">{feeTxt}</span>}
+            {l.defaultRequiresApproval && <span class="chip">voditelj potvrđuje prijave</span>}
+          </div>
+          {l.address && <p class="mt-3" data-reveal><a class="sec-link" href={mapsUrl(l)} rel="noopener" target="_blank"><Icon name="pin" size={18} /> {l.address} <Icon name="external" size={16} /></a></p>}
+          {l.description && <div class="prose mt-3" data-reveal set:html={textToHTML(l.description)} />}
+          <div class="cluster gap-2 mt-4" data-reveal>
+            {next && !next.isCancelled ? <a href={next.url} class="btn btn-accent btn-lg" data-magnetic="10">Prijavi ekipu na sljedeći kviz <Icon name="arrow-right" /></a> : <a href="/lokacije/" class="btn btn-dark btn-lg">Pogledaj druge lokacije</a>}
+            {l.whatsapp && <a href={l.whatsapp} class="btn btn-ghost btn-lg" rel="noopener" target="_blank"><Icon name="whatsapp" /> WhatsApp grupa</a>}
+          </div>
+        </div>
+        <figure class:list={['locd-photo', { 'is-mascot': !l.image }]} data-reveal data-tilt>
+          {l.image ? <img src={l.image.full} alt={`${l.venueName}, ${l.city.name}`} width="1200" height="900" decoding="async" data-parallax="-6" /> : <img src={`/img/seasons/${season}-mascot-820.webp`} data-season-src="/img/seasons/{season}-mascot-820.webp" alt="" width="820" height="740" decoding="async" />}
+        </figure>
+      </div>
+    </div>
+  </section>
+
+  <section class="section-tight">
+    <div class="container">
+      <SectionHead eyebrow="Termini" title={events.length ? 'Nadolazeći kvizovi' : 'Trenutno nema zakazanih termina'} />
+      <div class="grid grid-3" data-live="events" data-location={l.id} data-show-location="false" data-empty="Trenutno nema zakazanih termina na ovoj lokaciji. Zaprati nas i javit ćemo ti se čim krene nova sezona." set:html={events.length ? events.map(e => eventCardHTML(e, { showLocation: false })).join('') : '<div class="empty">Trenutno nema zakazanih termina na ovoj lokaciji. Zaprati nas i javit ćemo ti se čim krene nova sezona.</div>'} />
+    </div>
+  </section>
+
+  {nearby.length > 0 && (
+    <section class="section-tight">
+      <div class="container">
+        <SectionHead eyebrow={sameCity.length ? `Još kvizova u gradu ${l.city.name}` : 'Kvizovi u blizini'} title={sameCity.length ? 'Isti grad, drugi dan.' : 'Nije daleko.'} href={`/lokacije/?grad=${encodeURIComponent(l.city.name)}`} linkLabel="Sve lokacije" />
+        <div class="grid grid-3" set:html={nearby.map(x => locationCardHTML(x)).join('')} />
+      </div>
+    </section>
+  )}
+
+  <section class="section-tight">
+    <div class="container">
+      <div class="card-dark card-pad app-cta" data-reveal>
+        <div>
+          <span class="eyebrow">UKP Quiz aplikacija</span>
+          <h2 class="h3">Prijave i rezultati ove lokacije, u džepu.</h2>
+          <p class="mt-2 muted" style="max-width: 48ch">Zaprati lokaciju u aplikaciji i dobij obavijest kad voditelj objavi novi termin ili rezultate.</p>
+          <div class="mt-3"><AppBadges light /></div>
+        </div>
+      </div>
+    </div>
+  </section>
+</Base>
+<style>
+  .app-cta { display: grid; }
+</style>

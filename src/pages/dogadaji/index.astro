@@ -1,0 +1,51 @@
+---
+import Base from '../../layouts/Base.astro';
+import { getEvents } from '../../lib/data';
+import { eventCardHTML } from '../../lib/render';
+const events = getEvents();
+const cities = [...new Map(events.map(e => [e.city.name, e.city])).values()].sort((a, b) => a.name.localeCompare(b.name, 'hr'));
+---
+<Base title="Događaji" description="Svi nadolazeći pub kvizovi Urbane kviz priče: datumi, termini, slobodna mjesta i prijave.">
+  <section class="page-head">
+    <div class="container">
+      <span class="eyebrow" data-reveal>Događaji</span>
+      <h1 data-reveal>Što ima ovaj tjedan.</h1>
+      <p class="lead mt-3" data-reveal>Svi zakazani kvizovi na jednom mjestu, ažurirano iz iste aplikacije kojom voditelji vode prijave. Klikni na termin za detalje i prijavu ekipe.</p>
+    </div>
+  </section>
+  <section class="filter-bar" data-ev-filter>
+    <div class="container filter-chips">
+      <button type="button" class="chip fchip is-active" data-ev-city="" aria-pressed="true">Svi gradovi</button>
+      {cities.map(c => <button type="button" class="chip fchip" data-ev-city={c.name} aria-pressed="false">{c.name}</button>)}
+    </div>
+  </section>
+  <section class="section-tight">
+    <div class="container">
+      <p class="results-line muted" aria-live="polite"><span class="num" data-ev-count>{events.length}</span> nadolazećih termina</p>
+      <div class="grid grid-3" data-live="events" data-ev-grid set:html={events.length ? events.map(e => eventCardHTML(e)).join('') : '<div class="empty">Trenutno nema zakazanih kvizova. Zaprati nas na Instagramu i javit ćemo ti se čim krene nova sezona.</div>'} />
+      <div class="empty mt-4" data-ev-empty hidden>Nema termina u tom gradu ovaj tjedan. Pogledaj <a href="/lokacije/">sve lokacije</a>.</div>
+    </div>
+  </section>
+</Base>
+<script>
+  function init() {
+    const bar = document.querySelector<HTMLElement>('[data-ev-filter]')!; if (!bar || bar.dataset.bound) return; bar.dataset.bound = '1';
+    const grid = document.querySelector<HTMLElement>('[data-ev-grid]')!, empty = document.querySelector<HTMLElement>('[data-ev-empty]')!, count = document.querySelector<HTMLElement>('[data-ev-count]')!;
+    let city = new URLSearchParams(location.search).get('grad') || '';
+    let events: any[] = [];
+    fetch('/data/events.json', { cache: 'no-cache' }).then(r => r.json()).then(d => { events = d; apply(); }).catch(() => {});
+    function apply() {
+      const byId = new Map(events.map(e => [String(e.id), e]));
+      let shown = 0;
+      grid.querySelectorAll<HTMLElement>('[data-event-id]').forEach(c => {
+        const e = byId.get(c.dataset.eventId!); const ok = !city || (e ? e.city?.name === city : (c.textContent || '').includes(city));
+        c.hidden = !ok; if (ok) shown++;
+      });
+      count.textContent = String(shown); empty.hidden = shown > 0 || !grid.querySelector('[data-event-id]');
+      bar.querySelectorAll<HTMLElement>('[data-ev-city]').forEach(b => { const on = (b.dataset.evCity || '') === city; b.classList.toggle('is-active', on); b.setAttribute('aria-pressed', String(on)); });
+    }
+    bar.querySelectorAll<HTMLElement>('[data-ev-city]').forEach(b => b.addEventListener('click', () => { city = b.dataset.evCity || ''; apply(); }));
+    grid.addEventListener('ukp:live', apply); apply();
+  }
+  document.addEventListener('astro:page-load', init);
+</script>

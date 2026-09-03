@@ -1,0 +1,41 @@
+---
+import Base from '../layouts/Base.astro';
+import Icon from '../components/Icon.astro';
+import { SITE } from '../config';
+---
+<Base title="Partneri" description="Partneri i sponzori Urbane kviz priče: bez njih bi UKP ostao samo parohijalni kviz za bliske poznanike.">
+  <section class="page-head">
+    <div class="container">
+      <span class="eyebrow" data-reveal>Partneri u priči</span>
+      <h1 data-reveal>Nikad nismo bili sami.</h1>
+      <p class="lead mt-3" data-reveal>U čitavoj našoj avanturi, u kojoj stvarajući kvizove guštamo i gušt pružamo, nikad nismo bili sami. Uz nas stoje brojni sponzori kojima posebno zahvaljujemo na ukazanom povjerenju i dugogodišnjoj suradnji. Bez njih bi Urbana kviz priča ostala samo parohijalni kviz za bliske poznanike.</p>
+      <p class="lead mt-2" data-reveal>Zajedno smo za vas pripremili brojne nagrade koje možete osvojiti svojim znanjem.</p>
+    </div>
+  </section>
+  <section class="section-tight">
+    <div class="container">
+      <div class="partner-grid" data-reveal>
+        {SITE.partners.map(p => <div class="partner-tile card-light"><img src={p.img} alt={p.name} height="56" loading="lazy" decoding="async" /><span>{p.name}</span></div>)}
+      </div>
+    </div>
+  </section>
+  <section class="section-tight">
+    <div class="container">
+      <div class="card-dark card-pad partner-cta" data-reveal>
+        <div>
+          <span class="eyebrow">Postani partner</span>
+          <h2 class="h3">Tvoj brend pred tisućama kvizaša svaki tjedan.</h2>
+          <p class="mt-2 muted" style="max-width: 52ch">Nagrade, brendirane runde ili cijeli tematski kviz. Javi nam se i složit ćemo suradnju koja ima smisla za obje strane.</p>
+        </div>
+        <a href="/kontakt/?tema=partnerstvo" class="btn btn-accent btn-lg">Javi se <Icon name="arrow-right" /></a>
+      </div>
+    </div>
+  </section>
+</Base>
+<style>
+  .partner-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 16px; }
+  .partner-tile { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; min-height: 160px; padding: 24px; text-align: center; font-weight: 700; font-size: var(--fs-small); }
+  .partner-tile img { height: 56px; width: auto; max-width: 100%; object-fit: contain; }
+  .partner-cta { display: grid; gap: 24px; align-items: center; }
+  @media (min-width: 800px) { .partner-cta { grid-template-columns: 1fr auto; } }
+</style>

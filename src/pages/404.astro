@@ -1,0 +1,67 @@
+---
+import Base from '../layouts/Base.astro';
+import Icon from '../components/Icon.astro';
+import { SITE } from '../config';
+import { seasonFor } from '../lib/seasons';
+const season = seasonFor();
+---
+<Base title="Stranica nije pronađena" noindex>
+  <section class="page-head" data-nf data-registration={SITE.registrationEnabled ? '1' : '0'}>
+    <div class="container">
+      <div class="nf-static" data-nf-static>
+        <div class="nf">
+          <img src={`/img/seasons/${season}-mascot-410.webp`} data-season-src="/img/seasons/{season}-mascot-410.webp" width="410" height="370" alt="" class="nf-art" data-hero-float />
+          <div>
+            <span class="eyebrow">404</span>
+            <h1 class="mt-2">Ovo pitanje nema odgovor.</h1>
+            <p class="lead mt-3">Stranica koju tražiš ne postoji ili se preselila. Ako si došao sa stare stranice, evo kamo dalje.</p>
+            <div class="cluster gap-2 mt-4">
+              <a href="/lokacije/" class="btn btn-accent">Pronađi kviz <Icon name="arrow-right" /></a>
+              <a href="/" class="btn btn-ghost">Naslovna</a>
+              <a href="/kontakt/" class="btn btn-ghost">Kontakt</a>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div data-nf-live hidden></div>
+    </div>
+  </section>
+</Base>
+<script>
+  import { eventHeaderHTML, registrationPanelHTML, newsArticleHTML } from '../lib/detail';
+  import { eventCardHTML } from '../lib/render';
+  // Static host fallback: events/news created after the last build still get a page, rendered from the JSON snapshots.
+  async function init() {
+    const root = document.querySelector<HTMLElement>('[data-nf]'); if (!root || root.dataset.bound) return; root.dataset.bound = '1';
+    const path = location.pathname;
+    const legacy: Record<string, string> = { '/pub-kvizovi-zagreb': '/lokacije/', '/kvizaski-teambuilding': '/team-building/', '/arhiva-kvizova': '/o-nama/', '/arhiva': '/o-nama/', '/medijski-kutak': '/novosti/', '/cookie-policy-eu': '/kolacici/', '/hello-world': '/novosti/' };
+    const clean = path.replace(/\/+$/, '');
+    if (legacy[clean]) { location.replace(legacy[clean]); return; }
+    const live = root.querySelector<HTMLElement>('[data-nf-live]')!, stat = root.querySelector<HTMLElement>('[data-nf-static]')!;
+    const ev = clean.match(/^\/dogadaji\/(\d+)$/), nw = clean.match(/^\/novosti\/(\d+)$/);
+    try {
+      if (ev) {
+        const list = await fetch('/data/events.json', { cache: 'no-cache' }).then(r => r.json());
+        const e = list.find((x: any) => String(x.id) === ev[1]); if (!e) return;
+        document.title = `${e.name || 'Pub kviz'} · ${e.venueName} · UKP`;
+        const others = list.filter((x: any) => x.locationId === e.locationId && x.id !== e.id).slice(0, 3);
+        live.innerHTML = `<nav class="crumbs" aria-label="Putanja"><a href="/dogadaji/">Događaji</a> › <a href="${e.locationUrl || '/lokacije/'}">${e.venueName}</a></nav>
+          <div class="evd mt-4"><div class="evd-main">${eventHeaderHTML(e)}</div><aside class="evd-side">${registrationPanelHTML(e, root.dataset.registration === '1')}</aside></div>
+          ${others.length ? `<h2 class="h3 mt-6">Ostali termini</h2><div class="grid grid-3 mt-3">${others.map((x: any) => eventCardHTML(x, { showLocation: false })).join('')}</div>` : ''}`;
+      } else if (nw) {
+        const list = await fetch('/data/news.json', { cache: 'no-cache' }).then(r => r.json());
+        const n = list.find((x: any) => String(x.id) === nw[1]); if (!n) return;
+        document.title = `${n.title} · UKP`;
+        live.innerHTML = `<nav class="crumbs" aria-label="Putanja"><a href="/novosti/">Novosti</a></nav><div class="mt-4">${newsArticleHTML(n)}</div>`;
+      } else return;
+      stat.hidden = true; live.hidden = false; live.querySelectorAll('[data-reveal]').forEach(el => el.classList.add('is-in'));
+      document.dispatchEvent(new Event('astro:page-load'));
+    } catch {}
+  }
+  document.addEventListener('astro:page-load', init);
+</script>
+<style>
+  .nf { display: grid; gap: 24px; align-items: center; }
+  @media (min-width: 800px) { .nf { grid-template-columns: .8fr 1.2fr; gap: 48px; } }
+  .nf-art { width: min(100%, 320px); height: auto; border-radius: var(--r-hero); }
+</style>

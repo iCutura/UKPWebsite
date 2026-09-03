@@ -1,0 +1,80 @@
+---
+import Icon from './Icon.astro';
+import { SITE } from '../config';
+import { SEASONS, SEASON_TOKENS, LOCKED_SEASON } from '../lib/seasons';
+const year = new Date().getFullYear();
+const seasonIcon: Record<string, 'leaf' | 'sun' | 'leaf-fall' | 'snowflake'> = { spring: 'leaf', summer: 'sun', fall: 'leaf-fall', winter: 'snowflake' };
+---
+<footer class="footer band-dark on-dark">
+  <div class="container">
+    <div class="footer-top">
+      <div class="footer-brand">
+        <img src="/img/brand/mascot-white-512.webp" width="72" height="72" alt="" class="footer-mark" loading="lazy" />
+        <p class="footer-claim">Kvizaški smo entuzijasti koji kreiraju pub kvizove općeg znanja, tematske kvizove i teambuilding kvizove. A i sami nerijetko i s guštom igramo.</p>
+        <div class="cluster gap-1 mt-3">
+          <a class="btn btn-light btn-sm" href={SITE.apps.ios} rel="noopener" target="_blank"><Icon name="apple" size={18} /> App Store</a>
+          <a class="btn btn-ghost btn-sm" href={SITE.apps.android} rel="noopener" target="_blank"><Icon name="play" size={18} /> Google Play</a>
+        </div>
+      </div>
+      <nav class="footer-col" aria-label="Stranice">
+        <h2 class="footer-h">Stranice</h2>
+        <ul class="footer-list">
+          {SITE.nav.map(n => <li><a href={n.href}>{n.label}</a></li>)}
+          <li><a href="/partneri/">Partneri</a></li>
+        </ul>
+      </nav>
+      <div class="footer-col">
+        <h2 class="footer-h">Kontakt</h2>
+        <ul class="footer-list">
+          <li><a href={SITE.phoneHref}><Icon name="phone" size={16} /> {SITE.phone}</a></li>
+          <li><a href={`mailto:${SITE.email}`}><Icon name="mail" size={16} /> {SITE.email}</a></li>
+          <li><span class="footer-plain"><Icon name="pin" size={16} /> {SITE.address}</span></li>
+        </ul>
+        <h2 class="footer-h mt-4">Zaprati nas</h2>
+        <div class="cluster gap-1">
+          <a class="social" href={SITE.social.instagram} rel="noopener" target="_blank" aria-label="Instagram"><Icon name="instagram" size={20} /></a>
+          <a class="social" href={SITE.social.facebook} rel="noopener" target="_blank" aria-label="Facebook"><Icon name="facebook" size={20} /></a>
+          <a class="social" href={SITE.social.linkedin} rel="noopener" target="_blank" aria-label="LinkedIn"><Icon name="linkedin" size={20} /></a>
+        </div>
+      </div>
+      {!LOCKED_SEASON && <div class="footer-col">
+        <h2 class="footer-h">Godišnje doba</h2>
+        <p class="hint mt-1">Stranica mijenja boje s godišnjim dobom, kao i aplikacija.</p>
+        <div class="season-picker mt-2" role="group" aria-label="Odaberi temu">
+          <button type="button" class="season-btn" data-season-pick="auto" aria-pressed="true"><Icon name="calendar-auto" size={16} /> Automatski</button>
+          {SEASONS.map(s => <button type="button" class="season-btn" data-season-pick={s} aria-pressed="false" style={`--dot:${SEASON_TOKENS[s].accent}`}><span class="season-dot"></span>{SEASON_TOKENS[s].label}</button>)}
+        </div>
+      </div>}
+    </div>
+    <hr class="divider mt-6" />
+    <div class="footer-bottom">
+      <p class="footer-legal">
+        <strong>{SITE.company.name}</strong> · {SITE.company.seat} · {SITE.company.court}, MBS {SITE.company.mbs} · {SITE.company.director} · {SITE.company.capital}
+      </p>
+      <p class="footer-legal">© {year} Urbana kviz priča · <a href="/pravila-privatnosti/">Pravila privatnosti</a> · <a href="/kolacici/">Kolačići</a></p>
+    </div>
+  </div>
+</footer>
+
+<style>
+  .footer { padding-block: clamp(56px, 8vw, 96px) 32px; margin-top: calc(var(--section) * .5); }
+  .footer-top { display: grid; gap: 40px; grid-template-columns: 1fr; }
+  @media (min-width: 720px) { .footer-top { grid-template-columns: 1.4fr repeat(auto-fit, minmax(0, 1fr)); gap: 32px; } }
+  .footer-mark { width: 64px; height: 64px; opacity: .95; }
+  .footer-claim { margin-top: 20px; max-width: 34ch; color: var(--on-dark-md); font-size: var(--fs-small); line-height: 1.6; }
+  .footer-h { font-size: var(--fs-eyebrow); font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: var(--on-dark-lo); margin-bottom: 14px; }
+  .footer-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+  .footer-list a, .footer-plain { display: inline-flex; align-items: center; gap: 8px; color: var(--on-dark); font-weight: 500; text-decoration: none; }
+  .footer-list a:hover { color: var(--accent-soft); }
+  .social { width: 44px; height: 44px; display: grid; place-items: center; border-radius: 50%; background: var(--glass-light); color: var(--on-dark); transition: background-color .25s, transform .25s var(--ease-out); }
+  .social:hover { background: var(--accent); transform: translateY(-2px); color: var(--on-dark); }
+  .season-picker { display: flex; flex-wrap: wrap; gap: 8px; }
+  .season-btn { display: inline-flex; align-items: center; gap: 8px; min-height: 40px; padding: 0 14px; border-radius: var(--r-pill); font-size: .875rem; font-weight: 600; color: var(--on-dark-md); background: var(--glass-light); border: 1px solid transparent; transition: all .25s; }
+  .season-btn:hover { color: var(--on-dark); }
+  .season-btn.is-active { color: var(--on-dark); border-color: rgb(255 255 255 / .35); background: rgb(255 255 255 / .16); }
+  .season-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--dot); box-shadow: 0 0 0 2px rgb(255 255 255 / .18); }
+  .footer-bottom { display: flex; flex-direction: column; gap: 12px; padding-top: 24px; }
+  @media (min-width: 900px) { .footer-bottom { flex-direction: row; justify-content: space-between; align-items: flex-start; gap: 32px; } }
+  .footer-legal { font-size: var(--fs-caption); color: var(--on-dark-lo); line-height: 1.6; max-width: 70ch; }
+  .footer-legal a { color: var(--on-dark-md); }
+</style>

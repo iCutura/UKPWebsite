@@ -1,0 +1,59 @@
+# kvizovi.hr - static Astro site on SiteGround (Apache)
+Options -Indexes -MultiViews
+AddDefaultCharset UTF-8
+ErrorDocument 404 /404.html
+
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  # https + non-www canonical
+  RewriteCond %{HTTPS} !=on [OR]
+  RewriteCond %{HTTP_HOST} ^www\.kvizovi\.hr$ [NC]
+  RewriteRule ^(.*)$ https://kvizovi.hr/$1 [R=301,L]
+
+  # Legacy WordPress URLs -> new pages
+  RewriteRule ^pub-kvizovi-zagreb/?$ /lokacije/ [R=301,L]
+  RewriteRule ^kvizaski-teambuilding/?$ /team-building/ [R=301,L]
+  RewriteRule ^arhiva(-kvizova)?/?$ /o-nama/ [R=301,L]
+  RewriteRule ^medijski-kutak/?$ /novosti/ [R=301,L]
+  RewriteRule ^cookie-policy-eu/?$ /kolacici/ [R=301,L]
+  RewriteRule ^hello-world/?$ /novosti/ [R=301,L]
+  RewriteRule ^(wp-admin|wp-login\.php|wp-content|wp-includes|xmlrpc\.php|feed|category)(/.*)?$ / [R=301,L]
+
+  # Add trailing slash to directory-style URLs (Astro build.format=directory)
+  RewriteCond %{REQUEST_FILENAME} -d
+  RewriteRule ^(.+[^/])$ /$1/ [R=301,L]
+</IfModule>
+
+<IfModule mod_headers.c>
+  Header always set X-Content-Type-Options "nosniff"
+  Header always set X-Frame-Options "SAMEORIGIN"
+  Header always set Referrer-Policy "strict-origin-when-cross-origin"
+  Header always set Permissions-Policy "camera=(), microphone=(), geolocation=()"
+  # Hashed build assets: cache forever
+  <FilesMatch "\.(js|css|woff2?)$">
+    Header set Cache-Control "public, max-age=31536000, immutable"
+  </FilesMatch>
+  <FilesMatch "\.(webp|jpe?g|png|gif|svg|ico)$">
+    Header set Cache-Control "public, max-age=2592000"
+  </FilesMatch>
+  # Live snapshots must revalidate (rewritten by cron)
+  <FilesMatch "\.json$">
+    Header set Cache-Control "no-cache, must-revalidate"
+  </FilesMatch>
+  <FilesMatch "\.html$">
+    Header set Cache-Control "no-cache"
+  </FilesMatch>
+</IfModule>
+
+<IfModule mod_deflate.c>
+  AddOutputFilterByType DEFLATE text/html text/css text/plain application/javascript application/json image/svg+xml
+</IfModule>
+<IfModule mod_mime.c>
+  AddType image/webp .webp
+  AddType application/manifest+json .webmanifest
+</IfModule>
+
+# Keep secrets and tooling out of the web
+<FilesMatch "^(\.env|\.git.*|package\.json|composer\.json)$">
+  Require all denied
+</FilesMatch>

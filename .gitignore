@@ -1,0 +1,59 @@
+# ---------------------------------------------------------------------------
+# Secrets. .env holds the SiteGround FTP credentials and the PubQuiz API key.
+# Never commit it; .env.example documents the keys with empty values.
+# ---------------------------------------------------------------------------
+.env
+.env.*
+!.env.example
+*.local.json
+*.local.md
+ukp-config.php
+
+# ---------------------------------------------------------------------------
+# Dependencies and build output
+# ---------------------------------------------------------------------------
+node_modules/
+dist/
+.astro/
+.deploy/
+.vite/
+*.tsbuildinfo
+
+# ---------------------------------------------------------------------------
+# Regenerated on every build, never edited by hand.
+#   public/data/    API snapshots      -> npm run data
+#   public/img/api/ mirrored API media -> npm run data
+# ---------------------------------------------------------------------------
+public/data/
+public/img/api/
+
+# ---------------------------------------------------------------------------
+# Raw sources for the image pipeline: ~93 MB of brand PNGs and salvaged photos
+# that live in ../PubQuiz/brand and ../UKPWebsiteBackup. The optimized WebP in
+# public/img IS tracked, so the site builds and deploys without them.
+#   npm run assets                     -> public/img/{seasons,brand}
+#   node scripts/build-layers.mjs      -> public/img/layers
+#   node scripts/build-legacy-assets.mjs -> public/img/{partners,team,...}
+#   npm run fonts                      -> public/fonts
+# ---------------------------------------------------------------------------
+assets-src/
+
+# ---------------------------------------------------------------------------
+# Design canvas: the .dc.html artboards and canvas.json are the source and are
+# tracked. The assembled page is a 2.4 MB build output, re-made by seeding.
+# ---------------------------------------------------------------------------
+docs/design-review/ukp-website-design-review.html
+
+# ---------------------------------------------------------------------------
+# Legacy kvizovi.hr salvage (kept in ../UKPWebsiteBackup, not here)
+# ---------------------------------------------------------------------------
+legacy/
+
+# ---------------------------------------------------------------------------
+# OS and editor
+# ---------------------------------------------------------------------------
+.DS_Store
+Thumbs.db
+*.swp
+.idea/
+.vscode/

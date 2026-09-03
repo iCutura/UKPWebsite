@@ -1,0 +1,53 @@
+/** Site-wide constants. Facts come from the legacy-site brief; change here, not in pages. */
+export const SITE = {
+  name: 'Urbana kviz priča',
+  short: 'UKP',
+  url: 'https://kvizovi.hr',
+  tagline: 'Kvizovi koji mijenjaju kvizašku scenu',
+  description: 'Urbana kviz priča (UKP) organizira pub kvizove u više od 130 lokacija u Hrvatskoj i Bosni i Hercegovini, tematske kvizove i kvizaške teambuildinge.',
+  phone: '+385 92 387 0832',
+  phoneHref: 'tel:+385923870832',
+  email: 'organizacija@kvizovi.hr',
+  address: 'Ilica 16, 10000 Zagreb',
+  company: {
+    name: 'Kvizovi j.d.o.o.',
+    fullName: 'Kvizovi jednostavno društvo s ograničenom odgovornošću za usluge',
+    seat: 'Četvrte Poljanice 8, Zagreb',
+    court: 'Trgovački sud u Zagrebu',
+    mbs: '081519250',
+    director: 'Mislav Ivanković, član uprave',
+    capital: 'Temeljni kapital (1 €) uplaćen u cijelosti.',
+  },
+  social: {
+    instagram: 'https://www.instagram.com/_urbana_kviz_prica/',
+    facebook: 'https://www.facebook.com/profile.php?id=100063334022510',
+    linkedin: 'https://www.linkedin.com/company/urbana-kviz-priča/',
+  },
+  apps: {
+    ios: 'https://apps.apple.com/app/id6759879046',
+    android: 'https://play.google.com/store/apps/details?id=com.injeelit.pubquiz',
+  },
+  /** Website team registration through the API's external-registrations flow (e-mail code). PHP proxy: server/api/prijava.php. */
+  registrationEnabled: true,
+  partners: [
+    { name: 'OTP banka', img: '/img/partners/otp-icon-1.webp' },
+    { name: 'Jungle', img: '/img/partners/jungle.webp' },
+    { name: 'Badell', img: '/img/partners/badell.webp' },
+    { name: 'Amazinga', img: '/img/partners/amazinga.webp' },
+    { name: 'Friendly Fire', img: '/img/partners/friendly-fire.webp' },
+    { name: 'Stock', img: '/img/partners/stock.webp' },
+    { name: 'Karting Arena', img: '/img/partners/karting-arena.webp' },
+    { name: 'Iron Bull', img: '/img/partners/iron-bull.webp' },
+    { name: 'Escape Room', img: '/img/partners/escape-room.webp' },
+    { name: 'Bowling Club Zagreb', img: '/img/partners/bowling-club-zagreb.webp' },
+    { name: 'Axe Throwing Zagreb', img: '/img/partners/axe-throwing-zagreb.webp' },
+  ],
+  nav: [
+    { href: '/lokacije/', label: 'Lokacije' },
+    { href: '/dogadaji/', label: 'Događaji' },
+    { href: '/novosti/', label: 'Novosti' },
+    { href: '/team-building/', label: 'Team building' },
+    { href: '/o-nama/', label: 'O nama' },
+    { href: '/kontakt/', label: 'Kontakt' },
+  ],
+};

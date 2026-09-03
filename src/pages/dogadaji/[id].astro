@@ -1,0 +1,67 @@
+---
+import Base from '../../layouts/Base.astro';
+import Icon from '../../components/Icon.astro';
+import SectionHead from '../../components/SectionHead.astro';
+import { getEvents, getLocation, eventsForLocation, type EventItem } from '../../lib/data';
+import { eventHeaderHTML, registrationPanelHTML, eventJsonLd, mapsUrl, textToHTML } from '../../lib/detail';
+import { eventCardHTML } from '../../lib/render';
+import { longDate, parseApiDate, time, fee } from '../../lib/format';
+import { SITE } from '../../config';
+
+export function getStaticPaths() {
+  return getEvents().map(e => ({ params: { id: String(e.id) }, props: { e } }));
+}
+const { e } = Astro.props as { e: EventItem };
+const loc = getLocation(e.locationId);
+const others = eventsForLocation(e.locationId).filter(x => x.id !== e.id).slice(0, 3);
+const d = parseApiDate(e.date);
+const title = `${e.name || 'Pub kviz'} · ${e.venueName}, ${longDate(d)}`;
+const desc = `${e.name || 'Pub kviz'} u ${e.venueName}, ${e.city.name}: ${longDate(d)} u ${time(e.startTime)}. ${fee(e.feeType, e.feeAmount) ?? ''} Prijavi svoju ekipu.`.trim();
+---
+<Base title={title} description={desc} image={e.image?.full}>
+  <script type="application/ld+json" set:html={eventJsonLd(e)} />
+  <section class="page-head">
+    <div class="container">
+      <nav class="crumbs" aria-label="Putanja" data-reveal><a href="/dogadaji/">Događaji</a><Icon name="arrow-right" /><a href={e.locationUrl ?? '/lokacije/'}>{e.venueName}</a></nav>
+      <div class="evd mt-4">
+        <div class="evd-main" data-reveal>
+          <Fragment set:html={eventHeaderHTML(e)} />
+          <dl class="facts mt-4">
+            <div class="fact"><dt>Format</dt><dd>3 kruga · 15 pitanja</dd></div>
+            <div class="fact"><dt>Ekipa</dt><dd>{e.maxPlayersPerTeam ? `do ${e.maxPlayersPerTeam} igrača` : 'do 5 igrača'}</dd></div>
+            <div class="fact"><dt>Kotizacija</dt><dd>{fee(e.feeType, e.feeAmount) ?? 'Dogovor s lokacijom'}</dd></div>
+            <div class="fact"><dt>Mjesta</dt><dd>{e.maxTeams ? `${e.registered} od ${e.maxTeams} ekipa` : `${e.registered} prijavljenih ekipa`}</dd></div>
+          </dl>
+          {loc?.description && <div class="prose mt-4" set:html={textToHTML(loc.description)} />}
+          <div class="cluster gap-2 mt-4">
+            <a class="btn btn-ghost" href={mapsUrl({ lat: e.lat, lng: e.lng, address: e.address, venueName: e.venueName, city: e.city })} rel="noopener" target="_blank"><Icon name="map" /> Kako doći</a>
+            {e.whatsapp && <a class="btn btn-ghost" href={e.whatsapp} rel="noopener" target="_blank"><Icon name="whatsapp" /> WhatsApp grupa</a>}
+            <button class="btn btn-ghost" type="button" data-share={`${SITE.url}${e.url}`} data-share-title={title}><Icon name="arrow-up-right" /> Podijeli</button>
+          </div>
+        </div>
+        <aside class="evd-side" data-reveal>
+          <Fragment set:html={registrationPanelHTML(e, SITE.registrationEnabled)} />
+        </aside>
+      </div>
+    </div>
+  </section>
+  {others.length > 0 && (
+    <section class="section-tight">
+      <div class="container">
+        <SectionHead eyebrow="Ista lokacija" title="Ostali termini" href={e.locationUrl ?? '/lokacije/'} linkLabel="O lokaciji" />
+        <div class="grid grid-3" set:html={others.map(x => eventCardHTML(x, { showLocation: false })).join('')} />
+      </div>
+    </section>
+  )}
+</Base>
+<script>
+  document.addEventListener('astro:page-load', () => {
+    document.querySelectorAll<HTMLButtonElement>('[data-share]').forEach(b => {
+      if (b.dataset.bound) return; b.dataset.bound = '1';
+      b.addEventListener('click', async () => {
+        const data = { url: b.dataset.share!, title: b.dataset.shareTitle || document.title };
+        try { if (navigator.share) await navigator.share(data); else { await navigator.clipboard.writeText(data.url); b.textContent = 'Link kopiran'; } } catch {}
+      });
+    });
+  });
+</script>

@@ -1,0 +1,64 @@
+---
+import { ClientRouter } from 'astro:transitions';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+import { SITE } from '../config';
+import { seasonFor, LOCKED_SEASON } from '../lib/seasons';
+import '../styles/global.css';
+import '../styles/cards.css';
+import '../styles/detail.css';
+
+interface Props { title: string; description?: string; image?: string; onArt?: boolean; noindex?: boolean; class?: string }
+const { title, description = SITE.description, image, onArt = false, noindex = false, class: cls } = Astro.props;
+const season = seasonFor();
+const canonical = new URL(Astro.url.pathname, SITE.url).href;
+const fullTitle = Astro.url.pathname === '/' ? `${SITE.name} · ${SITE.tagline}` : `${title} · ${SITE.short}`;
+const og = image ?? `/og/${season}.jpg`;
+---
+<!doctype html>
+<html lang="hr" data-season={season}>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>{fullTitle}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+    {noindex && <meta name="robots" content="noindex" />}
+    <meta name="theme-color" content="#F8B790" />
+    <link rel="icon" href={`/img/seasons/${season}-icon-64.png`} sizes="64x64" type="image/png" />
+    <link rel="apple-touch-icon" href={`/img/seasons/${season}-icon-192.png`} />
+    <meta property="og:site_name" content={SITE.name} />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content={fullTitle} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:image" content={new URL(og, SITE.url).href} />
+    <meta property="og:locale" content="hr_HR" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <script is:inline data-astro-rerun set:html={LOCKED_SEASON
+      ? `document.documentElement.setAttribute('data-season','${LOCKED_SEASON}');document.documentElement.classList.add('js');`
+      : `(function(){var d=new Date(),md=(d.getMonth()+1)*100+d.getDate();var s=md>=320&&md<=620?'spring':md>=621&&md<=921?'summer':md>=922&&md<=1220?'fall':'winter';try{var q=new URLSearchParams(location.search).get('season');if(q&&/^(spring|summer|fall|winter|auto)$/.test(q)){q==='auto'?localStorage.removeItem('ukp-season'):localStorage.setItem('ukp-season',q)}var o=localStorage.getItem('ukp-season');if(o&&/^(spring|summer|fall|winter)$/.test(o))s=o}catch(e){}var h=document.documentElement;h.setAttribute('data-season',s);h.classList.add('js')})();`} />
+    <ClientRouter />
+  </head>
+  <body class={cls}>
+    <a class="skip" href="#main">Preskoči na sadržaj</a>
+    <Header onArt={onArt} />
+    <main id="main" class:list={['main', { 'main--on-art': onArt }]}>
+      <slot />
+    </main>
+    <Footer />
+    <script>
+      import '../scripts/season';
+      import '../scripts/motion';
+      import '../scripts/live';
+      import '../scripts/prijava';
+    </script>
+  </body>
+</html>
+
+<style is:global>
+  .skip { position: fixed; top: 8px; left: 8px; z-index: 100; padding: 10px 14px; border-radius: var(--r-md); background: var(--dark); color: var(--on-dark); font-weight: 700; transform: translateY(-200%); transition: transform .2s; }
+  .skip:focus { transform: none; outline-offset: 0; }
+  .main { min-height: 60dvh; padding-top: var(--header-h); }
+  .main--on-art { padding-top: 0; }
+</style>

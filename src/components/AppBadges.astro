@@ -1,0 +1,10 @@
+---
+import Icon from './Icon.astro';
+import { SITE } from '../config';
+interface Props { light?: boolean }
+const { light = false } = Astro.props;
+---
+<div class="cluster gap-1">
+  <a class:list={['btn btn-sm', light ? 'btn-light' : 'btn-dark']} href={SITE.apps.ios} rel="noopener" target="_blank"><Icon name="apple" size={18} /> App Store</a>
+  <a class:list={['btn btn-sm', light ? 'btn-ghost' : 'btn-dark']} href={SITE.apps.android} rel="noopener" target="_blank"><Icon name="play" size={18} /> Google Play</a>
+</div>

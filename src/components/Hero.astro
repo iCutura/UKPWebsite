@@ -1,0 +1,80 @@
+---
+/**
+ * Layered hero: the designer's split "Presentation mode" scene (bg → glow → UKP letters → mascot → foliage)
+ * with GSAP mouse/scroll parallax (scripts/motion.ts) and a Three.js particle + light-ray layer (scripts/hero3d.ts).
+ * Only the fall layer set exists; paths follow /img/layers/<season>/ so the other seasons can drop in later.
+ */
+import Icon from './Icon.astro';
+import Split from './Split.astro';
+import { seasonFor } from '../lib/seasons';
+interface Props { locations: number }
+const { locations } = Astro.props;
+const s = seasonFor();
+const L = (name: string, w: number) => `/img/layers/${s}/${name}-${w}.webp`;
+---
+<section class="hero" data-hero aria-labelledby="hero-title">
+  <div class="scene" data-scene aria-hidden="true">
+    <div class="layer layer-bg" data-depth="0.08"><div class="drift"><img src={L('bg', 1536)} srcset={`${L('bg', 900)} 900w, ${L('bg', 1536)} 1536w`} sizes="100vw" alt="" fetchpriority="high" decoding="async" /></div></div>
+    <div class="layer layer-glow" data-depth="0.18"><div class="drift"><img src={L('glow', 1024)} srcset={`${L('glow', 640)} 640w, ${L('glow', 1024)} 1024w`} sizes="100vw" alt="" decoding="async" data-breathe /></div></div>
+    <div class="layer layer-ukp" data-depth="0.42"><div class="drift"><img src={L('ukp', 1200)} srcset={`${L('ukp', 720)} 720w, ${L('ukp', 1200)} 1200w`} sizes="(min-width: 1000px) 40vw, 80vw" width="1183" height="382" alt="" fetchpriority="high" decoding="async" /></div></div>
+    <div class="layer layer-mascot" data-depth="0.62"><div class="drift"><img src={L('mascot', 1200)} srcset={`${L('mascot', 720)} 720w, ${L('mascot', 1200)} 1200w`} sizes="(min-width: 1000px) 36vw, 90vw" width="1005" height="996" alt="" fetchpriority="high" decoding="async" data-float /></div></div>
+    <canvas class="hero-gl" data-hero-gl></canvas>
+    <div class="layer layer-foliage" data-depth="1"><div class="drift"><img src={L('foliage', 1536)} srcset={`${L('foliage', 900)} 900w, ${L('foliage', 1536)} 1536w`} sizes="100vw" alt="" decoding="async" /></div></div>
+  </div>
+
+  <div class="container hero-content">
+    <div class="hero-text">
+      <p class="hero-eyebrow" data-hero-fade><span class="chip chip-live">Pub kvizovi u Hrvatskoj i BiH</span></p>
+      <h1 class="display hero-title" id="hero-title"><Split text="Kvizovi koji mijenjaju kvizašku scenu." /></h1>
+      <p class="lead hero-lead" data-hero-fade>Ako želiš iskušati znanje i natjecati se za nagrade naših sponzora, pridruži nam se na jednoj od aktivnih lokacija. Svaki tjedan, u više od {locations} kafića.</p>
+      <div class="cluster gap-2 hero-cta" data-hero-fade>
+        <a href="/lokacije/" class="btn btn-accent btn-lg" data-magnetic="14">Pronađi kviz u svom gradu <Icon name="arrow-right" /></a>
+        <a href="/dogadaji/" class="btn btn-ghost btn-lg">Što ima ovaj tjedan</a>
+      </div>
+    </div>
+  </div>
+  <a href="#ovaj-tjedan" class="hero-scroll" aria-label="Pomakni se na termine" data-hero-fade><span></span></a>
+</section>
+
+<style>
+  .hero { position: relative; isolation: isolate; min-height: 100svh; display: grid; align-items: end; color: var(--on-dark); background: #0f0e0b; overflow: hidden; border-radius: 0 0 var(--r-hero) var(--r-hero); }
+  .scene { position: absolute; inset: 0; z-index: 0; pointer-events: none; }
+  .layer { position: absolute; will-change: transform; }
+  .drift { width: 100%; height: 100%; will-change: transform; }
+  .layer img { display: block; width: 100%; height: 100%; object-fit: cover; }
+  .layer-bg { inset: -6%; }
+  .layer-glow { inset: -10% -10% -4%; mix-blend-mode: screen; opacity: .9; }
+  .layer-glow img { object-position: 50% 30%; transform-origin: 50% 40%; }
+  .layer-ukp { left: 0; right: 0; margin-inline: auto; top: calc(var(--header-h) + 1svh); width: min(72vw, 520px); aspect-ratio: 1183 / 382; }
+  .layer-ukp img { object-fit: contain; }
+  .layer-mascot { left: 0; right: 0; margin-inline: auto; top: calc(var(--header-h) + 7svh); width: min(82vw, 470px); aspect-ratio: 1005 / 996; }
+  .layer-mascot img { object-fit: contain; }
+  .hero-gl { position: absolute; inset: 0; z-index: 1; width: 100%; height: 100%; pointer-events: none; }
+  .layer-foliage { inset: -3% -8% -2%; z-index: 2; }
+  .layer-foliage img { object-position: 50% 100%; }
+  .hero-content { position: relative; z-index: 3; padding-top: calc(var(--header-h) + 47svh); padding-bottom: clamp(48px, 8svh, 96px); }
+  .hero-content::before { content: ""; position: absolute; z-index: -1; left: 50%; right: auto; width: 100vw; transform: translateX(-50%); top: 32%; bottom: 0; background: linear-gradient(180deg, transparent, rgb(15 14 11 / .72) 34%, rgb(15 14 11 / .9)); pointer-events: none; }
+  .hero-eyebrow { margin-bottom: 18px; }
+  .hero-title { max-width: 12ch; color: var(--on-dark); text-shadow: 0 2px 24px rgb(0 0 0 / .35); }
+  .hero-lead { margin-top: 22px; color: var(--on-dark-md); max-width: 52ch; }
+  .hero-cta { margin-top: 30px; }
+  .hero-scroll { position: absolute; z-index: 3; right: var(--gutter); bottom: 22px; width: 26px; height: 42px; border: 2px solid rgb(255 247 240 / .35); border-radius: 14px; display: none; }
+  .hero-scroll span { position: absolute; left: 50%; top: 7px; width: 4px; height: 8px; margin-left: -2px; border-radius: 2px; background: var(--accent-soft); animation: scrollhint 1.8s ease-in-out infinite; }
+  @keyframes scrollhint { 0%, 100% { transform: translateY(0); opacity: 1; } 70% { transform: translateY(12px); opacity: 0; } }
+  .chip-live { background: rgb(255 255 255 / .1); color: var(--on-dark); border-color: rgb(255 255 255 / .16); }
+  .hero .btn-ghost { background: rgb(255 255 255 / .1); color: var(--on-dark) !important; border-color: rgb(255 255 255 / .2); }
+  .hero .btn-ghost:hover { background: rgb(255 255 255 / .18); }
+
+  @media (min-width: 1000px) {
+    .hero { min-height: min(100svh, 980px); align-items: center; }
+    .layer-ukp { left: auto; right: 6%; margin: 0; top: calc(var(--header-h) + 1vh); width: min(38vw, 600px); }
+    .layer-mascot { left: auto; right: 9%; margin: 0; top: calc(var(--header-h) + 15vh); width: min(33vw, 520px); }
+    .hero-content { padding-top: calc(var(--header-h) + 6vh); padding-bottom: calc(6vh + 40px); }
+    .hero-content::before { top: 0; background: linear-gradient(90deg, rgb(15 14 11 / .82) 0%, rgb(15 14 11 / .5) 34%, transparent 62%); }
+    .hero-text { max-width: 620px; }
+    .hero-title { font-size: clamp(3.6rem, 6.4vw, 7.2rem); }
+    .hero-scroll { display: block; }
+  }
+  @media (min-width: 1400px) { .layer-mascot { right: 10%; } .layer-ukp { right: 8%; } }
+  @media (prefers-reduced-motion: reduce) { .hero-scroll span { animation: none; } }
+</style>

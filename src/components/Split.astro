@@ -1,0 +1,9 @@
+---
+/** Wraps each word in a masked span so GSAP can stagger words in from below. Renders plain text without JS. */
+interface Props { text: string; class?: string; as?: 'h1' | 'h2' | 'p' | 'span' | 'div' }
+const { text, class: cls, as: Tag = 'span' } = Astro.props;
+const words = text.split(/\s+/).filter(Boolean);
+---
+<Tag class={`split ${cls ?? ''}`} data-split aria-label={text}>
+  {words.map((w: string, i: number) => (<Fragment>{i > 0 ? ' ' : ''}<span class="w" aria-hidden="true"><span class="wi">{w}</span></span></Fragment>))}
+</Tag>

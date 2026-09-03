@@ -1,0 +1,12 @@
+---
+interface Props { eyebrow?: string; title: string; href?: string; linkLabel?: string }
+const { eyebrow, title, href, linkLabel } = Astro.props;
+import Icon from './Icon.astro';
+---
+<div class="sec-head" data-reveal>
+  <div>
+    {eyebrow && <span class="eyebrow">{eyebrow}</span>}
+    <h2>{title}</h2>
+  </div>
+  {href && <a class="sec-link" href={href}>{linkLabel ?? 'Sve'} <Icon name="arrow-right" size={18} /></a>}
+</div>

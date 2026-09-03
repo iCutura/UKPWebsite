@@ -1,0 +1,131 @@
+---
+import Base from '../../layouts/Base.astro';
+import Icon from '../../components/Icon.astro';
+import { getLocations, getCities } from '../../lib/data';
+import { locationCardHTML } from '../../lib/render';
+
+// getLocations() already orders these: locations with a scheduled quiz first, soonest first, then by city.
+const locations = getLocations();
+const cities = getCities();
+const countries = [...new Set(cities.map(c => c.country).filter(Boolean))] as string[];
+const top = [...cities].sort((a, b) => b.locations - a.locations || a.name.localeCompare(b.name, 'hr')).slice(0, 8);
+const withEvents = locations.filter(l => l.upcomingCount > 0).length;
+---
+<Base title="Lokacije" description={`Pub kvizovi Urbane kviz priče na ${locations.length} lokacija u ${cities.length} gradova Hrvatske i Bosne i Hercegovine. Pronađi kviz u svom gradu.`}>
+  <section class="page-head">
+    <div class="container">
+      <span class="eyebrow" data-reveal>Lokacije</span>
+      <h1 data-reveal>Pronađi kviz u svom gradu.</h1>
+      <p class="lead mt-3" data-reveal>{locations.length} lokacija u {cities.length} gradova. Svaka lokacija je jedan kvizaški termin: isti kafić može imati kviz i ponedjeljkom i srijedom.</p>
+    </div>
+  </section>
+
+  <section class="filter-bar" data-filter-bar>
+    <div class="container filter-inner">
+      <label class="search">
+        <Icon name="search" size={20} />
+        <input type="search" class="input" placeholder="Grad ili kafić" autocomplete="off" data-filter-q aria-label="Pretraži grad ili kafić" />
+      </label>
+      <div class="filter-chips" role="group" aria-label="Filtri">
+        <button type="button" class="chip fchip is-active" data-filter-country="" aria-pressed="true">Sve</button>
+        {countries.map(c => <button type="button" class="chip fchip" data-filter-country={c} aria-pressed="false">{c === 'Bosna i Hercegovina' ? 'BiH' : c}</button>)}
+        <span class="fsep" aria-hidden="true"></span>
+        <button type="button" class="chip fchip" data-filter-upcoming aria-pressed="false"><Icon name="calendar" size={14} /> Samo sa zakazanim terminom</button>
+      </div>
+      <div class="filter-cities" aria-label="Najveći gradovi">
+        {top.map(c => <button type="button" class="chip fchip" data-filter-city={c.name} aria-pressed="false">{c.name} <span class="num fcount">{c.locations}</span></button>)}
+        <label class="city-select">
+          <span class="sr-only">Svi gradovi</span>
+          <select class="input" data-filter-select>
+            <option value="">Svi gradovi…</option>
+            {cities.map(c => <option value={c.name}>{c.name} ({c.locations})</option>)}
+          </select>
+        </label>
+      </div>
+    </div>
+  </section>
+
+  <section class="section-tight">
+    <div class="container">
+      <p class="results-line muted" aria-live="polite"><span class="num" data-filter-count>{locations.length}</span> lokacija · <span class="num">{withEvents}</span> sa zakazanim terminom</p>
+      <div class="grid grid-3 loc-grid" data-live="locations" data-filter-grid set:html={locations.map(l => locationCardHTML(l)).join('')} />
+      <div class="empty mt-4" data-filter-empty hidden>Nema lokacija za taj filter. Probaj drugi grad ili nas <a href="/kontakt/">pitaj kad stižemo k tebi</a>.</div>
+    </div>
+  </section>
+</Base>
+
+<script>
+  function init() {
+    const bar = document.querySelector<HTMLElement>('[data-filter-bar]')!; if (!bar || bar.dataset.bound) return; bar.dataset.bound = '1';
+    const q = bar.querySelector<HTMLInputElement>('[data-filter-q]')!;
+    const select = bar.querySelector<HTMLSelectElement>('[data-filter-select]')!;
+    const grid = document.querySelector<HTMLElement>('[data-filter-grid]')!;
+    const empty = document.querySelector<HTMLElement>('[data-filter-empty]')!;
+    const count = document.querySelector<HTMLElement>('[data-filter-count]')!;
+    const state = { q: '', country: '', city: '', upcoming: false };
+    const norm = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/đ/g, 'd').toLowerCase();
+    const params = new URLSearchParams(location.search);
+    if (params.get('grad')) { state.city = params.get('grad')!; select.value = state.city; }
+    let locations: any[] | null = null;
+    fetch('/data/locations.json', { cache: 'no-cache' }).then(r => r.json()).then(d => { locations = d; apply(); }).catch(() => {});
+
+    function apply() {
+      const cards = Array.from(grid.querySelectorAll<HTMLElement>('[data-location-id]'));
+      const byId = new Map((locations || []).map((l: any) => [String(l.id), l]));
+      let shown = 0; const nq = norm(state.q.trim());
+      for (const c of cards) {
+        const l = byId.get(c.dataset.locationId!);
+        const city = c.dataset.city || l?.city?.name || '';
+        const text = norm(c.textContent || '');
+        let ok = true;
+        if (nq && !text.includes(nq)) ok = false;
+        if (state.country && l && l.city?.country !== state.country) ok = false;
+        if (state.city && city !== state.city) ok = false;
+        if (state.upcoming && l && !(l.upcomingCount > 0)) ok = false;
+        c.hidden = !ok; if (ok) shown++;
+      }
+      count.textContent = String(shown); empty.hidden = shown > 0;
+      bar.querySelectorAll<HTMLElement>('[data-filter-country]').forEach(b => { const on = (b.dataset.filterCountry || '') === state.country; b.classList.toggle('is-active', on); b.setAttribute('aria-pressed', String(on)); });
+      bar.querySelectorAll<HTMLElement>('[data-filter-city]').forEach(b => { const on = b.dataset.filterCity === state.city; b.classList.toggle('is-active', on); b.setAttribute('aria-pressed', String(on)); });
+      const up = bar.querySelector<HTMLElement>('[data-filter-upcoming]')!; up.classList.toggle('is-active', state.upcoming); up.setAttribute('aria-pressed', String(state.upcoming));
+      const url = new URL(location.href); state.city ? url.searchParams.set('grad', state.city) : url.searchParams.delete('grad'); history.replaceState(null, '', url);
+    }
+    q.addEventListener('input', () => { state.q = q.value; apply(); });
+    select.addEventListener('change', () => { state.city = select.value; apply(); });
+    bar.querySelectorAll<HTMLElement>('[data-filter-country]').forEach(b => b.addEventListener('click', () => { state.country = b.dataset.filterCountry || ''; apply(); }));
+    bar.querySelectorAll<HTMLElement>('[data-filter-city]').forEach(b => b.addEventListener('click', () => { state.city = state.city === b.dataset.filterCity ? '' : b.dataset.filterCity!; select.value = state.city; apply(); }));
+    bar.querySelector('[data-filter-upcoming]')!.addEventListener('click', () => { state.upcoming = !state.upcoming; apply(); });
+    grid.addEventListener('ukp:live', apply);
+    apply();
+  }
+  document.addEventListener('astro:page-load', init);
+</script>
+
+<style is:global>
+  .filter-bar { position: static; z-index: 30; padding: 12px 0; background: color-mix(in srgb, var(--paper) 88%, transparent); backdrop-filter: blur(14px) saturate(1.2); -webkit-backdrop-filter: blur(14px) saturate(1.2); border-bottom: 1px solid rgb(var(--rule) / .09); }
+  .filter-inner { display: flex; flex-direction: column; gap: 10px; }
+  .search { position: relative; display: block; max-width: 520px; }
+  .search svg { position: absolute; left: 16px; top: 50%; transform: translateY(-50%); color: var(--ink-md); pointer-events: none; }
+  .search .input { padding-left: 46px; min-height: 48px; }
+  .filter-chips, .filter-cities { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+  /* On a phone the city shortcuts otherwise stack into five rows of chrome before the first location. */
+  @media (max-width: 759px) {
+    .filter-cities { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; padding-block: 2px;
+      margin-inline: calc(-1 * var(--gutter)); padding-inline: var(--gutter);
+      -webkit-mask-image: linear-gradient(90deg, transparent, #000 16px, #000 calc(100% - 24px), transparent);
+      mask-image: linear-gradient(90deg, transparent, #000 16px, #000 calc(100% - 24px), transparent); }
+    .filter-cities::-webkit-scrollbar { display: none; }
+    .filter-cities > * { flex: none; }
+    .filter-chips { row-gap: 8px; }
+  }
+  .fchip { min-height: 36px; cursor: pointer; transition: background-color .25s, color .25s, border-color .25s; }
+  .fchip:hover { background: rgb(var(--rule) / .09); }
+  .fchip.is-active { background: var(--dark); color: var(--on-dark); border-color: transparent; }
+  .fchip.is-active .fcount { color: var(--accent-soft); }
+  .fcount { font-size: .75rem; color: var(--ink-md); }
+  .fsep { width: 1px; height: 22px; background: rgb(var(--rule) / .15); margin: 0 4px; }
+  .city-select .input { min-height: 36px; padding: 0 12px; border-radius: var(--r-pill); font-size: .8125rem; font-weight: 600; width: auto; background: rgb(var(--rule) / .045); border-color: rgb(var(--rule) / .09); }
+  .results-line { font-size: var(--fs-small); margin-bottom: 20px; }
+  .loc-grid { align-items: stretch; }
+  @media (min-width: 760px) { .filter-bar { position: sticky; top: 0; } .filter-inner { display: grid; grid-template-columns: minmax(240px, 420px) 1fr; grid-template-areas: "search chips" "cities cities"; align-items: center; gap: 10px 20px; } .search { grid-area: search; } .filter-chips { grid-area: chips; } .filter-cities { grid-area: cities; } }
+</style>

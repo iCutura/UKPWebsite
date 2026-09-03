@@ -1,0 +1,82 @@
+---
+import Base from '../layouts/Base.astro';
+import Icon from '../components/Icon.astro';
+const photos = ['gmd09294', 'gmd09351', 'gmd09409', 'gmd09477', 'gmd09505', 'gmd09483', 'gmd09591', 'gmd09696', 'gmd09892', 'gmd09841'];
+const alts = ['Ekipe za stolovima', 'Voditelj otvara kviz', 'Kolege raspravljaju o odgovoru', 'Dodjela nagrada', 'Publika prati pitanje', 'Zajednička fotografija ekipe', 'Bodovna ploča', 'Smijeh za stolom', 'Pobjednička ekipa', 'Kraj večeri'];
+---
+<Base title="Kvizaški team building" description="Organiziramo nezaboravne kvizove za vaš teambuilding. Testirajte znanje, potaknite timski duh i zabavite se. Kontaktirajte nas kako biste saznali više!">
+  <section class="page-head">
+    <div class="container tb-head">
+      <div>
+        <span class="eyebrow" data-reveal>Kvizaški team building</span>
+        <h1 data-reveal>Kviz koji iskače iz organizacijskih okvira na koje ste navikli.</h1>
+        <p class="lead mt-3" data-reveal>Osim kvizova za širu javnost na već dobro poznatim lokacijama, organiziramo i privatne evente na kojima se vi i vaše kolege možete natjecati u personaliziranim pub kvizovima. Prilika da kolege testiraju znanje, vještine i suradničke sposobnosti kroz uzbudljivu igru koja potiče timski duh i kreativnost.</p>
+        <div class="cluster gap-2 mt-4" data-reveal>
+          <a href="/kontakt/?tema=team-building" class="btn btn-accent btn-lg" data-magnetic="12">Dogovori team building <Icon name="arrow-right" /></a>
+          <a href="tel:+385923870832" class="btn btn-ghost btn-lg"><Icon name="phone" /> Nazovi nas</a>
+        </div>
+      </div>
+      <img src="/img/teambuilding/gmd09892-700.webp" srcset="/img/teambuilding/gmd09892-700.webp 700w, /img/teambuilding/gmd09892-1400.webp 1400w" sizes="(min-width: 900px) 45vw, 100vw" width="700" height="467" alt="Team building kviz u tijeku" class="tb-hero-img" data-reveal data-parallax="-8" />
+    </div>
+  </section>
+
+  <section class="section band-tint">
+    <div class="container">
+      <span class="eyebrow" data-reveal>Što možete očekivati</span>
+      <div class="grid grid-3 mt-3">
+        <div class="card-dark card-pad" data-reveal>
+          <span class="num tb-n">01</span>
+          <h2 class="h3">Personalizirano kvizaško iskustvo</h2>
+          <p class="mt-2 muted">Prilagodit ćemo kviz vašim potrebama i preferencijama, uzimajući u obzir vašu industriju, interne šale i ono što vaš tim voli, kako bi svaki sudionik bio uključen i motiviran.</p>
+        </div>
+        <div class="card-dark card-pad" data-reveal>
+          <span class="num tb-n">02</span>
+          <h2 class="h3">Interaktivni izazovi</h2>
+          <p class="mt-2 muted">Naši kvizovi nisu samo pitanja i odgovori. Uključuju različite interaktivne elemente, od glazbenih i video rundi do zadataka koji traže timsku suradnju.</p>
+        </div>
+        <div class="card-dark card-pad" data-reveal>
+          <span class="num tb-n">03</span>
+          <h2 class="h3">Iznenađenja i nagrade</h2>
+          <p class="mt-2 muted">Začinit ćemo događaj dodatnim iznenađenjima i nagradama kako bismo osigurali nezaboravno iskustvo koje se prepričava i tjednima poslije.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section-tight">
+    <div class="container">
+      <div class="tb-gallery" data-reveal>
+        {photos.map((p, i) => <img src={`/img/teambuilding/${p}-700.webp`} srcset={`/img/teambuilding/${p}-700.webp 700w, /img/teambuilding/${p}-1400.webp 1400w`} sizes="(min-width: 900px) 33vw, 50vw" width="700" height="467" alt={alts[i]} loading="lazy" decoding="async" class:list={{ 'is-wide': i === 0 || i === 5 }} />)}
+      </div>
+    </div>
+  </section>
+
+  <section class="section-tight">
+    <div class="container">
+      <div class="card-dark tb-cta" data-reveal>
+        <div>
+          <h2>Spremni za nešto malo drugačije?</h2>
+          <p class="lead mt-3" style="color: var(--on-dark-md)">Ako ste spremni za personalizirano i uzbudljivije kvizaško iskustvo, slobodno nas kontaktirajte. Rado ćemo vam dati sve informacije i prilagoditi ponudu vašim željama kako bismo zajedno stvorili nezaboravan team building.</p>
+        </div>
+        <div class="stack gap-2">
+          <a href="/kontakt/?tema=team-building" class="btn btn-accent btn-lg">Pošalji upit <Icon name="arrow-right" /></a>
+          <a href="mailto:organizacija@kvizovi.hr?subject=Team%20building%20kviz" class="btn btn-ghost btn-lg"><Icon name="mail" /> organizacija@kvizovi.hr</a>
+        </div>
+      </div>
+    </div>
+  </section>
+</Base>
+<style>
+  .tb-head { display: grid; gap: 32px; align-items: center; }
+  @media (min-width: 900px) { .tb-head { grid-template-columns: 1.1fr .9fr; gap: 64px; } }
+  .tb-head h1 { margin-top: 12px; }
+  .tb-hero-img { width: 100%; height: auto; border-radius: var(--r-hero); box-shadow: var(--sh-quiz); }
+  .tb-n { display: inline-block; font-size: 2.5rem; color: var(--accent-soft); line-height: 1; margin-bottom: 12px; }
+  .tb-gallery { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+  @media (min-width: 900px) { .tb-gallery { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; } }
+  .tb-gallery img { width: 100%; height: 100%; aspect-ratio: 3 / 2; object-fit: cover; border-radius: var(--r-lg); transition: transform .5s var(--ease-out); }
+  .tb-gallery img:hover { transform: scale(1.02); }
+  @media (min-width: 900px) { .tb-gallery .is-wide { grid-column: span 2; aspect-ratio: 3 / 1.4; } }
+  .tb-cta { display: grid; gap: 28px; padding: clamp(28px, 4vw, 56px); align-items: center; }
+  @media (min-width: 900px) { .tb-cta { grid-template-columns: 1.4fr .6fr; gap: 48px; } }
+</style>

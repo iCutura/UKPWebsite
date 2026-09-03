@@ -1,0 +1,91 @@
+---
+import Base from '../layouts/Base.astro';
+import Icon from '../components/Icon.astro';
+import SectionHead from '../components/SectionHead.astro';
+import { SITE } from '../config';
+import { getMeta } from '../lib/data';
+const meta = getMeta();
+const team = [
+  { name: 'Mislav', img: '/img/team/mislav-1.webp' }, { name: 'Andrej', img: '/img/team/andrej.webp' },
+  { name: 'Lovre', img: '/img/team/lovro.webp' }, { name: 'Leon', img: '/img/team/leon.webp' },
+];
+---
+<Base title="O nama" description="Kvizaški smo entuzijasti koji kreiraju pub kvizove općeg znanja, tematske kvizove i teambuilding kvizove. Priča Urbane kviz priče.">
+  <section class="page-head">
+    <div class="container">
+      <span class="eyebrow" data-reveal>O nama</span>
+      <h1 data-reveal>Kvizaški smo entuzijasti.</h1>
+      <p class="lead mt-3" data-reveal>Kreiramo pub kvizove općeg znanja, tematske kvizove, teambuilding kvizove, a i mi sami nerijetko i s guštom igramo. Organiziramo intrigantne kvizove za sve tipove publike sa širokim spektrom kategorija i još brojnijim nagradama.</p>
+    </div>
+  </section>
+
+  <section class="section-tight">
+    <div class="container">
+      <img class="about-hero" src="/img/about/urbana-kviz-prica-1400.webp" srcset="/img/about/urbana-kviz-prica-700.webp 700w, /img/about/urbana-kviz-prica-1400.webp 1400w" sizes="(min-width: 1280px) 1280px, 100vw" width="1400" height="933" alt="Kvizaška večer Urbane kviz priče" loading="lazy" decoding="async" data-reveal data-parallax="-6" />
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container story">
+      <article class="story-row" data-reveal>
+        <div class="story-copy">
+          <span class="eyebrow">Kako je počelo</span>
+          <h2>Prva organizacijska kviz avantura</h2>
+          <p class="mt-3 lead">Prije više od šest godina odlučili smo se na svoju prvu organizacijsku kviz avanturu i od tada mijenjamo kvizašku scenu u Hrvatskoj. Testiramo znanje na brojnim lokacijama i uvijek brinemo da se i vi i mi pritom zabavimo. Putujemo, istražujemo i uvijek spremamo neka nova iznenađenja.</p>
+        </div>
+        <img src="/img/about/ukp-kvizovi-1-700.webp" srcset="/img/about/ukp-kvizovi-1-700.webp 700w, /img/about/ukp-kvizovi-1-1400.webp 1400w" sizes="(min-width: 900px) 45vw, 100vw" width="700" height="525" alt="Ekipe na kvizu" loading="lazy" decoding="async" class="story-img" />
+      </article>
+      <article class="story-row is-flipped" data-reveal>
+        <div class="story-copy">
+          <span class="eyebrow">Rekord</span>
+          <h2>Najmnogoljudniji kviz u Hrvatskoj</h2>
+          <p class="mt-3 lead">S ponosom možemo istaknuti da smo 2022. godine organizirali do sada najveći kviz u Hrvatskoj, na kojem je sudjelovalo čak 70 ekipa. To je za nas bio tek početak otvaranja apetita. Za nas nema glupih pitanja, a realizacija kviza nam je najdraži izazov.</p>
+        </div>
+        <img src="/img/about/kup1-700.webp" srcset="/img/about/kup1-700.webp 700w, /img/about/kup1-1400.webp 1400w" sizes="(min-width: 900px) 45vw, 100vw" width="700" height="525" alt="Pehar kvizaškog kupa" loading="lazy" decoding="async" class="story-img" />
+      </article>
+      <article class="story-row" data-reveal>
+        <div class="story-copy">
+          <span class="eyebrow">Danas</span>
+          <h2>Urbana kviz priča dolazi u cijelu Hrvatsku</h2>
+          <p class="mt-3 lead">Pokrenuli smo kvizaški kup na više od 35 lokacija, a danas kviziramo na <strong class="num">{meta.locations}</strong> lokacija u <strong class="num">{meta.cities}</strong> gradova Hrvatske i Bosne i Hercegovine. Najbolji iz svake gradske lige osvajaju paket sponzora i ulaznicu za veliko finale u Zagrebu.</p>
+          <a href="/lokacije/" class="btn btn-accent mt-4">Provjeri je li tvoj grad na popisu <Icon name="arrow-right" /></a>
+        </div>
+        <img src="/img/about/289231195-372630458191419-3674993599359889481-n-700.webp" width="700" height="467" alt="Ekipa Urbane kviz priče" loading="lazy" decoding="async" class="story-img" />
+      </article>
+    </div>
+  </section>
+
+  <section class="section-tight band-dark on-dark">
+    <div class="container">
+      <SectionHead eyebrow="Naša ekipa" title="Ljudi koji postavljaju pitanja." />
+      <div class="team" data-reveal>
+        {team.map(t => <figure class="member"><img src={t.img} width="480" height="600" alt={t.name} loading="lazy" decoding="async" /><figcaption>{t.name}</figcaption></figure>)}
+      </div>
+    </div>
+  </section>
+
+  <section class="section-tight band-tint">
+    <div class="container">
+      <SectionHead eyebrow="Partneri u priči" title="Nikad nismo bili sami." href="/partneri/" linkLabel="Svi partneri" />
+      <div class="partner-grid" data-reveal>
+        {SITE.partners.map(p => <span class="partner-tile"><img src={p.img} alt={p.name} height="40" loading="lazy" decoding="async" /></span>)}
+      </div>
+    </div>
+  </section>
+</Base>
+<style>
+  .about-hero { width: 100%; height: auto; border-radius: var(--r-hero); box-shadow: var(--sh-quiz); }
+  .story { display: flex; flex-direction: column; gap: clamp(48px, 8vw, 96px); }
+  .story-row { display: grid; gap: 28px; align-items: center; }
+  @media (min-width: 900px) { .story-row { grid-template-columns: 1fr 1fr; gap: 64px; } .story-row.is-flipped .story-copy { order: 2; } }
+  .story-img { width: 100%; height: auto; border-radius: var(--r-xl); box-shadow: var(--sh-quiz); }
+  .team { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+  @media (min-width: 760px) { .team { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 24px; } }
+  .member { margin: 0; }
+  .member img { width: 100%; height: auto; aspect-ratio: 4 / 5; object-fit: cover; border-radius: var(--r-xl); filter: saturate(.9); transition: transform .5s var(--ease-out), filter .5s; }
+  .member:hover img { transform: translateY(-4px); filter: none; }
+  .member figcaption { margin-top: 12px; font-weight: 700; font-size: 1.1rem; }
+  .partner-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 12px; }
+  .partner-tile { display: grid; place-items: center; min-height: 88px; padding: 16px; border-radius: var(--r-lg); background: #fff; border: 1px solid rgb(var(--rule) / .08); }
+  .partner-tile img { height: 40px; width: auto; max-width: 100%; object-fit: contain; }
+</style>

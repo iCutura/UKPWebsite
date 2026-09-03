@@ -1,0 +1,97 @@
+---
+import Base from '../layouts/Base.astro';
+import Icon from '../components/Icon.astro';
+import { SITE } from '../config';
+---
+<Base title="Kontakt" description="Kontaktirajte Urbanu kviz priču: pitanja o kvizovima, team buildingu, partnerstvima ili kvizu u vašem gradu.">
+  <section class="page-head">
+    <div class="container">
+      <span class="eyebrow" data-reveal>Kontakt</span>
+      <h1 data-reveal>Inače mi postavljamo pitanja, ali ovdje možeš i ti nama.</h1>
+    </div>
+  </section>
+  <section class="section-tight">
+    <div class="container contact">
+      <div class="contact-side">
+        <ul class="contact-list" data-reveal>
+          <li><a href={SITE.phoneHref}><span class="contact-ico"><Icon name="phone" /></span><span><strong>{SITE.phone}</strong><br><span class="muted">Broj telefona</span></span></a></li>
+          <li><a href={`mailto:${SITE.email}`}><span class="contact-ico"><Icon name="mail" /></span><span><strong>{SITE.email}</strong><br><span class="muted">E-mail</span></span></a></li>
+          <li><a href="https://www.google.com/maps/search/?api=1&query=Ilica%2016%2C%2010000%20Zagreb" rel="noopener" target="_blank"><span class="contact-ico"><Icon name="pin" /></span><span><strong>{SITE.address}</strong><br><span class="muted">Lokacija</span></span></a></li>
+        </ul>
+        <div class="cluster gap-1 mt-4" data-reveal>
+          <a class="social-lg" href={SITE.social.instagram} rel="noopener" target="_blank"><Icon name="instagram" /> Instagram</a>
+          <a class="social-lg" href={SITE.social.facebook} rel="noopener" target="_blank"><Icon name="facebook" /> Facebook</a>
+          <a class="social-lg" href={SITE.social.linkedin} rel="noopener" target="_blank"><Icon name="linkedin" /> LinkedIn</a>
+        </div>
+        <div class="company mt-6" data-reveal>
+          <p class="eyebrow">Podaci o tvrtki</p>
+          <p class="mt-2"><strong>{SITE.company.fullName}</strong> ({SITE.company.name})</p>
+          <p>Sjedište: {SITE.company.seat}</p>
+          <p>{SITE.company.court}, MBS: {SITE.company.mbs}</p>
+          <p>{SITE.company.director}</p>
+          <p>{SITE.company.capital}</p>
+        </div>
+      </div>
+      <form class="card-dark card-pad contact-form on-dark" data-kontakt novalidate data-reveal>
+        <span class="eyebrow">Kontakt forma</span>
+        <h2 class="h3">Napiši nam što te zanima.</h2>
+        <div class="stack gap-2 mt-3">
+          <div class="field"><label for="k-tema">Tema</label>
+            <select id="k-tema" name="tema" class="input">
+              <option value="opcenito">Općenito</option>
+              <option value="team-building">Team building kviz</option>
+              <option value="partnerstvo">Partnerstvo i sponzorstvo</option>
+              <option value="kviz-u-mom-gradu">Želim kviz u svom gradu ili kafiću</option>
+              <option value="mediji">Mediji</option>
+            </select>
+          </div>
+          <div class="field"><label for="k-ime">Ime</label><input id="k-ime" name="ime" class="input" required autocomplete="name" maxlength="80" /></div>
+          <div class="field"><label for="k-email">E-mail</label><input id="k-email" name="email" class="input" type="email" required autocomplete="email" maxlength="120" /></div>
+          <div class="field"><label for="k-poruka">Poruka</label><textarea id="k-poruka" name="poruka" class="input" required maxlength="3000" rows="5"></textarea></div>
+          <input type="text" name="website" class="hp" tabindex="-1" autocomplete="off" aria-hidden="true" />
+          <label class="consent"><input type="checkbox" name="consent" required /> <span>Slažem se da UKP koristi ove podatke kako bi odgovorio na moj upit. <a href="/pravila-privatnosti/">Pravila privatnosti</a></span></label>
+          <button type="submit" class="btn btn-accent btn-lg btn-block">Pošalji <Icon name="arrow-right" /></button>
+          <p class="prijava-msg" role="status" aria-live="polite" hidden></p>
+        </div>
+      </form>
+    </div>
+  </section>
+</Base>
+<script>
+  function init() {
+    const form = document.querySelector<HTMLFormElement>('form[data-kontakt]'); if (!form || form.dataset.bound) return; form.dataset.bound = '1';
+    const tema = new URLSearchParams(location.search).get('tema'); const sel = form.querySelector<HTMLSelectElement>('[name=tema]')!;
+    if (tema && [...sel.options].some(o => o.value === tema)) sel.value = tema;
+    const msg = form.querySelector<HTMLElement>('.prijava-msg')!;
+    const show = (t: string, k: 'ok' | 'error') => { msg.hidden = false; msg.textContent = t; msg.className = `prijava-msg is-${k}`; };
+    form.addEventListener('submit', async ev => {
+      ev.preventDefault();
+      const fd = new FormData(form); const d = Object.fromEntries(fd.entries()) as Record<string, string>;
+      if (!d.ime?.trim() || !d.email?.trim() || !d.poruka?.trim()) return show('Ispuni ime, e-mail i poruku.', 'error');
+      if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(d.email)) return show('Provjeri e-mail adresu.', 'error');
+      if (!fd.get('consent')) return show('Potvrdi da se slažeš s korištenjem podataka.', 'error');
+      const btn = form.querySelector<HTMLButtonElement>('button[type=submit]')!; btn.disabled = true; btn.textContent = 'Šaljemo…';
+      try {
+        const r = await fetch('/api/kontakt.php', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(d) });
+        const j = await r.json().catch(() => ({}));
+        if (!r.ok || !j.ok) throw new Error(j.message || 'Slanje trenutno ne radi. Piši nam na organizacija@kvizovi.hr.');
+        form.classList.add('is-done'); form.classList.add('prijava'); show('Hvala! Poruka je poslana, javljamo se uskoro.', 'ok');
+      } catch (e) { show((e as Error).message, 'error'); btn.disabled = false; btn.textContent = 'Pošalji'; }
+    });
+  }
+  document.addEventListener('astro:page-load', init);
+</script>
+<style>
+  .contact { display: grid; gap: 40px; align-items: start; }
+  @media (min-width: 960px) { .contact { grid-template-columns: 1fr 1.1fr; gap: 64px; } }
+  .contact-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 12px; }
+  .contact-list a { display: flex; align-items: center; gap: 16px; padding: 14px 16px; border-radius: var(--r-lg); background: #fff; border: 1px solid rgb(var(--rule) / .09); box-shadow: 0 1px 2px rgb(var(--rule) / .04), 0 8px 24px -14px rgb(var(--rule) / .3); color: var(--ink); text-decoration: none !important; transition: transform .3s var(--ease-out), box-shadow .3s; line-height: 1.3; }
+  .contact-list a:hover { transform: translateY(-2px); box-shadow: var(--sh-card); }
+  .contact-ico { width: 44px; height: 44px; display: grid; place-items: center; border-radius: var(--r-md); background: var(--dark); color: var(--on-dark); flex: none; }
+  .social-lg { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 16px; border-radius: var(--r-pill); background: #fff; border: 1px solid rgb(var(--rule) / .1); color: var(--ink); font-weight: 700; text-decoration: none !important; }
+  .social-lg:hover { background: var(--dark); color: var(--on-dark); }
+  .company p { font-size: var(--fs-small); color: var(--ink-md); }
+  .company p strong { color: var(--ink); }
+  .contact-form .hp { position: absolute; left: -9999px; width: 1px; height: 1px; opacity: 0; }
+  .contact-form.is-done .stack > :not(.prijava-msg) { display: none; }
+</style>
