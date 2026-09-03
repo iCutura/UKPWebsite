@@ -79,26 +79,52 @@ test('tap targets are big enough to hit', async ({ page }, testInfo) => {
   expect(small).toEqual([]);
 });
 
-test('the hero dissolves into the page instead of stopping at an edge', async ({ page }) => {
+test('the hero dissolves into the page with no visible seam', async ({ page }) => {
+  // The scene used to stop on a hard edge against the paper below. It is now masked away at the
+  // foot, so the artwork thins out and the page shows through. Measured, because it looked
+  // "nearly right" twice before it actually was.
   await open(page, '/');
-  const seam = await page.evaluate(() => {
+  const step = await page.evaluate(async () => {
     const hero = document.querySelector('[data-hero]') as HTMLElement;
-    const fade = document.querySelector('.hero-dissolve') as HTMLElement;
-    if (!fade) return { missing: true } as const;
-    const h = hero.getBoundingClientRect(), f = fade.getBoundingClientRect();
-    return {
-      missing: false,
-      fadeHeight: Math.round(f.height),
-      reachesBottom: Math.round(f.bottom) >= Math.round(h.bottom),
-      contentClearsFade: Math.round(document.querySelector('.hero-cta')!.getBoundingClientRect().bottom) <= Math.round(f.top) + 8,
-    } as const;
+    const heroBottom = hero.getBoundingClientRect().height;
+    window.scrollTo(0, heroBottom - 400);
+    await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+
+    // Read the rendered colours either side of the join straight out of the compositor.
+    const y = Math.round(hero.getBoundingClientRect().bottom);
+    const probe = (yy: number) => {
+      const el = document.elementFromPoint(20, yy);
+      return el ? getComputedStyle(el).backgroundColor : '';
+    };
+    return { above: probe(y - 6), below: probe(y + 6), heroHasOwnDarkGround: getComputedStyle(hero).backgroundColor };
   });
-  expect(seam.missing).toBe(false);
-  if (!seam.missing) {
-    expect(seam.fadeHeight).toBeGreaterThan(90);
-    expect(seam.reachesBottom).toBe(true);
-    expect(seam.contentClearsFade).toBe(true);
-  }
+  // The hero must not paint its own opaque ground, or the mask has nothing to reveal.
+  expect(step.heroHasOwnDarkGround).toMatch(/rgba\(0, 0, 0, 0\)|transparent/);
+
+  const masked = await page.evaluate(() => {
+    const scene = document.querySelector('[data-scene]') as HTMLElement;
+    const cs = getComputedStyle(scene);
+    return (cs.maskImage || (cs as unknown as { webkitMaskImage: string }).webkitMaskImage || '');
+  });
+  expect(masked, 'the scene needs a fade-out mask at its foot').toContain('gradient');
+});
+
+test('the hero content clears the faded foot', async ({ page }) => {
+  await open(page, '/');
+  const ok = await page.evaluate(() => {
+    const hero = document.querySelector('[data-hero]')!.getBoundingClientRect();
+    const cta = document.querySelector('.hero-cta')!.getBoundingClientRect();
+    // getPropertyValue hands back the unresolved clamp(), so measure it on a throwaway element.
+    const heroEl = document.querySelector('[data-hero]') as HTMLElement;
+    const probe = document.createElement('div');
+    probe.style.cssText = 'height: var(--hero-fade); position: absolute; visibility: hidden';
+    heroEl.appendChild(probe);
+    const fade = probe.getBoundingClientRect().height;
+    probe.remove();
+    return { gap: Math.round(hero.bottom - cta.bottom), fade: Math.round(fade) };
+  });
+  // Buttons must sit above the region where the artwork has thinned to paper.
+  expect(ok.gap).toBeGreaterThanOrEqual(ok.fade - 4);
 });
 
 test('the artwork does not cover the headline', async ({ page }, testInfo) => {

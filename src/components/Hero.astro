@@ -20,7 +20,6 @@ const L = (name: string, w: number) => `/img/layers/${s}/${name}-${w}.webp`;
     <div class="layer layer-mascot" data-depth="0.62"><div class="drift"><img src={L('mascot', 1200)} srcset={`${L('mascot', 720)} 720w, ${L('mascot', 1200)} 1200w`} sizes="(min-width: 1000px) 36vw, 90vw" width="1005" height="996" alt="" fetchpriority="high" decoding="async" data-float /></div></div>
     <canvas class="hero-gl" data-hero-gl></canvas>
     <div class="layer layer-foliage" data-depth="1"><div class="drift"><img src={L('foliage', 1536)} srcset={`${L('foliage', 900)} 900w, ${L('foliage', 1536)} 1536w`} sizes="100vw" alt="" decoding="async" /></div></div>
-    <div class="hero-dissolve"></div>
   </div>
 
   <div class="container hero-content">
@@ -37,8 +36,19 @@ const L = (name: string, w: number) => `/img/layers/${s}/${name}-${w}.webp`;
 </section>
 
 <style>
-  .hero { position: relative; isolation: isolate; min-height: 100svh; display: grid; align-items: end; color: var(--on-dark); background: #0f0e0b; overflow: hidden; }
-  .scene { position: absolute; inset: 0; z-index: 0; pointer-events: none; }
+  .hero {
+    --hero-fade: clamp(130px, 18svh, 220px);
+    position: relative; isolation: isolate; min-height: 100svh; display: grid; align-items: end;
+    color: var(--on-dark); background: transparent; overflow: hidden;
+  }
+  /* The artwork itself thins out into the page, rather than a pale veil being drawn over it:
+     the scene is masked away at the foot and the paper ground shows through the foliage. */
+  .scene {
+    position: absolute; inset: 0; z-index: 0; pointer-events: none;
+    background: #0f0e0b;
+    -webkit-mask-image: linear-gradient(180deg, #000 calc(100% - var(--hero-fade)), transparent 100%);
+    mask-image: linear-gradient(180deg, #000 calc(100% - var(--hero-fade)), transparent 100%);
+  }
   .layer { position: absolute; will-change: transform; }
   .drift { width: 100%; height: 100%; will-change: transform; }
   .layer img { display: block; width: 100%; height: 100%; object-fit: cover; }
@@ -52,24 +62,18 @@ const L = (name: string, w: number) => `/img/layers/${s}/${name}-${w}.webp`;
   .hero-gl { position: absolute; inset: 0; z-index: 1; width: 100%; height: 100%; pointer-events: none; }
   .layer-foliage { inset: -3% -8% -2%; z-index: 2; }
   .layer-foliage img { object-position: 50% 100%; }
-  /* The scene dissolves into the paper ground instead of stopping at a hard edge. */
-  .hero-dissolve {
-    position: absolute; left: 0; right: 0; bottom: -1px; z-index: 3; pointer-events: none;
-    height: clamp(120px, 16svh, 190px);
-    background: linear-gradient(180deg,
-      transparent 0%,
-      color-mix(in srgb, var(--paper) 14%, transparent) 34%,
-      color-mix(in srgb, var(--paper) 46%, transparent) 58%,
-      color-mix(in srgb, var(--paper) 82%, transparent) 78%,
-      var(--paper) 92%,
-      var(--paper) 100%);
+  .hero-content { position: relative; z-index: 4; padding-top: calc(var(--header-h) + 39svh); padding-bottom: calc(var(--hero-fade) + 24px); }
+  .hero-content::before {
+    content: ""; position: absolute; z-index: -1; left: 50%; right: auto; width: 100vw;
+    transform: translateX(-50%); top: 32%; bottom: 0; pointer-events: none;
+    background: linear-gradient(180deg, transparent, rgb(15 14 11 / .72) 34%, rgb(15 14 11 / .9) 70%);
+    -webkit-mask-image: linear-gradient(180deg, #000 calc(100% - var(--hero-fade) - 20px), transparent calc(100% - var(--hero-fade) * .4));
+    mask-image: linear-gradient(180deg, #000 calc(100% - var(--hero-fade) - 20px), transparent calc(100% - var(--hero-fade) * .4));
   }
-  .hero-content { position: relative; z-index: 4; padding-top: calc(var(--header-h) + 39svh); padding-bottom: clamp(126px, 17svh, 200px); }
-  .hero-content::before { content: ""; position: absolute; z-index: -1; left: 50%; right: auto; width: 100vw; transform: translateX(-50%); top: 32%; bottom: 0; background: linear-gradient(180deg, transparent, rgb(15 14 11 / .72) 34%, rgb(15 14 11 / .9)); pointer-events: none; }
   .hero-title { max-width: 12ch; color: var(--on-dark); text-shadow: 0 2px 24px rgb(0 0 0 / .35); }
   .hero-lead { margin-top: 22px; color: var(--on-dark-md); max-width: 52ch; }
   .hero-cta { margin-top: 30px; }
-  .hero-scroll { position: absolute; z-index: 4; right: var(--gutter); bottom: 26px; width: 26px; height: 42px; border: 2px solid rgb(255 247 240 / .35); border-radius: 14px; display: none; }
+  .hero-scroll { position: absolute; z-index: 4; right: var(--gutter); bottom: calc(var(--hero-fade) - 8px); width: 26px; height: 42px; border: 2px solid rgb(255 247 240 / .35); border-radius: 14px; display: none; }
   .hero-scroll span { position: absolute; left: 50%; top: 7px; width: 4px; height: 8px; margin-left: -2px; border-radius: 2px; background: var(--accent-soft); animation: scrollhint 1.8s ease-in-out infinite; }
   @keyframes scrollhint { 0%, 100% { transform: translateY(0); opacity: 1; } 70% { transform: translateY(12px); opacity: 0; } }
   .chip-live { background: rgb(255 255 255 / .1); color: var(--on-dark); border-color: rgb(255 255 255 / .16); }
@@ -80,9 +84,15 @@ const L = (name: string, w: number) => `/img/layers/${s}/${name}-${w}.webp`;
     .hero { min-height: min(100svh, 980px); align-items: center; }
     .layer-ukp { left: auto; right: 14%; margin: 0; top: calc(var(--header-h) + 1vh); width: min(33vw, 530px); }
     .layer-mascot { left: auto; right: 17%; margin: 0; top: calc(var(--header-h) + 14vh); width: min(29vw, 460px); }
-    .hero-content { padding-top: calc(var(--header-h) + 5vh); padding-bottom: clamp(185px, 26vh, 300px); }
-    .hero-dissolve { height: clamp(180px, 26svh, 300px); }
-    .hero-content::before { top: 0; background: linear-gradient(90deg, rgb(15 14 11 / .82) 0%, rgb(15 14 11 / .5) 34%, transparent 62%); }
+    .hero { --hero-fade: clamp(170px, 24svh, 280px); }
+    .hero-content { padding-top: calc(var(--header-h) + 5vh); padding-bottom: calc(var(--hero-fade) + 30px); }
+    .hero-content::before {
+      top: 0;
+      background: linear-gradient(90deg, rgb(15 14 11 / .82) 0%, rgb(15 14 11 / .5) 34%, transparent 62%);
+      /* Stop the scrim short of the fade, or it repaints the scene dark right at the page join. */
+      -webkit-mask-image: linear-gradient(180deg, #000 calc(100% - var(--hero-fade) - 40px), transparent calc(100% - var(--hero-fade) * .35));
+      mask-image: linear-gradient(180deg, #000 calc(100% - var(--hero-fade) - 40px), transparent calc(100% - var(--hero-fade) * .35));
+    }
     .hero-text { max-width: 620px; }
     .hero-title { font-size: clamp(3.6rem, 6.4vw, 7.2rem); }
     .hero-scroll { display: block; }
