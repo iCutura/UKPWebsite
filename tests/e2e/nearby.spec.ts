@@ -6,12 +6,16 @@ const SPLIT = { latitude: 43.5081, longitude: 16.4402 };
 test.describe('quizzes near me', () => {
   test.use({ permissions: ['geolocation'], geolocation: SPLIT });
 
-  test('reorders locations by distance and labels each one', async ({ page }) => {
+  test('reorders locations by distance and labels each one', async ({ page, context }) => {
+    // Permission is already granted here, so the page applies distances on arrival. Take the
+    // built order from a visit without permission, which is what a first-time visitor sees.
+    await context.clearPermissions();
     await open(page, '/lokacije/');
     const before = await page.evaluate(() =>
       [...document.querySelectorAll('[data-location-id]')].slice(0, 3).map(el => (el as HTMLElement).dataset.city));
 
-    await page.locator('[data-nearby-go]').click();
+    await context.grantPermissions(['geolocation']);
+    await open(page, '/lokacije/');
     await expect(page.locator('[data-nearby-status]')).toContainText('udaljenosti', { timeout: 10000 });
 
     const after = await page.evaluate(() =>
@@ -49,12 +53,15 @@ test.describe('quizzes near me', () => {
     expect(lastHasBadge).toBe(false);
   });
 
-  test('reset puts the original order back', async ({ page }) => {
+  test('reset puts the original order back', async ({ page, context }) => {
+    // The order the page was built in, seen without permission the way a first visit is.
+    await context.clearPermissions();
     await open(page, '/lokacije/');
     const before = await page.evaluate(() =>
       [...document.querySelectorAll('[data-location-id]')].map(el => (el as HTMLElement).dataset.locationId));
 
-    await page.locator('[data-nearby-go]').click();
+    await context.grantPermissions(['geolocation']);
+    await open(page, '/lokacije/');
     await expect(page.locator('[data-nearby-reset]')).toBeVisible({ timeout: 10000 });
     await page.locator('[data-nearby-reset]').click();
 

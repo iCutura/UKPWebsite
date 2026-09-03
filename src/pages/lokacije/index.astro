@@ -142,6 +142,17 @@ const coords = Object.fromEntries(locations.map(l => [l.id, { lat: l.lat, lng: l
   .search .input { padding-left: 46px; min-height: 48px; }
   .filter-chips, .filter-cities { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
   .filter-tools { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; }
+  @media (max-width: 759px) {
+    .filter-bar { padding: 8px 0; }
+    /* One swipeable row each, instead of two wrapped rows and a stacked tool column. */
+    .filter-chips { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch; padding-bottom: 2px; }
+    .filter-chips::-webkit-scrollbar { display: none; }
+    .filter-chips .fchip { flex: 0 0 auto; }
+    .filter-tools { gap: 8px 10px; }
+    .filter-tools .nearby { flex: 1 1 auto; min-width: 0; }
+    /* The privacy line gets its own full-width line so it stays one line, not three. */
+    .filter-tools .nearby-note { flex-basis: 100%; }
+  }
   .view-switch { display: inline-flex; padding: 3px; border-radius: var(--r-pill); background: rgb(var(--rule) / .06); border: 1px solid rgb(var(--rule) / .08); }
   /* 38px keeps the switch comfortable to hit on a phone without making it loud on desktop. */
   .view-btn { min-height: 38px; padding: 0 16px; border-radius: var(--r-pill); font-size: .8125rem; font-weight: 700; color: var(--ink-md); transition: background-color .2s, color .2s; }

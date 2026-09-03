@@ -4,6 +4,7 @@ import Icon from '../components/Icon.astro';
 import Hero from '../components/Hero.astro';
 import SectionHead from '../components/SectionHead.astro';
 import AppBadges from '../components/AppBadges.astro';
+import NearbyControls from '../components/NearbyControls.astro';
 import { SITE } from '../config';
 import { getEvents, getNews, getMeta, getCities } from '../lib/data';
 import { eventCardHTML, newsCardHTML } from '../lib/render';
@@ -15,6 +16,7 @@ const news = getNews().slice(0, 3);
 const meta = getMeta();
 const cities = getCities();
 const countries = new Set(cities.map(c => c.country).filter(Boolean)).size || 2;
+const eventCoords = Object.fromEntries(getEvents().map(e => [e.id, { lat: e.lat, lng: e.lng }]));
 const gallery = ['ukp-kviz', 'urbana-kviz-prica', 'ukp-kvizovi', 'ukp-kvizovi-hr', 'urban', 'urbana-kvart-prica-organiziranje-kviza'];
 ---
 <Base title="Naslovna" onArt>
@@ -33,6 +35,9 @@ const gallery = ['ukp-kviz', 'urbana-kviz-prica', 'ukp-kvizovi', 'ukp-kvizovi-hr
   <section class="section-tight" id="ovaj-tjedan">
     <div class="container">
       <SectionHead eyebrow="Sljedeći termini" title="Kvizovi koji dolaze" href="/dogadaji/" linkLabel="Svi događaji" />
+      <div class="home-nearby" data-reveal>
+        <NearbyControls grid="[data-live='events']" item="data-event-id" coords={eventCoords} label="Pokaži najbliže meni" />
+      </div>
     </div>
     <div class="container">
       <div class="rail" data-live="events" data-limit="8" data-empty="Trenutno nema zakazanih kvizova. Zaprati nas i javit ćemo ti se čim krene nova sezona." set:html={events.length ? events.map(e => eventCardHTML(e)).join('') : '<div class="empty">Trenutno nema zakazanih kvizova.</div>'} />
@@ -129,6 +134,8 @@ const gallery = ['ukp-kviz', 'urbana-kviz-prica', 'ukp-kvizovi', 'ukp-kvizovi-hr
 </Base>
 
 <style>
+  .home-nearby { margin: -8px 0 20px; }
+
   .hero-stats { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px 24px; margin: 0; padding: clamp(28px, 4vw, 44px) 0; border-bottom: 1px solid rgb(var(--rule) / .1); }
   .hero-stats dt { font-family: var(--font-sans); font-size: var(--fs-caption); font-weight: 600; text-transform: uppercase; letter-spacing: .1em; color: var(--ink-md); }
   .hero-stats dd { color: var(--ink); }

@@ -36,6 +36,8 @@ async function refresh() {
       }
       box.querySelectorAll('[data-reveal]').forEach(el => el.classList.add('is-in'));
     } catch (e) { /* keep the server-rendered snapshot */ }
+    // Marked whether the refresh succeeded or fell back, so a waiting test never hangs.
+    box.dataset.liveDone = '1';
   }
   document.querySelectorAll<HTMLElement>('[data-live-count]').forEach(async el => {
     try { const list = upcomingEvents(await load<EventItem[]>('events.json'), now); el.textContent = String(list.length); } catch {}

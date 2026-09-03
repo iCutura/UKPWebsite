@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { open, PAGES } from './support';
+import { open, clickCard, PAGES } from './support';
 
 for (const path of PAGES) {
   test(`${path} renders without errors`, async ({ page }) => {
@@ -28,7 +28,7 @@ test('a location page carries its venue, city and a way back', async ({ page }) 
   await open(page, '/lokacije/');
   const first = page.locator('[data-location-id]').first();
   const venue = (await first.locator('.loc-title').textContent())!.trim();
-  await first.click();
+  await clickCard(page, '[data-location-id]');
   await page.waitForLoadState('load');
 
   await expect(page.locator('h1')).toContainText(venue);

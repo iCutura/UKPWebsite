@@ -9,7 +9,21 @@ import Base from '../layouts/Base.astro';
       <div class="article-body legal">
         <p>Web stranica kvizovi.hr ne koristi kolačiće za praćenje ni oglašavanje i ne postavlja kolačiće trećih strana.</p>
         <h2>Što pohranjujemo na vašem uređaju</h2>
-        <p>Stranica u lokalnoj pohrani preglednika (localStorage) pamti samo dvije postavke koje sami odaberete: godišnje doba teme (<code>ukp-season</code>) i isključene animacije (<code>ukp-motion</code>). Te postavke ne napuštaju vaš uređaj i možete ih obrisati u postavkama preglednika.</p>
+        <p>Stranica u lokalnoj pohrani preglednika (localStorage) pamti samo postavke koje sami odaberete. Te postavke ne napuštaju vaš uređaj.</p>
+        <ul>
+          <li><code>ukp-season</code> — odabrano godišnje doba teme.</li>
+          <li><code>ukp-motion</code> — isključene animacije.</li>
+          <li><code>ukp-geo</code> — vaša odluka o prikazu udaljenosti do kvizova. Zapisujemo samo odluku i datum; <strong>koordinate se nikada ne spremaju</strong>.</li>
+        </ul>
+
+        <h2>Lokacija</h2>
+        <p>Ako zatražite prikaz najbližih kvizova, preglednik nas pita za dopuštenje i tek nam tada javlja vaš približan položaj. Položaj se koristi isključivo na vašem uređaju kako bi se popis poredao po udaljenosti. Ne šaljemo ga našim poslužiteljima, ne spremamo ga i ne dijelimo ni s kim.</p>
+        <p>Nikada ne tražimo lokaciju sami od sebe pri otvaranju stranice, a ako jednom odbijete, više ne pitamo.</p>
+        <p>
+          <button type="button" class="btn btn-ghost btn-sm" data-forget-geo>Zaboravi moju odluku o lokaciji</button>
+          <span class="hint" data-forget-geo-done hidden>Obrisano.</span>
+        </p>
+        <p>Dopuštenje za lokaciju možete povući i u postavkama preglednika za ovu stranicu.</p>
         <h2>Ugrađeni sadržaj</h2>
         <p>Poveznice na Google karte, Instagram, Facebook, LinkedIn, App Store i Google Play vode na te servise; oni primjenjuju vlastita pravila o kolačićima tek kad ih posjetite.</p>
         <h2>Ako u budućnosti dodamo analitiku</h2>
@@ -19,3 +33,14 @@ import Base from '../layouts/Base.astro';
     </div>
   </section>
 </Base>
+
+<script>
+  import { forgetDecision } from '../lib/consent';
+  document.addEventListener('astro:page-load', () => {
+    const btn = document.querySelector<HTMLButtonElement>('[data-forget-geo]');
+    const done = document.querySelector<HTMLElement>('[data-forget-geo-done]');
+    if (!btn || btn.dataset.bound) return;
+    btn.dataset.bound = '1';
+    btn.addEventListener('click', () => { forgetDecision(); if (done) done.hidden = false; });
+  });
+</script>

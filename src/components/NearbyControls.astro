@@ -4,12 +4,16 @@ import Icon from './Icon.astro';
 interface Props { grid: string; item?: string; coords: Record<string | number, { lat: number | null; lng: number | null }>; label?: string }
 const { grid, item = 'data-location-id', coords, label = 'Kvizovi blizu mene' } = Astro.props;
 ---
-<div class="nearby" data-nearby data-nearby-grid={grid} data-nearby-item={item} data-nearby-coords={JSON.stringify(coords)}>
+<div class="nearby" data-nearby data-nearby-grid={grid} data-nearby-item={item} data-nearby-coords={JSON.stringify(coords)} data-mode="invite">
   <button type="button" class="chip fchip nearby-go" data-nearby-go>
     <Icon name="pin" size={14} /> <span data-nearby-label>{label}</span>
   </button>
   <button type="button" class="link-btn nearby-reset" data-nearby-reset hidden>Poništi</button>
   <p class="nearby-status" data-nearby-status hidden role="status" aria-live="polite"></p>
+  <p class="nearby-note" data-nearby-invite>
+    Lokacija ostaje na tvom uređaju.
+    <button type="button" class="link-btn" data-nearby-dismiss>Ne, hvala</button>
+  </p>
 </div>
 
 <style is:global>
@@ -19,6 +23,12 @@ const { grid, item = 'data-location-id', coords, label = 'Kvizovi blizu mene' } 
   .nearby-reset { color: var(--accent-deep); }
   .nearby-status { flex-basis: 100%; margin: 0; font-size: var(--fs-caption); color: var(--ink-md); }
   .nearby-status.is-error { color: var(--error); }
+  .nearby { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
+  .nearby-note { margin: 0; font-size: var(--fs-caption); color: var(--ink-lo); }
+  .nearby-note .link-btn { margin-left: 8px; font-size: var(--fs-caption); color: var(--ink-md); }
+  /* Both of these are real controls on a phone, so they get a real tap target. */
+  .nearby .link-btn { min-height: 36px; padding: 0 4px; }
+  .nearby[data-mode="hide"] .nearby-go { display: none; }
   .nearby-badge {
     display: inline-flex; align-items: center; height: 24px; padding: 0 9px; border-radius: var(--r-pill);
     font-size: .75rem; font-weight: 700; letter-spacing: .02em; white-space: nowrap;
