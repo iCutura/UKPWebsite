@@ -5,8 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "astro dev",
-    "build": "node scripts/fetch-data.mjs && astro build",
-    "build:offline": "astro build",
+    "build": "node scripts/fetch-data.mjs && astro build && node scripts/build-sitemap.mjs",
+    "build:offline": "astro build && node scripts/build-sitemap.mjs",
     "preview": "astro preview",
     "data": "node scripts/fetch-data.mjs",
     "assets": "node scripts/build-assets.mjs",
@@ -17,7 +17,8 @@
     "test:watch": "vitest tests/unit",
     "test:e2e": "playwright test",
     "test:all": "npm run test && npm run test:e2e",
-    "map": "node scripts/build-map.mjs"
+    "map": "node scripts/build-map.mjs",
+    "sitemap": "node scripts/build-sitemap.mjs"
   },
   "dependencies": {
     "astro": "^5.13.0",
