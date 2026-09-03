@@ -41,6 +41,20 @@ function bind() {
     const resendBtn = panel.querySelector<HTMLButtonElement>('[data-resend]')!;
     const state: { requestId: number | null; resendAt: number; timer: number | null } = { requestId: null, resendAt: 0, timer: null };
 
+    /**
+     * A link an organiser sends to their teams: /dogadaji/3145/?prijava opens the form straight
+     * away, so scanning a code at the bar is one step rather than three. Silently ignored when
+     * this event is closed or cancelled, because then there is no form to open.
+     */
+    const openFromLink = () => {
+      const asked = new URLSearchParams(location.search).has('prijava') || location.hash === '#prijava';
+      if (!asked || !panel.querySelector('[data-step-panel="form"]')) return;
+      show('form');
+      // Land on the panel with the first field in reach, without stealing focus on a phone
+      // keyboard the reader did not ask for.
+      requestAnimationFrame(() => panel.scrollIntoView({ block: 'start', behavior: 'smooth' }));
+    };
+
     const show = (step: string) => { panel.dataset.step = step; panels.forEach(p => { p.hidden = p.dataset.stepPanel !== step; }); panel.querySelector<HTMLElement>(`[data-step-panel="${step}"] .prijava-msg`)?.setAttribute('hidden', ''); if (step === 'code') setTimeout(() => codeForm.querySelector<HTMLInputElement>('input[name=code]')?.focus(), 50); };
     const msg = (f: HTMLElement, text: string, kind: 'ok' | 'error' | 'info') => {
       const el = f.querySelector<HTMLElement>('.prijava-msg')!;
@@ -116,6 +130,7 @@ function bind() {
       try { const j = await call({ action: 'resend', eventId, requestId: state.requestId }); started(j); msg(codeForm, 'Novi kod je poslan.', 'info'); }
       catch (e) { msg(codeForm, (e as Error).message, 'error'); resendBtn.disabled = false; }
     });
+    openFromLink();
   });
 }
 document.addEventListener('astro:page-load', bind);

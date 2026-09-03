@@ -49,7 +49,7 @@ const desc = `Pub kviz Urbane kviz priče u ${l.city.name}: ${l.venueName}${rhyt
           {l.address && <p class="mt-3" data-reveal><a class="sec-link" href={mapsUrl(l)} rel="noopener" target="_blank"><Icon name="pin" size={18} /> {l.address} <Icon name="external" size={16} /></a></p>}
           {l.description && <div class="prose mt-3" data-reveal set:html={textToHTML(l.description)} />}
           <div class="cluster gap-2 mt-4" data-reveal>
-            {next && !next.isCancelled ? <a href={next.url} class="btn btn-accent btn-lg" data-magnetic="10">Prijavi ekipu na sljedeći kviz <Icon name="arrow-right" /></a> : <a href="/lokacije/" class="btn btn-dark btn-lg">Pogledaj druge lokacije</a>}
+            {next && !next.isCancelled ? <a href={`${next.url}?prijava`} class="btn btn-accent btn-lg" data-magnetic="10">Prijavi ekipu na sljedeći kviz <Icon name="arrow-right" /></a> : <a href="/lokacije/" class="btn btn-dark btn-lg">Pogledaj druge lokacije</a>}
             {l.whatsapp && <a href={l.whatsapp} class="btn btn-ghost btn-lg" rel="noopener" target="_blank"><Icon name="whatsapp" /> WhatsApp grupa</a>}
           </div>
         </div>
@@ -88,6 +88,16 @@ const desc = `Pub kviz Urbane kviz priče u ${l.city.name}: ${l.venueName}${rhyt
       </div>
     </div>
   </section>
+  {next && !next.isCancelled && <div data-next-prijava={`${next.url}?prijava`} hidden></div>}
+  <script>
+    // /lokacije/<venue>/?prijava is the link a venue shares once. It forwards to whichever quiz
+    // is next, so a printed code keeps working week after week.
+    document.addEventListener('astro:page-load', () => {
+      if (!new URLSearchParams(location.search).has('prijava')) return;
+      const target = document.querySelector<HTMLElement>('[data-next-prijava]')?.dataset.nextPrijava;
+      if (target) location.replace(target);
+    });
+  </script>
 </Base>
 <style>
   .app-cta { display: grid; }
