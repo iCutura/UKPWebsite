@@ -4,6 +4,7 @@
 import fs from 'node:fs/promises';
 import crypto from 'node:crypto';
 import sharp from 'sharp';
+sharp.concurrency(1);
 
 // --- env (.env without a dependency) ---
 try {
@@ -55,8 +56,14 @@ async function mirror(url) {
       try {
         const r = await fetch(src, { headers: m ? H : { 'User-Agent': H['User-Agent'] }, signal: AbortSignal.timeout(30000) });
         if (!r.ok) throw new Error(String(r.status));
+        // Some venue records point at a Facebook or Google *page* rather than an image. Handing
+        // that HTML to libvips is at best a wasted decode and at worst a native abort that takes
+        // the whole build down, which is how a deploy died mid-flight.
+        const type = r.headers.get('content-type') || '';
+        if (!/^image\//i.test(type)) throw new Error(`not an image (${type.split(';')[0] || 'no content-type'})`);
         const buf = Buffer.from(await r.arrayBuffer());
-        const img = sharp(buf, { animated: false }).rotate();
+        if (buf.length < 64) throw new Error('empty image');
+        const img = sharp(buf, { animated: false, failOn: 'error' }).rotate();
         await img.clone().resize({ width: 1600, withoutEnlargement: true }).webp({ quality: 78 }).toFile(full);
         await img.clone().resize({ width: 480, withoutEnlargement: true }).webp({ quality: 74 }).toFile(small);
       } catch (e) { console.warn(`  image failed ${url.slice(0, 80)}: ${String(e.message).slice(0, 60)}`); return m ? { full: src, small: src } : null; }
