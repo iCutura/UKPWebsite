@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { mapsUrl, textToHTML, deadlineText, eventJsonLd, placeLine, eventGoneHTML } from '../../src/lib/detail';
+import { mapsUrl, textToHTML, deadlineText, eventJsonLd, placeLine, eventGoneHTML, eventFactsHTML } from '../../src/lib/detail';
 import type { EventItem } from '../../src/lib/data';
 
 function event(over: Partial<EventItem> = {}): EventItem {
@@ -116,5 +116,17 @@ describe('eventGoneHTML', () => {
   });
   it('copes without a venue link', () => {
     expect(eventGoneHTML(null)).toContain('href="/dogadaji/"');
+  });
+});
+
+describe('eventFactsHTML', () => {
+  it('prints the fee in the event currency and the free places', () => {
+    const html = eventFactsHTML(event({ feeAmount: 25, feeCurrency: 'BAM', maxTeams: 18, registered: 12, spotsRemaining: 6 }));
+    expect(html).toContain('25 KM po ekipi');
+    expect(html).toContain('6 slobodnih mjesta za ekipe');
+    expect(html).toContain('minimalno 15 pitanja');
+  });
+  it('leaves the fee tile out when no fee is recorded', () => {
+    expect(eventFactsHTML(event({ feeAmount: null }))).not.toContain('Kotizacija');
   });
 });

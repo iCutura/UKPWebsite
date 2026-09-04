@@ -6,16 +6,19 @@
 import type { EventItem, Location, NewsItem } from '../lib/data';
 import { sortLocations, upcomingEvents } from '../lib/order';
 import { eventCardHTML, locationCardHTML, newsCardHTML } from '../lib/render';
-import { eventGoneHTML } from '../lib/detail';
+import { eventGoneHTML, eventHeaderHTML, eventFactsHTML } from '../lib/detail';
 
 const cache = new Map<string, Promise<unknown>>();
 const load = <T,>(f: string) => { if (!cache.has(f)) cache.set(f, fetch(`/data/${f}`, { cache: 'no-cache' }).then(r => r.ok ? r.json() : Promise.reject(r.status))); return cache.get(f) as Promise<T>; };
 
 /**
  * A detail page is built for every upcoming event and the host keeps it until the next deploy, so
- * an event hidden or removed in the meantime still has a live-looking page with an open
- * registration panel. Checked against the snapshot the cron rewrites every 15 minutes: when the
- * event is gone, the panel says so instead of inviting a sign-up the API will refuse.
+ * it shows the event as it was at build time. Checked against the snapshot the cron rewrites
+ * every 15 minutes: the header (status, fee, time) and the fact tiles are redrawn from the fresh
+ * record, so a fee or a cap corrected in the admin shows within the quarter hour; and when the
+ * event is gone (hidden or deleted), the panel says so instead of inviting a sign-up the API will
+ * refuse. The registration panel itself is left alone: it is already wired up, and the API
+ * re-checks every rule at submit time anyway.
  */
 async function checkEventPage() {
   const page = document.querySelector<HTMLElement>('[data-event-page]');
@@ -24,7 +27,14 @@ async function checkEventPage() {
   try {
     const list = await load<EventItem[]>('events.json');
     // An empty snapshot is more likely a failed refresh than a season with no quizzes at all.
-    if (!list.length || list.some(e => String(e.id) === page.dataset.eventPage)) return;
+    if (!list.length) return;
+    const fresh = list.find(e => String(e.id) === page.dataset.eventPage);
+    if (fresh) {
+      const head = page.querySelector<HTMLElement>('.evd-head'), facts = page.querySelector<HTMLElement>('.facts');
+      if (head) head.outerHTML = eventHeaderHTML(fresh);
+      if (facts) facts.outerHTML = eventFactsHTML(fresh);
+      return;
+    }
     page.classList.add('is-gone');
     const chip = page.querySelector<HTMLElement>('.chip-status');
     if (chip) { chip.className = 'chip chip-status chip-closed'; chip.textContent = 'Termin nije dostupan'; }

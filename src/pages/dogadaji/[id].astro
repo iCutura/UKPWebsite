@@ -3,9 +3,9 @@ import Base from '../../layouts/Base.astro';
 import Icon from '../../components/Icon.astro';
 import SectionHead from '../../components/SectionHead.astro';
 import { getEvents, getLocation, eventsForLocation, type EventItem } from '../../lib/data';
-import { eventHeaderHTML, registrationPanelHTML, eventJsonLd, mapsUrl, textToHTML } from '../../lib/detail';
+import { eventHeaderHTML, eventFactsHTML, registrationPanelHTML, eventJsonLd, mapsUrl, textToHTML } from '../../lib/detail';
 import { eventCardHTML } from '../../lib/render';
-import { longDate, parseApiDate, time, fee, spotsText } from '../../lib/format';
+import { longDate, parseApiDate, time, fee } from '../../lib/format';
 import { SITE } from '../../config';
 
 export function getStaticPaths() {
@@ -27,12 +27,7 @@ const desc = `${e.name || 'Pub kviz'} u ${e.venueName}, ${e.city.name}: ${longDa
       <div class="evd mt-4" data-event-page={e.id} data-location-url={e.locationUrl ?? '/lokacije/'}>
         <div class="evd-main" data-reveal>
           <Fragment set:html={eventHeaderHTML(e)} />
-          <dl class="facts mt-4">
-            <div class="fact"><dt>Format</dt><dd>3 kruga · minimalno 15 pitanja u svakom krugu</dd></div>
-            <div class="fact"><dt>Ekipa</dt><dd>{e.maxPlayersPerTeam ? `do ${e.maxPlayersPerTeam} igrača` : 'do 5 igrača'}</dd></div>
-            {feeTxt && <div class="fact"><dt>Kotizacija</dt><dd>{feeTxt}</dd></div>}
-            <div class="fact"><dt>Mjesta</dt><dd>{spotsText(e)}</dd></div>
-          </dl>
+          <Fragment set:html={eventFactsHTML(e)} />
           {loc?.description && <div class="prose mt-4" set:html={textToHTML(loc.description)} />}
           <div class="cluster gap-2 mt-4">
             <a class="btn btn-ghost" href={mapsUrl({ lat: e.lat, lng: e.lng, address: e.address, venueName: e.venueName, city: e.city })} rel="noopener" target="_blank"><Icon name="map" /> Kako doći</a>

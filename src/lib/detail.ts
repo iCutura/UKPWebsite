@@ -1,7 +1,7 @@
 /** Isomorphic renderers for event / news detail blocks (build time + 404 client fallback). */
 import type { EventItem, Location, NewsItem } from './data';
 import { esc, logoTile, eventStatus } from './render';
-import { parseApiDate, longDate, numericDate, time, fee, plural } from './format';
+import { parseApiDate, longDate, numericDate, time, fee, plural, spotsText } from './format';
 import { SITE } from '../config';
 
 export function mapsUrl(x: { lat: number | null; lng: number | null; address: string | null; venueName: string; city: { name: string } }): string {
@@ -37,6 +37,17 @@ export function eventHeaderHTML(e: EventItem): string {
     ${e.season ? `<span class="chip">${esc(e.season)}</span>` : ''}
   </div>
 </div>`;
+}
+
+/** The fact tiles under the event header: format, team size, fee (only when one is recorded), places. */
+export function eventFactsHTML(e: EventItem): string {
+  const feeTxt = fee(e.feeType, e.feeAmount, e.feeCurrency);
+  return `<dl class="facts mt-4">
+  <div class="fact"><dt>Format</dt><dd>3 kruga · minimalno 15 pitanja u svakom krugu</dd></div>
+  <div class="fact"><dt>Ekipa</dt><dd>${e.maxPlayersPerTeam ? `do ${e.maxPlayersPerTeam} igrača` : 'do 5 igrača'}</dd></div>
+  ${feeTxt ? `<div class="fact"><dt>Kotizacija</dt><dd>${esc(feeTxt)}</dd></div>` : ''}
+  <div class="fact"><dt>Mjesta</dt><dd>${esc(spotsText(e))}</dd></div>
+</dl>`;
 }
 
 export function registrationPanelHTML(e: EventItem, enabled: boolean): string {

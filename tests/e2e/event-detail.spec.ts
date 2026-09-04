@@ -64,3 +64,20 @@ test('a page whose event is still on the calendar keeps its registration panel',
   await expect(page.locator('[data-prijava]')).toBeVisible();
   await expect(page.locator('.evd')).not.toHaveClass(/is-gone/);
 });
+
+test('a fee corrected in the admin shows on the built page without a deploy', async ({ page }) => {
+  await open(page, '/dogadaji/');
+  const ids = await page.locator('[data-event-id]').evaluateAll(els => els.map(e => (e as HTMLElement).dataset.eventId!));
+  test.skip(ids.length === 0, 'no upcoming quizzes');
+  const id = ids[0];
+  await page.route('**/data/events.json', async route => {
+    const res = await route.fetch();
+    const list = (await res.json()) as { id: number; feeType: string | null; feeAmount: number | null; feeCurrency: string | null }[];
+    for (const e of list) if (String(e.id) === id) { e.feeType = 'PerTeam'; e.feeAmount = 25; e.feeCurrency = 'BAM'; }
+    await route.fulfill({ response: res, json: list });
+  });
+  await open(page, `/dogadaji/${id}/`);
+  await expect(page.locator('.facts')).toContainText('25 KM po ekipi');
+  await expect(page.locator('.evd-head .chip', { hasText: '25 KM po ekipi' })).toHaveCount(1);
+  await expect(page.locator('[data-prijava]')).toBeVisible();
+});
