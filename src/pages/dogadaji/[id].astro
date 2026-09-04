@@ -24,11 +24,11 @@ const desc = `${e.name || 'Pub kviz'} u ${e.venueName}, ${e.city.name}: ${longDa
   <section class="page-head">
     <div class="container">
       <nav class="crumbs" aria-label="Putanja" data-reveal><a href="/dogadaji/">Događaji</a><Icon name="arrow-right" /><a href={e.locationUrl ?? '/lokacije/'}>{e.venueName}</a></nav>
-      <div class="evd mt-4" data-event-page={e.id} data-location-url={e.locationUrl ?? '/lokacije/'}>
+      <div class="evd mt-4" data-event-page={e.id} data-location-id={e.locationId} data-location-url={e.locationUrl ?? '/lokacije/'}>
         <div class="evd-main" data-reveal>
           <Fragment set:html={eventHeaderHTML(e)} />
           <Fragment set:html={eventFactsHTML(e)} />
-          {loc?.description && <div class="prose mt-4" set:html={textToHTML(loc.description)} />}
+          <div class="prose mt-4" data-about hidden={!loc?.description} set:html={loc?.description ? textToHTML(loc.description) : ''} />
           <div class="cluster gap-2 mt-4">
             <a class="btn btn-ghost" href={mapsUrl({ lat: e.lat, lng: e.lng, address: e.address, venueName: e.venueName, city: e.city })} rel="noopener" target="_blank"><Icon name="map" /> Kako doći</a>
             {e.whatsapp && <a class="btn btn-ghost" href={e.whatsapp} rel="noopener" target="_blank"><Icon name="whatsapp" /> WhatsApp grupa</a>}

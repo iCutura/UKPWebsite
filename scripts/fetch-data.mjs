@@ -76,8 +76,25 @@ async function mirror(url) {
 const t0 = Date.now();
 console.log('fetching locations...');
 const locList = await get('/api/pub-quiz-locations');
-const details = await pool(locList, 6, l => get(`/api/pub-quiz-locations/${l.pubQuizLocationId}`).catch(e => { console.warn('  detail failed', l.pubQuizLocationId, e.message); return null; }));
-console.log(`  ${locList.length} locations, ${details.filter(Boolean).length} details`);
+// Three at a time, not six. The API allows 600 requests a minute per IP and there are ~140 of
+// these: six in flight with no pause between them earned enough 429s to outlast the retries, and
+// ten venues were built with no description, no fee and no team cap. The whole sweep is ~40 s.
+const detailOf = l => get(`/api/pub-quiz-locations/${l.pubQuizLocationId}`).catch(() => null);
+const details = await pool(locList, 3, detailOf);
+// Whatever the burst still lost, pick up one at a time before giving up on it.
+const retries = locList.map((l, i) => [l, i]).filter(([, i]) => !details[i]);
+if (retries.length) {
+  console.log(`  retrying ${retries.length} detail(s) serially`);
+  for (const [l, i] of retries) {
+    details[i] = await detailOf(l);
+    if (!details[i]) console.warn('  detail failed', l.pubQuizLocationId);
+  }
+}
+// A location whose detail was lost builds with no description, no fee and no team cap. Say so in
+// meta.json rather than shipping the gap quietly; live.ts only honours a *missing* description when
+// the snapshot is whole, so 'partial' also stops the browser blanking one the build did get right.
+const detailsState = details.every(Boolean) ? 'complete' : 'partial';
+console.log(`  ${locList.length} locations, ${details.filter(Boolean).length} details (${detailsState})`);
 const today = new Date(); const from = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
 const [events, news, reasons] = await Promise.all([
   get(`/api/pub-quiz-events?from=${from}`), get('/api/news?limit=100'), get('/api/cancellation-reasons'),
@@ -168,6 +185,7 @@ await fs.mkdir('public/data', { recursive: true });
 const write = (f, d) => fs.writeFile(`public/data/${f}`, JSON.stringify(d));
 await Promise.all([
   write('locations.json', locations), write('events.json', upcomingEvents), write('news.json', newsOut), write('cities.json', cities), write('reasons.json', reasonsOut),
-  write('meta.json', { generatedAt: new Date().toISOString(), locations: locations.length, cities: cities.length, events: upcomingEvents.length, news: newsOut.length }),
+  write('meta.json', { generatedAt: new Date().toISOString(), locations: locations.length, cities: cities.length, events: upcomingEvents.length, news: newsOut.length, locationDetails: detailsState }),
 ]);
 console.log(`done in ${((Date.now() - t0) / 1000).toFixed(0)}s: ${locations.length} locations, ${cities.length} cities, ${upcomingEvents.length} events${staleCount ? ` (${staleCount} already started, dropped)` : ''}, ${newsOut.length} news, ${imgCache.size} images`);
+if (detailsState !== 'complete') console.error(`WARNING: ${details.filter(d => !d).length} location details failed; those venues build without description/fee/caps. Re-run \`npm run data\` before deploying.`);

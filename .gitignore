@@ -65,3 +65,8 @@ Thumbs.db
 *.swp
 .idea/
 .vscode/
+
+# written by server/cron/refresh-data.php when it is run locally; lives on the host in production
+server/cron/refresh.log
+server/cron/last-ok.txt
+server/cron/cache/

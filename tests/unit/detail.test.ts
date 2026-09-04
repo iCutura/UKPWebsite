@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { mapsUrl, textToHTML, deadlineText, eventJsonLd, placeLine, eventGoneHTML, eventFactsHTML } from '../../src/lib/detail';
+import { mapsUrl, textToHTML, deadlineText, eventJsonLd, placeLine, eventGoneHTML, eventFactsHTML, aboutUpdate } from '../../src/lib/detail';
 import type { EventItem } from '../../src/lib/data';
 
 function event(over: Partial<EventItem> = {}): EventItem {
@@ -128,5 +128,42 @@ describe('eventFactsHTML', () => {
   });
   it('leaves the fee tile out when no fee is recorded', () => {
     expect(eventFactsHTML(event({ feeAmount: null }))).not.toContain('Kotizacija');
+  });
+});
+
+/**
+ * The About block is built into the page, so live.ts has to redraw it from the snapshot or an
+ * edited description waits for the next deploy. The danger is the opposite one: a cron run that
+ * loses a location's detail reports no description at all, and a naive redraw would then wipe the
+ * copy the build got right. Hence the completeness flag.
+ */
+describe('aboutUpdate', () => {
+  it('redraws the block when the snapshot has a description', () => {
+    const u = aboutUpdate({ description: 'Kviz svakog utorka' }, 'complete');
+    expect(u).toEqual({ action: 'set', html: '<p>Kviz svakog utorka</p>' });
+  });
+
+  it('keeps the built copy when the location is missing from the snapshot', () => {
+    expect(aboutUpdate(undefined, 'complete')).toEqual({ action: 'keep' });
+  });
+
+  it('keeps the built copy when a partial snapshot reports no description', () => {
+    expect(aboutUpdate({ description: null }, 'partial')).toEqual({ action: 'keep' });
+    expect(aboutUpdate({ description: '' }, 'partial')).toEqual({ action: 'keep' });
+  });
+
+  it('clears the block only when a whole snapshot says the description is gone', () => {
+    expect(aboutUpdate({ description: null }, 'complete')).toEqual({ action: 'clear' });
+    expect(aboutUpdate({ description: '   ' }, 'complete')).toEqual({ action: 'clear' });
+  });
+
+  it('still redraws a description a partial snapshot did manage to carry', () => {
+    expect(aboutUpdate({ description: 'Novi opis' }, 'partial')).toEqual({ action: 'set', html: '<p>Novi opis</p>' });
+  });
+
+  it('escapes markup arriving in the description', () => {
+    const u = aboutUpdate({ description: '<img src=x onerror=alert(1)>' }, 'complete');
+    expect(u.action).toBe('set');
+    expect('html' in u && u.html).not.toContain('<img');
   });
 });

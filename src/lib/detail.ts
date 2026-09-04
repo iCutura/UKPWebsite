@@ -202,6 +202,28 @@ export function newsArticleHTML(n: NewsItem, size?: { w: number; h: number }): s
 </article>`;
 }
 
+/** Whether a snapshot carried every location's detail; see meta.json's `locationDetails`. */
+export type DetailsState = 'complete' | 'partial';
+
+/**
+ * What the live snapshot should do to an About block that was rendered at build time.
+ *
+ * A description edited in the admin otherwise waits for the next deploy, because the block is
+ * static HTML and live.ts only ever redrew `[data-live]` card grids. Redrawing it is safe in one
+ * direction and not the other: the snapshot reports no description both when the venue genuinely
+ * has none and when the cron lost that venue's detail request, and those look identical here. So a
+ * removal is only honoured when the run reported itself whole; otherwise the built copy stands.
+ */
+export function aboutUpdate(
+  fresh: { description: string | null } | undefined,
+  details: DetailsState,
+): { action: 'keep' } | { action: 'clear' } | { action: 'set'; html: string } {
+  if (!fresh) return { action: 'keep' };
+  const text = (fresh.description || '').trim();
+  if (text) return { action: 'set', html: textToHTML(text) };
+  return details === 'complete' ? { action: 'clear' } : { action: 'keep' };
+}
+
 export function eventJsonLd(e: EventItem): string {
   const obj: Record<string, unknown> = {
     '@context': 'https://schema.org', '@type': 'Event', name: e.name || `Pub kviz · ${e.venueName}`,
