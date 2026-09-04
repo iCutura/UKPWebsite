@@ -1,0 +1,26 @@
+---
+/**
+ * /lokacije/{id}/ - a slug-free alias for every venue page. Links carry the id and a slug, and the
+ * page itself lives under the slug the build made; a link spelled another way (a venue renamed in
+ * the admin after the last deploy, or a snapshot that slugged a symbol differently) lands on the
+ * 404 page, which forwards here by id, and this forwards to wherever the page actually is. Two
+ * hops, no data dependency, and a renamed venue keeps working until the next deploy.
+ */
+import { getLocations, type Location } from '../../lib/data';
+export function getStaticPaths() {
+  return getLocations().map(l => ({ params: { id: String(l.id) }, props: { l } }));
+}
+const { l } = Astro.props as { l: Location };
+---
+<!doctype html>
+<html lang="hr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="robots" content="noindex" />
+    <meta http-equiv="refresh" content={`0; url=${l.url}`} />
+    <link rel="canonical" href={l.url} />
+    <title>{l.name}</title>
+    <script is:inline define:vars={{ url: l.url }}>location.replace(url);</script>
+  </head>
+  <body><p>Preusmjeravanje na <a href={l.url}>{l.name}</a>…</p></body>
+</html>

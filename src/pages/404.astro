@@ -40,12 +40,10 @@ import LayeredScene from '../components/LayeredScene.astro';
     const ev = clean.match(/^\/dogadaji\/(\d+)$/), nw = clean.match(/^\/novosti\/(\d+)$/), lc = clean.match(/^\/lokacije\/(\d+)(?:-[^/]*)?$/);
     try {
       // A location link carries the id and a slug; the page lives under the slug the build made.
-      // A link made from another spelling (a renamed venue, or a snapshot that slugged a symbol
-      // differently) lands here, so forward by id to wherever the snapshot says the page is.
+      // A link spelled another way (a renamed venue, or a snapshot that slugged a symbol
+      // differently) lands here, so forward by id to the built alias, which knows the real page.
       if (lc) {
-        const list = await fetch('/data/locations.json', { cache: 'no-cache' }).then(r => r.json());
-        const l = list.find((x: any) => String(x.id) === lc[1]);
-        if (l && l.url.replace(/\/+$/, '') !== clean) location.replace(l.url);
+        if (clean !== `/lokacije/${lc[1]}`) location.replace(`/lokacije/${lc[1]}/`);
         return;
       }
       if (ev) {
