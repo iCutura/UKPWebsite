@@ -81,3 +81,13 @@ test('a fee corrected in the admin shows on the built page without a deploy', as
   await expect(page.locator('.evd-head .chip', { hasText: '25 KM po ekipi' })).toHaveCount(1);
   await expect(page.locator('[data-prijava]')).toBeVisible();
 });
+
+test('a location link with the wrong slug forwards to the page by id', async ({ page }) => {
+  await open(page, '/lokacije/');
+  const href = await page.locator('a[data-location-id]').first().getAttribute('href');
+  test.skip(!href, 'no locations in the snapshot');
+  const id = href!.match(/\/lokacije\/(\d+)-/)![1];
+  await page.goto(`/lokacije/${id}-neko-drugo-ime/`, { waitUntil: 'load' });
+  await page.waitForURL(new RegExp(`/lokacije/${id}-(?!neko-drugo-ime)[a-z0-9-]+/$`), { timeout: 10000 });
+  await expect(page.locator('h1')).not.toContainText('nema odgovor');
+});

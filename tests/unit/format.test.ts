@@ -141,6 +141,12 @@ describe('slugify', () => {
   });
 });
 
+describe('slugify symbols', () => {
+  it('drops a bullet instead of spelling it', () => {
+    expect(slugify('VIVA Caffe • Lounge • Bar - Posušje')).toBe('viva-caffe-lounge-bar-posusje');
+  });
+});
+
 describe('freeSpots / spotsText', () => {
   it('says how many places are free, with the Croatian plural', () => {
     expect(spotsText({ maxTeams: 18, registered: 12, spotsRemaining: 6 })).toBe('6 slobodnih mjesta za ekipe');

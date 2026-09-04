@@ -37,8 +37,17 @@ import LayeredScene from '../components/LayeredScene.astro';
     const clean = path.replace(/\/+$/, '');
     if (legacy[clean]) { location.replace(legacy[clean]); return; }
     const live = root.querySelector<HTMLElement>('[data-nf-live]')!, stat = root.querySelector<HTMLElement>('[data-nf-static]')!;
-    const ev = clean.match(/^\/dogadaji\/(\d+)$/), nw = clean.match(/^\/novosti\/(\d+)$/);
+    const ev = clean.match(/^\/dogadaji\/(\d+)$/), nw = clean.match(/^\/novosti\/(\d+)$/), lc = clean.match(/^\/lokacije\/(\d+)(?:-[^/]*)?$/);
     try {
+      // A location link carries the id and a slug; the page lives under the slug the build made.
+      // A link made from another spelling (a renamed venue, or a snapshot that slugged a symbol
+      // differently) lands here, so forward by id to wherever the snapshot says the page is.
+      if (lc) {
+        const list = await fetch('/data/locations.json', { cache: 'no-cache' }).then(r => r.json());
+        const l = list.find((x: any) => String(x.id) === lc[1]);
+        if (l && l.url.replace(/\/+$/, '') !== clean) location.replace(l.url);
+        return;
+      }
       if (ev) {
         const list = await fetch('/data/events.json', { cache: 'no-cache' }).then(r => r.json());
         const e = list.find((x: any) => String(x.id) === ev[1]); if (!e) return;

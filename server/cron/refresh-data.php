@@ -18,10 +18,18 @@ function api(string $path, array $cfg, string $base): ?array {
   if ($res === false || $code !== 200) { fwrite(STDERR, "api $path -> $code\n"); return null; }
   $j = json_decode($res, true); return is_array($j) ? $j : null;
 }
+/**
+ * Mirrors slugify() in src/lib/format.ts exactly. The two must agree, or every card the browser
+ * redraws from this JSON links to a page that was built under a different name: iconv's
+ * transliteration turned the "•" in "VIVA Caffe • Lounge • Bar" into the letter o, and the
+ * venue's page was a 404 from every list. Croatian letters map to ASCII, accents are stripped
+ * when intl is available, and anything else outside a-z0-9 is a separator.
+ */
 function slugify(string $s): string {
-  $s = str_replace(['đ', 'Đ'], ['d', 'D'], $s);
-  $s = iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $s) ?: $s;
-  $s = strtolower(preg_replace('/[^a-z0-9]+/i', '-', $s) ?? ''); return substr(trim($s, '-'), 0, 60);
+  $s = strtr($s, ['č' => 'c', 'ć' => 'c', 'š' => 's', 'ž' => 'z', 'đ' => 'd', 'Č' => 'c', 'Ć' => 'c', 'Š' => 's', 'Ž' => 'z', 'Đ' => 'd']);
+  if (class_exists('Normalizer')) { $n = Normalizer::normalize($s, Normalizer::FORM_D); if ($n !== false) $s = preg_replace('/\p{Mn}+/u', '', $n) ?? $n; }
+  $s = preg_replace('/[^a-z0-9]+/', '-', strtolower($s)) ?? '';
+  return substr(trim($s, '-'), 0, 60);
 }
 function mirror(?string $url, string $base, string $imgDir, array $cfg): ?array {
   if (!$url) return null;
