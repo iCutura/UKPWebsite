@@ -107,6 +107,14 @@ const L = (name: string, w: number) => `/img/layers/${s}/${name}-${w}.webp`;
     .hero-title { font-size: clamp(3.6rem, 6.4vw, 7.2rem); }
     .hero-scroll { display: block; }
   }
-  @media (min-width: 1400px) { .layer-mascot { right: 19%; } .layer-ukp { right: 16%; } }
+  /* From here up the art is anchored to the page's centre, beside the text column, not to the
+     viewport's right edge. The foliage is object-fit: cover, so on a wide monitor its right-hand
+     cluster grows inward, and a mascot placed by percentage from the right was half hidden at
+     2560 px and gone at 3440 px. The vw term keeps it where it was at 1440 and eases it left of
+     the leaves as the screen widens. */
+  @media (min-width: 1400px) {
+    .layer-mascot { right: auto; left: calc(50% + 7vw - 115px); }
+    .layer-ukp { right: auto; left: calc(50% + 7vw - 125px); }
+  }
   @media (prefers-reduced-motion: reduce) { .hero-scroll span { animation: none; } }
 </style>
