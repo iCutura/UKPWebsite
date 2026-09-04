@@ -100,7 +100,7 @@ const locations = await Promise.all(locList.map(async (l, i) => {
     description: (d.description || '').trim() || null,
     defaultStartTime: d.defaultStartTime ?? l.defaultStartTime ?? null,
     defaultMaxTeams: d.defaultMaxTeams ?? null, defaultMaxPlayersPerTeam: d.defaultMaxPlayersPerTeam ?? null,
-    defaultFeeType: d.defaultFeeType ?? null, defaultFeeAmount: d.defaultFeeAmount ?? null,
+    defaultFeeType: d.defaultFeeType ?? null, defaultFeeAmount: d.defaultFeeAmount ?? null, defaultFeeCurrency: d.defaultFeeCurrency ?? 'EUR',
     defaultRequiresApproval: !!d.defaultRequiresApproval, registrationDeadlineHours: d.registrationDeadlineHours ?? null,
     whatsapp: d.whatsAppCommunityLink || l.whatsAppCommunityLink || null,
     weekday: weekdayFromName(l.name) ?? (nextDate ? new Date(nextDate.slice(0, 10) + 'T12:00:00').getDay() : null),
@@ -121,7 +121,7 @@ const eventsOut = await Promise.all(events.filter(e => !e.isHidden).map(async e 
     category: e.categoryName ?? null, subCategory: e.subCategoryName ?? null,
     maxTeams: e.maxTeams ?? null, registered: e.registeredTeamsCount ?? 0, spotsRemaining: e.spotsRemaining ?? null,
     registrationDeadline: e.registrationDeadline ?? null, requiresApproval: !!e.requiresApproval,
-    isCancelled: !!e.isCancelled, feeType: e.feeType ?? null, feeAmount: e.feeAmount ?? null, maxPlayersPerTeam: e.maxPlayersPerTeam ?? null,
+    isCancelled: !!e.isCancelled, feeType: e.feeType ?? null, feeAmount: e.feeAmount ?? null, feeCurrency: e.feeCurrency ?? 'EUR', maxPlayersPerTeam: e.maxPlayersPerTeam ?? null,
     resultsPublished: !!e.resultsPublished, season: e.season?.name ?? null, whatsapp: loc?.whatsapp ?? null,
   };
 }));

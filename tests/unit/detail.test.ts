@@ -10,7 +10,7 @@ function event(over: Partial<EventItem> = {}): EventItem {
     lat: 44.86, lng: 13.85, logo: null, image: null, date: '2026-09-14', startTime: '20:00:00',
     name: 'Opći kviz', category: null, subCategory: null, maxTeams: 50, registered: 0,
     spotsRemaining: 50, registrationDeadline: '2026-09-14T19:00:00', requiresApproval: true,
-    isCancelled: false, feeType: 'PerTeam', feeAmount: 12, maxPlayersPerTeam: 5,
+    isCancelled: false, feeType: 'PerTeam', feeAmount: 12, feeCurrency: 'EUR', maxPlayersPerTeam: 5,
     resultsPublished: false, season: null, whatsapp: null, ...over,
   };
 }
@@ -96,6 +96,9 @@ describe('eventJsonLd', () => {
 
   it('omits the offer when no fee is recorded', () => {
     expect(JSON.parse(eventJsonLd(event({ feeAmount: null }))).offers).toBeUndefined();
+  });
+  it('prices a Bosnian quiz in marks', () => {
+    expect(JSON.parse(eventJsonLd(event({ feeAmount: 25, feeCurrency: 'BAM' }))).offers).toMatchObject({ price: 25, priceCurrency: 'BAM' });
   });
 
   it('always produces valid JSON, even with quotes in the name', () => {

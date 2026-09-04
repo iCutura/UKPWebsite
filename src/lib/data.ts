@@ -10,7 +10,7 @@ export interface Location {
   city: { id: number | null; name: string; country: string | null }; lat: number | null; lng: number | null;
   logo: Img | null; image: Img | null; description: string | null;
   defaultStartTime: string | null; defaultMaxTeams: number | null; defaultMaxPlayersPerTeam: number | null;
-  defaultFeeType: string | null; defaultFeeAmount: number | null; defaultRequiresApproval: boolean; registrationDeadlineHours: number | null;
+  defaultFeeType: string | null; defaultFeeAmount: number | null; defaultFeeCurrency: string | null; defaultRequiresApproval: boolean; registrationDeadlineHours: number | null;
   whatsapp: string | null; weekday: number | null; upcomingCount: number;
   nextEventDate: string | null; nextEventStartTime: string | null; nextEventName: string | null; isActive: boolean;
 }
@@ -19,7 +19,7 @@ export interface EventItem {
   city: { id: number | null; name: string; country: string | null }; address: string | null; lat: number | null; lng: number | null;
   logo: Img | null; image: Img | null; date: string; startTime: string; name: string | null; category: string | null; subCategory: string | null;
   maxTeams: number | null; registered: number; spotsRemaining: number | null; registrationDeadline: string | null; requiresApproval: boolean;
-  isCancelled: boolean; feeType: string | null; feeAmount: number | null; maxPlayersPerTeam: number | null; resultsPublished: boolean; season: string | null; whatsapp: string | null;
+  isCancelled: boolean; feeType: string | null; feeAmount: number | null; feeCurrency: string | null; maxPlayersPerTeam: number | null; resultsPublished: boolean; season: string | null; whatsapp: string | null;
 }
 export interface NewsItem {
   id: number; url: string; title: string; summary: string; content: string; image: Img | null; publishedDate: string;

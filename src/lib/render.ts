@@ -49,7 +49,7 @@ export function eventCardHTML(e: EventItem, o: EventCardOpts = {}): string {
   const sub = e.name
     ? (showLoc ? [e.venueName, e.city?.name].filter(Boolean).join(', ') : null)
     : (showLoc ? e.city?.name || null : null);
-  const feeTxt = fee(e.feeType, e.feeAmount);
+  const feeTxt = fee(e.feeType, e.feeAmount, e.feeCurrency);
   // Kept deliberately short: the rest of the detail lives one click away.
   const chips = [
     `<span class="chip">${svg.clock} ${esc(time(e.startTime))}</span>`,

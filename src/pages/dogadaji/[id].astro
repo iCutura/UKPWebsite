@@ -15,7 +15,7 @@ const { e } = Astro.props as { e: EventItem };
 const loc = getLocation(e.locationId);
 const others = eventsForLocation(e.locationId).filter(x => x.id !== e.id).slice(0, 3);
 const d = parseApiDate(e.date);
-const feeTxt = fee(e.feeType, e.feeAmount);
+const feeTxt = fee(e.feeType, e.feeAmount, e.feeCurrency);
 const title = `${e.name || 'Pub kviz'} · ${e.venueName}, ${longDate(d)}`;
 const desc = `${e.name || 'Pub kviz'} u ${e.venueName}, ${e.city.name}: ${longDate(d)} u ${time(e.startTime)}. ${feeTxt ?? ''} Prijavi svoju ekipu.`.trim();
 ---

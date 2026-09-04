@@ -23,10 +23,13 @@ export function relativeDay(d: Date, now = new Date()): string {
   if (isTomorrow(d, now)) return 'sutra';
   return longDate(d);
 }
-export function fee(type?: string | null, amount?: number | null): string | null {
+/** How each API currency is written after the amount: euro sign, KM for the Bosnian mark, the code for anything new. */
+const CURRENCY_LABEL: Record<string, string> = { EUR: '€', BAM: 'KM' };
+export function fee(type?: string | null, amount?: number | null, currency?: string | null): string | null {
   if (amount == null) return null;
   const n = Number.isInteger(amount) ? String(amount) : amount.toFixed(2).replace('.', ',');
-  return type === 'PerMember' ? `${n} € po osobi` : `${n} € po ekipi`;
+  const cur = CURRENCY_LABEL[currency || 'EUR'] ?? currency;
+  return type === 'PerMember' ? `${n} ${cur} po osobi` : `${n} ${cur} po ekipi`;
 }
 export function slugify(s: string): string {
   return s.normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/đ/g, 'd').replace(/Đ/g, 'D')

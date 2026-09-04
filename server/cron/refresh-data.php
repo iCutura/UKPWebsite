@@ -58,7 +58,7 @@ foreach ($list as $l) {
     'city' => $city($l['city'] ?? []), 'lat' => $l['latitude'] ?? ($d['latitude'] ?? null), 'lng' => $l['longitude'] ?? ($d['longitude'] ?? null),
     'logo' => mirror($l['logoImageUrl'] ?? ($d['logoImageUrl'] ?? null), $base, $imgDir, $cfg), 'image' => mirror($l['imageUrl'] ?? ($d['imageUrl'] ?? null), $base, $imgDir, $cfg),
     'description' => trim((string)($d['description'] ?? '')) ?: null, 'defaultStartTime' => $d['defaultStartTime'] ?? ($l['defaultStartTime'] ?? null),
-    'defaultMaxTeams' => $d['defaultMaxTeams'] ?? null, 'defaultMaxPlayersPerTeam' => $d['defaultMaxPlayersPerTeam'] ?? null, 'defaultFeeType' => $d['defaultFeeType'] ?? null, 'defaultFeeAmount' => $d['defaultFeeAmount'] ?? null,
+    'defaultMaxTeams' => $d['defaultMaxTeams'] ?? null, 'defaultMaxPlayersPerTeam' => $d['defaultMaxPlayersPerTeam'] ?? null, 'defaultFeeType' => $d['defaultFeeType'] ?? null, 'defaultFeeCurrency' => $d['defaultFeeCurrency'] ?? 'EUR', 'defaultFeeAmount' => $d['defaultFeeAmount'] ?? null,
     'defaultRequiresApproval' => (bool)($d['defaultRequiresApproval'] ?? false), 'registrationDeadlineHours' => $d['registrationDeadlineHours'] ?? null,
     'whatsapp' => $d['whatsAppCommunityLink'] ?? ($l['whatsAppCommunityLink'] ?? null),
     'weekday' => $weekdayFromName($l['name']) ?? ($next ? (int)date('w', strtotime(substr($next, 0, 10) . ' 12:00')) : null),
@@ -75,7 +75,7 @@ foreach ($events as $e) {
     'image' => mirror($e['eventImageUrl'] ?? null, $base, $imgDir, $cfg) ?? ($loc['image'] ?? null),
     'date' => substr($e['eventDate'], 0, 10), 'startTime' => $e['startTime'], 'name' => trim((string)($e['name'] ?? '')) ?: null, 'category' => $e['categoryName'] ?? null, 'subCategory' => $e['subCategoryName'] ?? null,
     'maxTeams' => $e['maxTeams'] ?? null, 'registered' => $e['registeredTeamsCount'] ?? 0, 'spotsRemaining' => $e['spotsRemaining'] ?? null, 'registrationDeadline' => $e['registrationDeadline'] ?? null, 'requiresApproval' => (bool)($e['requiresApproval'] ?? false),
-    'isCancelled' => (bool)($e['isCancelled'] ?? false), 'feeType' => $e['feeType'] ?? null, 'feeAmount' => $e['feeAmount'] ?? null, 'maxPlayersPerTeam' => $e['maxPlayersPerTeam'] ?? null, 'resultsPublished' => (bool)($e['resultsPublished'] ?? false), 'season' => $e['season']['name'] ?? null, 'whatsapp' => $loc['whatsapp'] ?? null,
+    'isCancelled' => (bool)($e['isCancelled'] ?? false), 'feeType' => $e['feeType'] ?? null, 'feeAmount' => $e['feeAmount'] ?? null, 'feeCurrency' => $e['feeCurrency'] ?? 'EUR', 'maxPlayersPerTeam' => $e['maxPlayersPerTeam'] ?? null, 'resultsPublished' => (bool)($e['resultsPublished'] ?? false), 'season' => $e['season']['name'] ?? null, 'whatsapp' => $loc['whatsapp'] ?? null,
   ];
 }
 usort($eventsOut, fn($a, $b) => strcmp($a['date'] . $a['startTime'], $b['date'] . $b['startTime']));

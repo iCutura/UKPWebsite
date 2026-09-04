@@ -12,7 +12,7 @@ function event(over: Partial<EventItem> = {}): EventItem {
     logo: null, image: null, date: '2026-09-14', startTime: '20:00:00', name: null,
     category: null, subCategory: null, maxTeams: 18, registered: 12, spotsRemaining: 6,
     registrationDeadline: null, requiresApproval: false, isCancelled: false,
-    feeType: null, feeAmount: null, maxPlayersPerTeam: null, resultsPublished: false,
+    feeType: null, feeAmount: null, feeCurrency: 'EUR', maxPlayersPerTeam: null, resultsPublished: false,
     season: null, whatsapp: null, ...over,
   };
 }
@@ -23,7 +23,7 @@ function location(over: Partial<Location> = {}): Location {
     name: 'Zeppelin pub - Bjelovar', venueName: 'Zeppelin pub', address: null,
     city: { id: 1, name: 'Bjelovar', country: 'Hrvatska' }, lat: null, lng: null,
     logo: null, image: null, description: null, defaultStartTime: null, defaultMaxTeams: null,
-    defaultMaxPlayersPerTeam: null, defaultFeeType: null, defaultFeeAmount: null,
+    defaultMaxPlayersPerTeam: null, defaultFeeType: null, defaultFeeAmount: null, defaultFeeCurrency: 'EUR',
     defaultRequiresApproval: false, registrationDeadlineHours: null, whatsapp: null,
     weekday: 1, upcomingCount: 1, nextEventDate: '2026-09-14', nextEventStartTime: '20:00:00',
     nextEventName: null, isActive: true, ...over,

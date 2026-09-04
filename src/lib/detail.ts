@@ -23,7 +23,7 @@ export function deadlineText(e: EventItem): string | null {
 
 export function eventHeaderHTML(e: EventItem): string {
   const d = parseApiDate(e.date); const st = eventStatus(e);
-  const feeTxt = fee(e.feeType, e.feeAmount);
+  const feeTxt = fee(e.feeType, e.feeAmount, e.feeCurrency);
   return `<div class="evd-head">
   <p class="eyebrow">${e.isCancelled ? 'Otkazani kviz' : (e.category && e.category !== 'General' ? esc(e.category) + ' kviz' : 'Pub kviz')}</p>
   <h1 class="evd-title">${esc(e.name || e.venueName || 'Pub kviz')}</h1>
@@ -200,7 +200,7 @@ export function eventJsonLd(e: EventItem): string {
     organizer: { '@type': 'Organization', name: SITE.name, url: SITE.url },
     url: SITE.url + e.url, inLanguage: 'hr',
   };
-  if (e.feeAmount != null) obj.offers = { '@type': 'Offer', price: e.feeAmount, priceCurrency: 'EUR', availability: e.spotsRemaining === 0 ? 'https://schema.org/SoldOut' : 'https://schema.org/InStock' };
+  if (e.feeAmount != null) obj.offers = { '@type': 'Offer', price: e.feeAmount, priceCurrency: e.feeCurrency || 'EUR', availability: e.spotsRemaining === 0 ? 'https://schema.org/SoldOut' : 'https://schema.org/InStock' };
   if (e.image) obj.image = SITE.url + e.image.full;
   return JSON.stringify(obj);
 }

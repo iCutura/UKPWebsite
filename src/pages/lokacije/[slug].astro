@@ -20,7 +20,7 @@ const sameCity = all.filter(x => x.id !== l.id && x.city.name === l.city.name);
 const dist = (a: Location, b: Location) => (a.lat && a.lng && b.lat && b.lng) ? Math.hypot((a.lat - b.lat) * 111, (a.lng - b.lng) * 78) : Infinity;
 const nearby = sameCity.length ? sameCity.slice(0, 3) : all.filter(x => x.id !== l.id && dist(l, x) < 60).sort((a, b) => dist(l, a) - dist(l, b)).slice(0, 3);
 const rhythm = [l.weekday != null ? weekdayInstrumental(new Date(2024, 0, 7 + l.weekday)) : null, l.defaultStartTime ? time(l.defaultStartTime) : null].filter(Boolean).join(' · ');
-const feeTxt = fee(l.defaultFeeType, l.defaultFeeAmount);
+const feeTxt = fee(l.defaultFeeType, l.defaultFeeAmount, l.defaultFeeCurrency);
 const season = seasonFor();
 const title = `${l.venueName}, ${l.city.name}`;
 const desc = `Pub kviz Urbane kviz priče u ${l.city.name}: ${l.venueName}${rhythm ? ', ' + rhythm : ''}. Termini, prijave i informacije o lokaciji.`;

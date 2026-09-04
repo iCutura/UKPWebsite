@@ -90,6 +90,13 @@ describe('fee', () => {
   it('treats a free quiz as a real value, not as missing', () => {
     expect(fee('PerTeam', 0)).toBe('0 € po ekipi');
   });
+  it('writes the Bosnian mark as KM and leaves an unknown code as it came', () => {
+    expect(fee('PerTeam', 25, 'BAM')).toBe('25 KM po ekipi');
+    expect(fee('PerMember', 5, 'BAM')).toBe('5 KM po osobi');
+    expect(fee('PerTeam', 12, 'EUR')).toBe('12 € po ekipi');
+    expect(fee('PerTeam', 12, null)).toBe('12 € po ekipi');
+    expect(fee('PerTeam', 12, 'CHF')).toBe('12 CHF po ekipi');
+  });
 });
 
 describe('plural', () => {
