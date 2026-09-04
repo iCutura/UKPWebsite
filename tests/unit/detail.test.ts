@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { mapsUrl, textToHTML, deadlineText, eventJsonLd, placeLine } from '../../src/lib/detail';
+import { mapsUrl, textToHTML, deadlineText, eventJsonLd, placeLine, eventGoneHTML } from '../../src/lib/detail';
 import type { EventItem } from '../../src/lib/data';
 
 function event(over: Partial<EventItem> = {}): EventItem {
@@ -100,5 +100,18 @@ describe('eventJsonLd', () => {
 
   it('always produces valid JSON, even with quotes in the name', () => {
     expect(() => JSON.parse(eventJsonLd(event({ name: 'Kviz "Zvijezde"' })))).not.toThrow();
+  });
+});
+
+describe('eventGoneHTML', () => {
+  it('points the reader at the venue and at the full list', () => {
+    const html = eventGoneHTML('/lokacije/9-caffe-bar-urban-zagreb/');
+    expect(html).toContain('više nije u ponudi');
+    expect(html).toContain('href="/lokacije/9-caffe-bar-urban-zagreb/"');
+    expect(html).toContain('href="/dogadaji/"');
+    expect(html).not.toContain('data-prijava');
+  });
+  it('copes without a venue link', () => {
+    expect(eventGoneHTML(null)).toContain('href="/dogadaji/"');
   });
 });

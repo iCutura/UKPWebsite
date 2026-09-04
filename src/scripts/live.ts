@@ -6,12 +6,36 @@
 import type { EventItem, Location, NewsItem } from '../lib/data';
 import { sortLocations, upcomingEvents } from '../lib/order';
 import { eventCardHTML, locationCardHTML, newsCardHTML } from '../lib/render';
+import { eventGoneHTML } from '../lib/detail';
 
 const cache = new Map<string, Promise<unknown>>();
 const load = <T,>(f: string) => { if (!cache.has(f)) cache.set(f, fetch(`/data/${f}`, { cache: 'no-cache' }).then(r => r.ok ? r.json() : Promise.reject(r.status))); return cache.get(f) as Promise<T>; };
 
+/**
+ * A detail page is built for every upcoming event and the host keeps it until the next deploy, so
+ * an event hidden or removed in the meantime still has a live-looking page with an open
+ * registration panel. Checked against the snapshot the cron rewrites every 15 minutes: when the
+ * event is gone, the panel says so instead of inviting a sign-up the API will refuse.
+ */
+async function checkEventPage() {
+  const page = document.querySelector<HTMLElement>('[data-event-page]');
+  if (!page || page.dataset.liveChecked) return;
+  page.dataset.liveChecked = '1';
+  try {
+    const list = await load<EventItem[]>('events.json');
+    // An empty snapshot is more likely a failed refresh than a season with no quizzes at all.
+    if (!list.length || list.some(e => String(e.id) === page.dataset.eventPage)) return;
+    page.classList.add('is-gone');
+    const chip = page.querySelector<HTMLElement>('.chip-status');
+    if (chip) { chip.className = 'chip chip-status chip-closed'; chip.textContent = 'Termin nije dostupan'; }
+    const side = page.querySelector<HTMLElement>('.evd-side');
+    if (side) side.innerHTML = eventGoneHTML(page.dataset.locationUrl);
+  } catch { /* keep the built page */ }
+}
+
 async function refresh() {
   const now = new Date();
+  await checkEventPage();
   const boxes = document.querySelectorAll<HTMLElement>('[data-live]');
   if (!boxes.length) return;
   for (const box of boxes) {

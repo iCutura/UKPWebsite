@@ -25,9 +25,13 @@ if [ "$WIPE" = 1 ]; then
   echo "▶ WIPING remote public_html (old WordPress) - backup lives in ../UKPWebsiteBackup"; read -r -p "type WIPE to continue: " c; [ "$c" = "WIPE" ] || exit 1
   lftp -u "$LEGACY_FTP_USER","$LEGACY_FTP_PASS" "ftp://$LEGACY_FTP_HOST" -e "$LFTP_OPTS mirror -R --delete --verbose=1 $DRY .deploy/public_html kvizovi.hr/public_html; bye"
 else
-  # Keep cron-written data/ and img/api/ if newer, never delete unknown remote files
-  lftp -u "$LEGACY_FTP_USER","$LEGACY_FTP_PASS" "ftp://$LEGACY_FTP_HOST" -e "$LFTP_OPTS mirror -R --only-newer --verbose=1 $DRY .deploy/public_html kvizovi.hr/public_html; bye"
+  # data/ and img/api/ belong to the cron and are neither uploaded nor deleted. Everything else
+  # mirrors the build, deletions included: a page built for an event that was later hidden or
+  # removed must not outlive the next deploy (/dogadaji/3180/ stayed up a day after the event went).
+  lftp -u "$LEGACY_FTP_USER","$LEGACY_FTP_PASS" "ftp://$LEGACY_FTP_HOST" -e "$LFTP_OPTS mirror -R --only-newer --delete -x '^data/' -x '^img/api/' -x '^\\.well-known/' --verbose=1 $DRY .deploy/public_html kvizovi.hr/public_html; bye"
 fi
-lftp -u "$LEGACY_FTP_USER","$LEGACY_FTP_PASS" "ftp://$LEGACY_FTP_HOST" -e "$LFTP_OPTS mirror -R --verbose=1 $DRY .deploy/ukp-cron kvizovi.hr/ukp-cron; put $DRY .deploy/ukp-config.php -o kvizovi.hr/ukp-config.php; bye"
+# put has no --dry-run of its own; skip it rather than let it error out the dry run.
+PUT_CFG="put .deploy/ukp-config.php -o kvizovi.hr/ukp-config.php;"; [ -n "$DRY" ] && PUT_CFG="echo '(dry run) would upload ukp-config.php';"
+lftp -u "$LEGACY_FTP_USER","$LEGACY_FTP_PASS" "ftp://$LEGACY_FTP_HOST" -e "$LFTP_OPTS mirror -R --verbose=1 $DRY .deploy/ukp-cron kvizovi.hr/ukp-cron; $PUT_CFG bye"
 rm -f .deploy/ukp-config.php
 echo "✔ deployed. Check: curl -sI https://kvizovi.hr/ | head -1"

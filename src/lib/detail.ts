@@ -128,6 +128,14 @@ export function registrationPanelHTML(e: EventItem, enabled: boolean): string {
 </div>`;
 }
 
+/** Replaces the registration panel on a built page whose event has since vanished from the snapshot. */
+export function eventGoneHTML(locationUrl?: string | null): string {
+  const more = locationUrl
+    ? `Pogledaj <a href="${esc(locationUrl)}">ostale termine na ovoj lokaciji</a> ili <a href="/dogadaji/">sve nadolazeće kvizove</a>.`
+    : `Pogledaj <a href="/dogadaji/">sve nadolazeće kvizove</a>.`;
+  return `<div class="card-dark card-pad prijava-panel"><p class="eyebrow">Prijava ekipe</p><h2 class="h3">Ovaj termin više nije u ponudi.</h2><p class="mt-2 muted">Možda je pomaknut ili otkazan. ${more}</p></div>`;
+}
+
 /** Inline markup allowed inside a paragraph or a list item: links, and **bold**. */
 function inline(t: string): string {
   return esc(t)

@@ -32,6 +32,16 @@ export function slugify(s: string): string {
   return s.normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/đ/g, 'd').replace(/Đ/g, 'D')
     .toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 60);
 }
+/** "6 slobodnih mjesta za ekipe" from the capacity the API reports; null when the event has no cap. */
+export function freeSpots(e: { maxTeams: number | null; registered: number; spotsRemaining: number | null }): string | null {
+  if (!e.maxTeams) return null;
+  const n = e.spotsRemaining ?? Math.max(0, e.maxTeams - e.registered);
+  return n > 0 ? `${plural(n, 'slobodno mjesto', 'slobodna mjesta', 'slobodnih mjesta')} za ekipe` : 'Nema slobodnih mjesta';
+}
+/** The "Mjesta" fact: free capacity when the event has a cap, otherwise how many teams are in. */
+export function spotsText(e: { maxTeams: number | null; registered: number; spotsRemaining: number | null }): string {
+  return freeSpots(e) ?? (e.registered ? plural(e.registered, 'prijavljena ekipa', 'prijavljene ekipe', 'prijavljenih ekipa') : 'Bez ograničenja broja ekipa');
+}
 /** Croatian plural for "ekipa": 1 ekipa, 2-4 ekipe, 5+ ekipa (with the 11-14 exception). */
 export function plural(n: number, one: string, few: string, many: string): string {
   const m10 = n % 10, m100 = n % 100;

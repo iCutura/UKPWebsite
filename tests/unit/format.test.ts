@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   parseApiDate, weekday, weekdayInstrumental, longDate, numericDate, time,
-  isToday, isTomorrow, relativeDay, fee, slugify, plural,
+  isToday, isTomorrow, relativeDay, fee, slugify, plural, freeSpots, spotsText,
 } from '../../src/lib/format';
 
 describe('parseApiDate', () => {
@@ -131,5 +131,27 @@ describe('slugify', () => {
     const s = slugify('--- Klub ---');
     expect(s.startsWith('-')).toBe(false);
     expect(s.endsWith('-')).toBe(false);
+  });
+});
+
+describe('freeSpots / spotsText', () => {
+  it('says how many places are free, with the Croatian plural', () => {
+    expect(spotsText({ maxTeams: 18, registered: 12, spotsRemaining: 6 })).toBe('6 slobodnih mjesta za ekipe');
+    expect(spotsText({ maxTeams: 18, registered: 17, spotsRemaining: 1 })).toBe('1 slobodno mjesto za ekipe');
+    expect(spotsText({ maxTeams: 18, registered: 15, spotsRemaining: 3 })).toBe('3 slobodna mjesta za ekipe');
+    expect(spotsText({ maxTeams: 30, registered: 9, spotsRemaining: 21 })).toBe('21 slobodno mjesto za ekipe');
+  });
+  it('falls back to the cap minus sign-ups when the API sends no remainder', () => {
+    expect(freeSpots({ maxTeams: 18, registered: 12, spotsRemaining: null })).toBe('6 slobodnih mjesta za ekipe');
+  });
+  it('never advertises a negative number of places', () => {
+    expect(spotsText({ maxTeams: 10, registered: 12, spotsRemaining: null })).toBe('Nema slobodnih mjesta');
+    expect(spotsText({ maxTeams: 10, registered: 10, spotsRemaining: 0 })).toBe('Nema slobodnih mjesta');
+  });
+  it('describes an uncapped event by its sign-ups', () => {
+    expect(freeSpots({ maxTeams: null, registered: 4, spotsRemaining: null })).toBeNull();
+    expect(spotsText({ maxTeams: null, registered: 4, spotsRemaining: null })).toBe('4 prijavljene ekipe');
+    expect(spotsText({ maxTeams: null, registered: 1, spotsRemaining: null })).toBe('1 prijavljena ekipa');
+    expect(spotsText({ maxTeams: null, registered: 0, spotsRemaining: null })).toBe('Bez ograničenja broja ekipa');
   });
 });
