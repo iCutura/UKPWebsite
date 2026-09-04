@@ -1,0 +1,37 @@
+---
+/**
+ * The hero's layered scene (bg → glow → UKP letters → mascot → foliage) as a framed card for the
+ * rest of the site, in place of the flat mascot photo. Same layer assets and the same
+ * `data-depth` contract, so `scenes()` in motion.ts gives it the hero's scroll and pointer
+ * parallax, the mascot float and the breathing glow. No Three.js layer: that stays a hero-only cost.
+ */
+import { seasonFor } from '../lib/seasons';
+interface Props { class?: string; ratio?: string }
+const { class: cls = '', ratio = '4 / 3.5' } = Astro.props;
+const s = seasonFor();
+const L = (name: string, w: number) => `/img/layers/${s}/${name}-${w}.webp`;
+---
+<div class:list={['lscene', cls]} data-scene-card aria-hidden="true" style={`--ratio: ${ratio}`}>
+  <div class="layer layer-bg" data-depth="0.08"><div class="drift"><img src={L('bg', 900)} srcset={`${L('bg', 900)} 900w, ${L('bg', 1536)} 1536w`} sizes="(min-width: 900px) 45vw, 100vw" width="1536" height="864" alt="" loading="lazy" decoding="async" /></div></div>
+  <div class="layer layer-glow" data-depth="0.18"><div class="drift"><img src={L('glow', 640)} srcset={`${L('glow', 640)} 640w, ${L('glow', 1024)} 1024w`} sizes="(min-width: 900px) 45vw, 100vw" width="1024" height="576" alt="" loading="lazy" decoding="async" data-breathe /></div></div>
+  <div class="layer layer-ukp" data-depth="0.42"><div class="drift"><img src={L('ukp', 720)} srcset={`${L('ukp', 720)} 720w, ${L('ukp', 1200)} 1200w`} sizes="(min-width: 900px) 28vw, 62vw" width="1183" height="382" alt="" loading="lazy" decoding="async" /></div></div>
+  <div class="layer layer-mascot" data-depth="0.62"><div class="drift"><img src={L('mascot', 720)} srcset={`${L('mascot', 720)} 720w, ${L('mascot', 1200)} 1200w`} sizes="(min-width: 900px) 26vw, 58vw" width="1005" height="996" alt="" loading="lazy" decoding="async" data-float /></div></div>
+  <div class="layer layer-foliage" data-depth="1"><div class="drift"><img src={L('foliage', 900)} srcset={`${L('foliage', 900)} 900w, ${L('foliage', 1536)} 1536w`} sizes="(min-width: 900px) 45vw, 100vw" width="1536" height="864" alt="" loading="lazy" decoding="async" /></div></div>
+</div>
+
+<style>
+  .lscene { position: relative; overflow: hidden; isolation: isolate; aspect-ratio: var(--ratio); border-radius: var(--r-hero); background: #0f0e0b; box-shadow: var(--sh-quiz); }
+  .layer { position: absolute; will-change: transform; }
+  .drift { width: 100%; height: 100%; will-change: transform; }
+  .layer img { display: block; width: 100%; height: 100%; object-fit: cover; }
+  /* Far layers bleed past the frame so the parallax never shows an edge. */
+  .layer-bg { inset: -8%; }
+  .layer-glow { inset: -10% -10% -4%; mix-blend-mode: screen; opacity: .9; }
+  .layer-glow img { object-position: 50% 30%; transform-origin: 50% 40%; }
+  .layer-ukp { left: 0; right: 0; margin-inline: auto; top: 8%; width: 62%; aspect-ratio: 1183 / 382; }
+  .layer-ukp img { object-fit: contain; }
+  .layer-mascot { left: 0; right: 0; margin-inline: auto; top: 21%; width: 60%; aspect-ratio: 1005 / 996; }
+  .layer-mascot img { object-fit: contain; }
+  .layer-foliage { inset: -3% -8% -2%; z-index: 2; }
+  .layer-foliage img { object-position: 50% 100%; }
+</style>

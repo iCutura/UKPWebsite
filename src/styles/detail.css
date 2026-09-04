@@ -42,6 +42,8 @@
 .fact { padding: 18px; border-radius: var(--r-lg); background: #fff; border: 1px solid rgb(var(--rule) / .08); }
 .fact dt { font-size: var(--fs-caption); font-weight: 600; text-transform: uppercase; letter-spacing: .08em; color: var(--ink-md); }
 .fact dd { margin: 6px 0 0; font-weight: 700; font-size: 1.05rem; }
+/* The format line is the long one; on a phone it takes the row so the cell beside it is not left mostly empty. */
+@media (max-width: 599px) { .facts .fact:first-child { grid-column: 1 / -1; } }
 .prose { max-width: 66ch; font-size: var(--fs-body); line-height: 1.65; }
 .prose p + p { margin-top: .9em; }
 
@@ -73,6 +75,7 @@
 .article-body.legal li + li { margin-top: .4em; }
 
 /* Website registration flow */
+.prijava-panel { scroll-margin-top: calc(var(--header-h) + 16px); }
 .prijava [data-step-panel][hidden] { display: none; }
 .qr-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
 .qr-tile { display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 14px 10px 12px; border-radius: var(--r-lg); background: var(--on-dark); color: var(--ink) !important; font-weight: 700; font-size: var(--fs-small); text-decoration: none !important; transition: transform .3s var(--ease-out), box-shadow .3s; }

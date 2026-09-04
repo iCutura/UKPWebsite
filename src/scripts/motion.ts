@@ -38,7 +38,15 @@ function nav() {
 }
 
 let destroy3d: (() => void) | null = null;
-const fineOrCoarse = () => matchMedia('(pointer: fine)').matches;
+
+/** Pointer parallax on each layer's inner .drift wrapper: near layers move more. */
+function pointerParallax(root: HTMLElement, layers: HTMLElement[], sx: number, sy: number) {
+  if (!fine() || !layers.length) return;
+  const setters = layers.map(l => { const d = parseFloat(l.dataset.depth || '0.5'); const el = l.firstElementChild as HTMLElement; return { d, x: gsap.quickTo(el, 'x', { duration: .9, ease: 'power3.out' }), y: gsap.quickTo(el, 'y', { duration: .9, ease: 'power3.out' }) }; });
+  const onMove = (e: PointerEvent) => { const r = root.getBoundingClientRect(); const dx = (e.clientX - r.left) / r.width - .5, dy = (e.clientY - r.top) / r.height - .5; setters.forEach(s => { s.x(dx * s.d * sx); s.y(dy * s.d * sy); }); };
+  root.addEventListener('pointermove', onMove, { passive: true });
+  root.addEventListener('pointerleave', () => setters.forEach(s => { s.x(0); s.y(0); }));
+}
 
 function hero() {
   const hero = document.querySelector<HTMLElement>('[data-hero]'); if (!hero) return;
@@ -56,13 +64,7 @@ function hero() {
   });
   gsap.to(hero.querySelector('.hero-content'), { y: 80, opacity: .2, ease: 'none', scrollTrigger: { trigger: hero, start: 'top top', end: 'bottom top', scrub: true } });
 
-  // Mouse parallax on the inner .drift wrapper, near layers move more.
-  if (fineOrCoarse() && layers.length) {
-    const setters = layers.map(l => { const d = parseFloat(l.dataset.depth || '0.5'); const el = l.firstElementChild as HTMLElement; return { d, x: gsap.quickTo(el, 'x', { duration: .9, ease: 'power3.out' }), y: gsap.quickTo(el, 'y', { duration: .9, ease: 'power3.out' }) }; });
-    const onMove = (e: PointerEvent) => { const r = hero.getBoundingClientRect(); const dx = (e.clientX - r.left) / r.width - .5, dy = (e.clientY - r.top) / r.height - .5; setters.forEach(s => { s.x(dx * s.d * 44); s.y(dy * s.d * 26); }); };
-    hero.addEventListener('pointermove', onMove, { passive: true });
-    hero.addEventListener('pointerleave', () => setters.forEach(s => { s.x(0); s.y(0); }));
-  }
+  pointerParallax(hero, layers, 44, 26);
   const mascot = hero.querySelector('[data-float]'); if (mascot) gsap.to(mascot, { y: -14, duration: 4.2, yoyo: true, repeat: -1, ease: 'sine.inOut' });
   const glow = hero.querySelector('[data-breathe]'); if (glow) gsap.to(glow, { scale: 1.07, opacity: .75, duration: 7, yoyo: true, repeat: -1, ease: 'sine.inOut' });
   hero.querySelectorAll('[data-hero-float]').forEach((el, i) => gsap.to(el, { y: i % 2 ? -14 : 14, duration: 3 + i * .4, yoyo: true, repeat: -1, ease: 'sine.inOut' }));
@@ -76,6 +78,37 @@ function hero() {
 }
 function hasWebGL(): boolean { try { const c = document.createElement('canvas'); return !!(c.getContext('webgl2') || c.getContext('webgl')); } catch { return false; } }
 document.addEventListener('astro:before-swap', () => { destroy3d?.(); destroy3d = null; });
+
+/**
+ * Layered scenes outside the hero (LayeredScene.astro): the hero's layer contract in a card, with
+ * the scroll parallax measured over the card's own trip through the viewport, so the layers sit
+ * in line when the card is centred and drift apart as it enters and leaves.
+ */
+function scenes() {
+  document.querySelectorAll<HTMLElement>('[data-scene-card]').forEach(scene => {
+    const layers = Array.from(scene.querySelectorAll<HTMLElement>('[data-depth]'));
+    layers.forEach(l => {
+      const d = parseFloat(l.dataset.depth || '0.5');
+      gsap.fromTo(l, { y: -(1 - d) * 60 }, { y: (1 - d) * 60, ease: 'none', scrollTrigger: { trigger: scene, start: 'top bottom', end: 'bottom top', scrub: true } });
+    });
+    pointerParallax(scene, layers, 30, 20);
+    const mascot = scene.querySelector('[data-float]'); if (mascot) gsap.to(mascot, { y: -10, duration: 4.2, yoyo: true, repeat: -1, ease: 'sine.inOut' });
+    const glow = scene.querySelector('[data-breathe]'); if (glow) gsap.to(glow, { scale: 1.07, opacity: .75, duration: 7, yoyo: true, repeat: -1, ease: 'sine.inOut' });
+  });
+}
+
+/**
+ * The app pitch's phones (PhoneShowcase.astro): each floats on its own rhythm, keeping the lean
+ * its stylesheet gives it. The pointer tilt on the trio comes from tilt() through data-tilt.
+ * Under reduced motion none of this runs.
+ */
+function phones() {
+  document.querySelectorAll<HTMLElement>('[data-phone-stage] [data-phone]').forEach((phone, i) => {
+    const lean = parseFloat((getComputedStyle(phone).rotate || '0').replace('deg', '')) || 0;
+    gsap.set(phone, { rotate: lean });
+    gsap.to(phone, { y: i % 2 ? 10 : -12, rotate: lean + (i % 2 ? .8 : -.8), duration: 4.2 + i * .6, yoyo: true, repeat: -1, ease: 'sine.inOut', delay: i * .35 });
+  });
+}
 
 function reveals() {
   const els = Array.from(document.querySelectorAll<HTMLElement>('[data-reveal]:not(.is-in)'));
@@ -124,7 +157,7 @@ export function initMotion() {
   ScrollTrigger.getAll().forEach(t => t.kill());
   header(); nav();
   if (reduce()) { document.querySelectorAll('[data-reveal]').forEach(e => e.classList.add('is-in')); return; }
-  hero(); reveals(); counters(); parallax(); magnetic(); tilt();
+  hero(); scenes(); phones(); reveals(); counters(); parallax(); magnetic(); tilt();
   requestAnimationFrame(() => ScrollTrigger.refresh());
 }
 document.addEventListener('astro:page-load', initMotion);

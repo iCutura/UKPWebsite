@@ -6,6 +6,7 @@
  */
 import Icon from './Icon.astro';
 import Split from './Split.astro';
+import AppBadges from './AppBadges.astro';
 import { seasonFor } from '../lib/seasons';
 interface Props { locations: number }
 const { locations } = Astro.props;
@@ -29,6 +30,10 @@ const L = (name: string, w: number) => `/img/layers/${s}/${name}-${w}.webp`;
       <div class="cluster gap-2 hero-cta" data-hero-fade>
         <a href="/lokacije/" class="btn btn-accent btn-lg" data-magnetic="14">Pronađi kviz u svom gradu <Icon name="arrow-right" /></a>
         <a href="/dogadaji/" class="btn btn-ghost btn-lg">Što ima ovaj tjedan</a>
+      </div>
+      <div class="hero-apps on-dark" data-hero-fade>
+        <span class="hero-apps-label">Preuzmi UKP Quiz aplikaciju</span>
+        <AppBadges light />
       </div>
     </div>
   </div>
@@ -76,6 +81,8 @@ const L = (name: string, w: number) => `/img/layers/${s}/${name}-${w}.webp`;
      these widths the last lines were printed over the mascot. */
   @media (min-width: 960px) and (max-width: 1279px) { .hero-lead { max-width: 40ch; } }
   .hero-cta { margin-top: 30px; }
+  .hero-apps { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; margin-top: 22px; }
+  .hero-apps-label { font-size: var(--fs-caption); font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: var(--on-dark-md); }
   .hero-scroll { position: absolute; z-index: 4; right: var(--gutter); bottom: calc(var(--hero-fade) - 8px); width: 26px; height: 42px; border: 2px solid rgb(255 247 240 / .35); border-radius: 14px; display: none; }
   .hero-scroll span { position: absolute; left: 50%; top: 7px; width: 4px; height: 8px; margin-left: -2px; border-radius: 2px; background: var(--accent-soft); animation: scrollhint 1.8s ease-in-out infinite; }
   @keyframes scrollhint { 0%, 100% { transform: translateY(0); opacity: 1; } 70% { transform: translateY(12px); opacity: 0; } }

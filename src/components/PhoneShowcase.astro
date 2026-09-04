@@ -1,0 +1,33 @@
+---
+/**
+ * The promo slide's three phones, for the app pitch: the deck's fan (league left, home in front,
+ * quiz right) over the seasonal glow, but in a real device frame rather than a CSS bezel: each
+ * image is an App Store capture composed into fastlane's iPhone 17 Pro frame by
+ * scripts/build-promo-frames.mjs (transparent WebP). `phones()` in motion.ts floats each one on
+ * its own rhythm and tilt() leans the trio towards the pointer (data-tilt); under reduced motion
+ * they hold still.
+ */
+interface Props { class?: string }
+const { class: cls = '' } = Astro.props;
+const shots = [
+  { key: 'league', src: '/img/promo/league-framed.webp', alt: 'UKP Quiz aplikacija na iPhoneu: ljestvica lige' },
+  { key: 'home', src: '/img/promo/home-framed.webp', alt: 'UKP Quiz aplikacija na iPhoneu: početni ekran s odbrojavanjem do sljedećeg kviza' },
+  { key: 'quiz', src: '/img/promo/quiz-framed.webp', alt: 'UKP Quiz aplikacija na iPhoneu: pitanje i odgovor u kvizu' },
+];
+---
+<div class:list={['phone-stage', cls]} data-phone-stage data-tilt>
+  <div class="phone-glow" aria-hidden="true"></div>
+  {shots.map(s => <img class:list={['phone', `phone-${s.key}`]} src={s.src} alt={s.alt} width="640" height="1308" loading="lazy" decoding="async" data-phone />)}
+</div>
+
+<style>
+  .phone-stage { position: relative; width: 100%; aspect-ratio: 1 / 1.02; transform-style: preserve-3d; }
+  /* The deck keeps the seasonal phone gradient as a glow behind the phones; same idea here. */
+  .phone-glow { position: absolute; inset: 8% 6%; border-radius: 50%; background: radial-gradient(closest-side, var(--warm-1), transparent 72%); opacity: .5; filter: blur(28px); pointer-events: none; }
+  /* drop-shadow follows the frame's silhouette; a box-shadow would draw a rectangle around it. */
+  .phone { position: absolute; height: auto; filter: drop-shadow(0 28px 36px rgb(0 0 0 / .55)); will-change: transform; }
+  /* The fan: home in front, league and quiz behind it, each leaning away. */
+  .phone-home { width: 46%; left: 27%; top: 0; z-index: 3; }
+  .phone-league { width: 41%; left: 0; top: 11%; z-index: 2; transform: rotate(-7deg); }
+  .phone-quiz { width: 41%; right: 0; top: 13%; z-index: 1; transform: rotate(6deg); }
+</style>

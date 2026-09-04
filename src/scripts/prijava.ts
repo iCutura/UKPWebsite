@@ -45,16 +45,15 @@ function bind() {
     const state: { requestId: number | null; resendAt: number; timer: number | null } = { requestId: null, resendAt: 0, timer: null };
 
     /**
-     * A link an organiser sends to their teams: /dogadaji/3145/?prijava opens the form straight
-     * away, so scanning a code at the bar is one step rather than three. Silently ignored when
-     * this event is closed or cancelled, because then there is no form to open.
+     * A link an organiser sends to their teams (/dogadaji/3145/?prijava, or #prijava): land on the
+     * panel with the apps step showing, QR codes and store buttons with the "no app" route one tap
+     * below, so the reader picks the way in rather than being dropped into the form. Nothing
+     * happens when the event is closed or cancelled, because then there is no panel to land on.
      */
     const openFromLink = () => {
       const asked = new URLSearchParams(location.search).has('prijava') || location.hash === '#prijava';
-      if (!asked || !panel.querySelector('[data-step-panel="form"]')) return;
-      show('form');
-      // Land on the panel with the first field in reach, without stealing focus on a phone
-      // keyboard the reader did not ask for.
+      if (!asked) return;
+      if (panel.dataset.step !== 'apps') show('apps');
       requestAnimationFrame(() => panel.scrollIntoView({ block: 'start', behavior: 'smooth' }));
     };
 
@@ -108,10 +107,17 @@ function bind() {
     };
 
     const ORDER = ['apps', 'form', 'code', 'done'];
-    const show = (step: string) => {
-      panel.dataset.step = step;
+    /** Make one step the visible one and let it settle: messages cleared, code boxes ready, tick drawn. */
+    const settle = (step: string) => {
       panels.forEach(p => { p.hidden = p.dataset.stepPanel !== step; });
       panel.querySelector<HTMLElement>(`[data-step-panel="${step}"] .prijava-msg`)?.setAttribute('hidden', '');
+      if (step === 'code') { resetBoxes(); setTimeout(() => boxes[0]?.focus(), 60); }
+      if (step === 'done') drawTick();
+    };
+    const show = (step: string) => {
+      const from = panels.find(p => !p.hidden);
+      const to = panel.querySelector<HTMLElement>(`[data-step-panel="${step}"]`);
+      panel.dataset.step = step;
 
       // The spine: where you are, and how much is left.
       const at = ORDER.indexOf(step);
@@ -121,12 +127,17 @@ function bind() {
         dot.classList.toggle('is-done', i < at);
       });
 
-      const incoming = panel.querySelector<HTMLElement>(`[data-step-panel="${step}"]`);
-      if (incoming && !reducedMotion()) {
-        gsap.fromTo(incoming, { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: .45, ease: 'power3.out', clearProps: 'all' });
-      }
-      if (step === 'code') { resetBoxes(); setTimeout(() => boxes[0]?.focus(), 60); }
-      if (step === 'done') drawTick();
+      if (!to || !from || to === from || reducedMotion()) { settle(step); return; }
+      // One motion rather than a jump cut: the old step fades upward, the card's height glides to
+      // the new step's, and the new step rises into place.
+      const h0 = panel.offsetHeight;
+      gsap.to(from, { opacity: 0, y: -8, duration: .18, ease: 'power2.in', onComplete: () => {
+        gsap.set(from, { clearProps: 'all' });
+        settle(step);
+        const h1 = panel.offsetHeight;
+        gsap.fromTo(panel, { height: h0, overflow: 'hidden' }, { height: h1, duration: .42, ease: 'power3.out', clearProps: 'height,overflow' });
+        gsap.fromTo(to, { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: .45, ease: 'power3.out', clearProps: 'all' });
+      } });
     };
     const msg = (f: HTMLElement, text: string, kind: 'ok' | 'error' | 'info') => {
       const el = f.querySelector<HTMLElement>('.prijava-msg')!;

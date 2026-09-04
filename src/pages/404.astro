@@ -2,15 +2,14 @@
 import Base from '../layouts/Base.astro';
 import Icon from '../components/Icon.astro';
 import { SITE } from '../config';
-import { seasonFor } from '../lib/seasons';
-const season = seasonFor();
+import LayeredScene from '../components/LayeredScene.astro';
 ---
 <Base title="Stranica nije pronađena" noindex>
   <section class="page-head" data-nf data-registration={SITE.registrationEnabled ? '1' : '0'}>
     <div class="container">
       <div class="nf-static" data-nf-static>
         <div class="nf">
-          <img src={`/img/seasons/${season}-mascot-410.webp`} data-season-src="/img/seasons/{season}-mascot-410.webp" width="410" height="370" alt="" class="nf-art" data-hero-float />
+          <LayeredScene class="nf-art" ratio="1 / 1" />
           <div>
             <span class="eyebrow">404</span>
             <h1 class="mt-2">Ovo pitanje nema odgovor.</h1>
@@ -63,5 +62,5 @@ const season = seasonFor();
 <style>
   .nf { display: grid; gap: 24px; align-items: center; }
   @media (min-width: 800px) { .nf { grid-template-columns: .8fr 1.2fr; gap: 48px; } }
-  .nf-art { width: min(100%, 320px); height: auto; border-radius: var(--r-hero); }
+  .nf-art { width: min(100%, 320px); }
 </style>

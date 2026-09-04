@@ -4,13 +4,13 @@ import Icon from '../components/Icon.astro';
 import Hero from '../components/Hero.astro';
 import SectionHead from '../components/SectionHead.astro';
 import AppBadges from '../components/AppBadges.astro';
+import LayeredScene from '../components/LayeredScene.astro';
+import PhoneShowcase from '../components/PhoneShowcase.astro';
 import NearbyControls from '../components/NearbyControls.astro';
 import { SITE } from '../config';
 import { getEvents, getNews, getMeta, getCities } from '../lib/data';
 import { eventCardHTML, newsCardHTML } from '../lib/render';
-import { seasonFor } from '../lib/seasons';
 
-const season = seasonFor();
 const events = getEvents().filter(e => !e.isCancelled).slice(0, 8);
 const news = getNews().slice(0, 3);
 const meta = getMeta();
@@ -49,19 +49,17 @@ const gallery = ['ukp-kviz', 'urbana-kviz-prica', 'ukp-kvizovi', 'ukp-kvizovi-hr
     <div class="container format">
       <div class="format-copy">
         <span class="eyebrow" data-reveal>Kako izgleda kviz</span>
-        <h2 data-reveal>Tri kruga, petnaest pitanja, jedna ekipa do pet ljudi.</h2>
+        <h2 data-reveal>Tri kruga, minimalno petnaest pitanja, jedna ekipa do pet ljudi.</h2>
         <p class="lead mt-3" data-reveal>Organiziramo intrigantne kvizove za sve tipove publike sa širokim spektrom kategorija i još brojnijim nagradama. Dobre atmosfere, odličnih pitanja i fenomenalnih nagrada svakoga tjedna neće nedostajati.</p>
         <div class="format-grid num" data-reveal>
           <div class="format-cell"><span class="format-n" data-counter="3">3</span><span class="format-l">kruga pitanja</span></div>
-          <div class="format-cell"><span class="format-n" data-counter="15">15</span><span class="format-l">pitanja u svakom krugu</span></div>
+          <div class="format-cell"><span class="format-pre">minimalno</span><span class="format-n" data-counter="15">15</span><span class="format-l">pitanja u svakom krugu</span></div>
           <div class="format-cell"><span class="format-n" data-counter="5">5</span><span class="format-l">članova ekipe najviše</span></div>
-          <div class="format-cell"><span class="format-n">10 €</span><span class="format-l">kotizacija po ekipi</span></div>
+          <div class="format-cell"><span class="format-n" data-counter="3" data-suffix="+">3+</span><span class="format-l">nagrađenih ekipa po kvizu</span></div>
         </div>
-        <p class="hint mt-2" data-reveal>Kotizacija i broj igrača mogu se razlikovati po lokaciji; točni uvjeti pišu uz svaki termin.</p>
+        <p class="hint mt-2" data-reveal>Broj igrača i nagrade mogu se razlikovati po lokaciji; točni uvjeti pišu uz svaki termin.</p>
       </div>
-      <figure class="format-art" data-reveal data-tilt>
-        <img src={`/img/seasons/${season}-mascot-820.webp`} data-season-src="/img/seasons/{season}-mascot-820.webp" width="820" height="740" alt="UKP maskota: glava s mozgom, slušalicama i sunčanim naočalama" loading="lazy" decoding="async" data-parallax="-8" />
-      </figure>
+      <div class="format-art" data-reveal><LayeredScene ratio="4 / 3.5" /></div>
     </div>
   </section>
 
@@ -127,7 +125,7 @@ const gallery = ['ukp-kviz', 'urbana-kviz-prica', 'ukp-kvizovi', 'ukp-kvizovi-hr
           <p class="mt-2" style="color: var(--on-dark-md); max-width: 46ch">Prijavi ekipu na kviz u par dodira, prati ljestvice svoje lige i igraj dnevni kviz kad nisi u kafiću.</p>
           <div class="mt-4"><AppBadges light /></div>
         </div>
-        <img class="app-cta-art" src={`/img/seasons/${season}-mascot-410.webp`} data-season-src="/img/seasons/{season}-mascot-410.webp" width="410" height="370" alt="" loading="lazy" decoding="async" data-hero-float />
+        <PhoneShowcase class="app-cta-art" />
       </div>
     </div>
   </section>
@@ -145,11 +143,13 @@ const gallery = ['ukp-kviz', 'urbana-kviz-prica', 'ukp-kvizovi', 'ukp-kvizovi-hr
   .format { display: grid; gap: 40px; align-items: center; }
   @media (min-width: 900px) { .format { grid-template-columns: 1.1fr .9fr; gap: 64px; } }
   .format-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-top: 32px; }
-  .format-cell { display: flex; flex-direction: column; gap: 6px; padding: 20px; border-radius: var(--r-lg); background: #fff; border: 1px solid rgb(var(--rule) / .08); }
+  /* Every cell reserves the same room above its number, so a qualifier in one of them ("minimalno") never pushes that number out of line with the others. */
+  .format-cell { position: relative; display: flex; flex-direction: column; gap: 6px; padding: 36px 20px 20px; border-radius: var(--r-lg); background: #fff; border: 1px solid rgb(var(--rule) / .08); }
   .format-n { font-size: clamp(2.2rem, 4vw, 3.25rem); line-height: 1; color: var(--accent-deep); }
+  /* Cobe has no small cut worth showing; the qualifier stays on the body face, styled like the fact labels on the event page. */
+  .format-pre { position: absolute; top: 12px; left: 20px; font-family: var(--font-sans); font-size: var(--fs-caption); font-weight: 600; text-transform: uppercase; letter-spacing: .08em; color: var(--ink-md); }
   .format-l { font-family: var(--font-sans); font-weight: 600; font-size: var(--fs-small); color: var(--ink-md); }
-  .format-art { margin: 0; border-radius: var(--r-hero); overflow: hidden; box-shadow: var(--sh-quiz); background: linear-gradient(160deg, var(--warm-0), var(--warm-2)); transform-style: preserve-3d; }
-  .format-art img { width: 100%; height: auto; transform: scale(1.06); }
+  .format-art { margin: 0; }
 
   .gallery { display: flex; gap: 16px; overflow-x: auto; padding: 16px var(--gutter) 32px; scrollbar-width: none; scroll-snap-type: x mandatory; }
   .gallery::-webkit-scrollbar { display: none; }
@@ -173,7 +173,7 @@ const gallery = ['ukp-kviz', 'urbana-kviz-prica', 'ukp-kvizovi', 'ukp-kvizovi-hr
   .partner img { height: 40px; width: auto; max-width: 160px; object-fit: contain; }
 
   .app-cta { display: grid; gap: 24px; padding: clamp(28px, 4vw, 48px); overflow: hidden; align-items: center; }
-  @media (min-width: 800px) { .app-cta { grid-template-columns: 1.3fr .7fr; } }
+  @media (min-width: 800px) { .app-cta { grid-template-columns: 1.05fr .95fr; } }
   .app-cta h2 { margin-top: 12px; max-width: 16ch; }
-  .app-cta-art { width: min(100%, 340px); height: auto; justify-self: center; border-radius: var(--r-hero); }
+  .app-cta-art { width: 100%; max-width: 480px; justify-self: center; margin-block: 12px; }
 </style>
