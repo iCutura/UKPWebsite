@@ -1,0 +1,23 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.injeelit.pubquiz",
+      "sha256_cert_fingerprints": [
+        "CF:CD:38:B7:48:5A:A6:02:E2:7E:D2:63:6B:CF:91:83:D7:B0:51:AA:17:4C:FA:A1:D7:B9:DE:75:E6:AB:A3:EC",
+        "B8:71:7B:08:EC:9C:83:E0:6C:71:AA:32:45:B1:7F:F3:85:E4:37:8A:2E:9E:01:47:26:95:3E:C1:BC:15:CC:92"
+      ]
+    }
+  },
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.injeelit.pubquiz.debug",
+      "sha256_cert_fingerprints": [
+        "79:12:4B:30:93:B4:03:3B:61:47:8A:30:D5:66:39:6F:26:58:D8:9D:36:73:51:FC:93:1B:D3:24:83:1D:C9:23"
+      ]
+    }
+  }
+]

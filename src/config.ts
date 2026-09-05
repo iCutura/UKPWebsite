@@ -26,6 +26,10 @@ export const SITE = {
   apps: {
     ios: 'https://apps.apple.com/app/id6759879046',
     android: 'https://play.google.com/store/apps/details?id=com.injeelit.pubquiz',
+    /** Origin the landing page's "open in app" button targets. Kept on the API host on purpose: the
+     *  1.x builds only registered that host, so a kvizovi.hr link that reached a browser still
+     *  deep-links for them. The API's /join, /play and /get pages stay live for exactly this. */
+    openHost: 'https://api.injeel-it.hr',
   },
   /** Website team registration through the API's external-registrations flow (e-mail code). PHP proxy: server/api/prijava.php. */
   registrationEnabled: true,

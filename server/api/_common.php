@@ -4,11 +4,7 @@ header('Content-Type: application/json; charset=utf-8');
 header('Cache-Control: no-store');
 header('X-Content-Type-Options: nosniff');
 
-function ukp_config(): array {
-  $f = dirname(__DIR__, 2) . '/ukp-config.php';   // kvizovi.hr/ukp-config.php (outside web root)
-  if (!is_file($f)) ukp_fail(500, 'Poslužitelj nije konfiguriran.');
-  return require $f;
-}
+require_once __DIR__ . '/_config.php';   // ukp_config(): shared with the HTML endpoints
 function ukp_fail(int $code, string $message): never {
   http_response_code($code);
   echo json_encode(['ok' => false, 'message' => $message], JSON_UNESCAPED_UNICODE);
