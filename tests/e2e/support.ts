@@ -3,7 +3,7 @@ import type { Page } from '@playwright/test';
 /** Every route the site serves from its own templates. */
 export const PAGES = [
   '/', '/lokacije/', '/dogadaji/', '/novosti/', '/o-nama/',
-  '/team-building/', '/partneri/', '/kontakt/', '/pravila-privatnosti/', '/kolacici/',
+  '/team-building/', '/partneri/', '/kontakt/', '/pravila-privatnosti/', '/kolacici/', '/link/',
 ];
 
 /** Load a page with animation disabled so reveals do not hide content from the assertions. */
