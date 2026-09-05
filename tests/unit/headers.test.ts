@@ -40,4 +40,18 @@ describe('production headers', () => {
     expect(htaccess).toMatch(/\\\.env/);
     expect(htaccess).toContain('Require all denied');
   });
+
+  it('serves the Apple association file as JSON and routes app links to the landing script', () => {
+    expect(htaccess).toMatch(/<Files "apple-app-site-association">[\s\S]*ForceType application\/json/);
+    expect(htaccess).toMatch(/RewriteRule \^join\/team\/\(\[A-Za-z0-9\]\{4,16\}\)\/\?\$ \/api\/link\.php\?kind=team&code=\$1 \[L,QSA\]/);
+    expect(htaccess).toMatch(/RewriteRule \^join\/event\/\(\\d\+\)\/\?\$ \/dogadaji\/\$1\/\?prijava \[R=302,L\]/);
+    expect(htaccess).toMatch(/RewriteRule \^play\/quiz\/\(\\d\+\)\/\?\$ \/api\/link\.php\?kind=quiz&id=\$1 \[L,QSA\]/);
+    expect(htaccess).toMatch(/RewriteRule \^get\/\?\$ \/api\/link\.php\?kind=get \[L\]/);
+  });
+
+  it('keeps the certificate challenge folder out of the deploy, and only that', () => {
+    const deploy = readFileSync(new URL('../../deploy.sh', import.meta.url), 'utf8');
+    expect(deploy).toContain(String.raw`-x '^\\.well-known/acme-challenge/'`);
+    expect(deploy).not.toContain(String.raw`-x '^\\.well-known/'`);
+  });
 });
