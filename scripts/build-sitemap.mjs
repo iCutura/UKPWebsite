@@ -12,7 +12,7 @@ const SITE = 'https://kvizovi.hr';
 const DIST = 'dist';
 
 /** Pages we do not want in the index: thin, legal-only, or duplicated by a canonical elsewhere. */
-const SKIP = [/^404\//, /^_a\//];
+const SKIP = [/^404\//, /^_a\//, /^link\//];
 
 /** Rough importance, so the crawler spends its budget on the pages people search for. */
 const priority = (route) => {

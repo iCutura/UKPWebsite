@@ -37,4 +37,9 @@ describe('sitemap and robots', () => {
     expect(robots).toMatch(/^User-agent: \*/m);
     expect(robots).toMatch(/^Allow: \//m);
   });
+
+  it('keeps the app-link landing template out', () => {
+    const xml = readFileSync(dist('sitemap.xml'), 'utf8');
+    expect(xml).not.toContain('/link/');
+  });
 });

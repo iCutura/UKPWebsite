@@ -1,0 +1,33 @@
+---
+// Built once, filled per request by server/api/link.php: the three {{TOKENS}} below are
+// replaced with the team or quiz the visitor was sent to. Nobody lands on /link/ directly.
+import Base from '../../layouts/Base.astro';
+import Icon from '../../components/Icon.astro';
+import AppBadges from '../../components/AppBadges.astro';
+import { SITE } from '../../config';
+---
+<Base title="{{TITLE}}" description="{{DESCRIPTION}}" noindex>
+  <section class="page-head">
+    <div class="container">
+      <div class="applink" data-applink>
+        <span class="eyebrow">UKP Quiz aplikacija</span>
+        <h1 class="mt-2">{'{{TITLE}}'}</h1>
+        <p class="lead mt-3">{'{{DESCRIPTION}}'}</p>
+        <div class="cluster gap-2 mt-4">
+          <a class="btn btn-accent btn-lg" href="{{OPEN_URL}}" data-open-app>Otvori u UKP Quiz aplikaciji <Icon name="arrow-right" /></a>
+        </div>
+        <p class="hint mt-3">Nemaš aplikaciju? Preuzmi je, pa otvori poveznicu ponovno.</p>
+        <div class="mt-3"><AppBadges /></div>
+        <div class="qr-grid mt-4 applink-qr">
+          <a class="qr-tile" href={SITE.apps.ios} rel="noopener" target="_blank"><img src="/img/qr/app-store.svg" alt="QR kod za App Store" width="132" height="132" loading="lazy"><span>App Store</span></a>
+          <a class="qr-tile" href={SITE.apps.android} rel="noopener" target="_blank"><img src="/img/qr/google-play.svg" alt="QR kod za Google Play" width="132" height="132" loading="lazy"><span>Google Play</span></a>
+        </div>
+      </div>
+    </div>
+  </section>
+</Base>
+<style>
+  .applink { max-width: 40rem; }
+  .applink-qr { display: none; }
+  @media (min-width: 60rem) { .applink-qr { display: grid; } }
+</style>
