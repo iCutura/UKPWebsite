@@ -19,7 +19,13 @@ chk "event link" "$H/join/event/12" 302
 chk "event link (non-numeric)" "$H/join/event/x" 404
 chk "quiz link (unknown id)" "$H/play/quiz/999999" 404 'og:title'
 chk "get" "$H/get" 200 'Otvori u UKP Quiz'
-chk "www redirects" "https://www.kvizovi.hr/.well-known/apple-app-site-association" 301
-chk "Apple CDN" "https://app-site-association.cdn-apple.com/a/v1/kvizovi.hr" 200 'X6P3LG956W.injeel.PubQuiz'
+# SiteGround's front-end serves static files before Apache's www redirect runs, so www may answer
+# 200 with the file itself; Apple only asks the apex host, so either answer is fine.
+www=$(curl -sS -o /dev/null -w "%{http_code}" --max-time 20 "https://www.kvizovi.hr/.well-known/apple-app-site-association")
+case "$www" in 200|301) echo "✓ www host: $www";; *) echo "✗ www host: $www (want 200 or 301)"; fail=1;; esac
+# Apple's CDN ingests a domain some hours after the file first goes live; until then it answers 404.
+# Keep re-running this script: no iOS build ships before this line is green.
+cdn=$(curl -sS -o /tmp/vl.cdn -w "%{http_code}" --max-time 20 "https://app-site-association.cdn-apple.com/a/v1/kvizovi.hr")
+if [ "$cdn" = 200 ] && grep -q 'X6P3LG956W.injeel.PubQuiz' /tmp/vl.cdn; then echo "✓ Apple CDN: 200"; elif [ "$cdn" = 404 ]; then echo "✗ Apple CDN: not ingested yet (404), retry later"; fail=1; else echo "✗ Apple CDN: $cdn"; fail=1; fi
 chk "Google statements" "https://digitalassetlinks.googleapis.com/v1/statements:list?source.web.site=https://kvizovi.hr&relation=delegate_permission/common.handle_all_urls" 200 'com.injeelit.pubquiz'
 [ $fail = 0 ] && echo "all link checks passed" || { echo "SOME LINK CHECKS FAILED"; exit 1; }
