@@ -16,7 +16,8 @@ echo "▶ building"; npm run build
 mkdir -p .deploy && rm -rf .deploy/* && cp -R dist .deploy/public_html
 cp server/public_html/.htaccess .deploy/public_html/.htaccess
 mkdir -p .deploy/public_html/api && cp server/api/*.php .deploy/public_html/api/
-mkdir -p .deploy/ukp-cron && cp server/cron/refresh-data.php .deploy/ukp-cron/
+# Every .php in server/cron: refresh-data.php requires refresh-lib.php, and half a script fatals.
+mkdir -p .deploy/ukp-cron && cp server/cron/*.php .deploy/ukp-cron/
 REG=$(grep -q "registrationEnabled: true" src/config.ts && echo true || echo false)
 sed -e "s#__UKP_API_BASE__#${UKP_API_BASE}#" -e "s#__UKP_API_KEY__#${UKP_API_KEY}#" -e "s#__REGISTRATION_ENABLED__#${REG}#" server/config.template.php > .deploy/ukp-config.php
 

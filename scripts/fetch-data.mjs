@@ -114,7 +114,8 @@ const locations = await Promise.all(locList.map(async (l, i) => {
     name: l.name, venueName: l.venueName, address: d.address ?? l.address ?? null,
     city: cityOf(l.city), lat: l.latitude ?? d.latitude ?? null, lng: l.longitude ?? d.longitude ?? null,
     logo: await mirror(l.logoImageUrl || d.logoImageUrl), image: await mirror(l.imageUrl || d.imageUrl),
-    description: (d.description || '').trim() || null,
+    // The list carries it as of 2026-09; the detail is the fallback for an API that predates that.
+    description: (l.description || d.description || '').trim() || null,
     defaultStartTime: d.defaultStartTime ?? l.defaultStartTime ?? null,
     defaultMaxTeams: d.defaultMaxTeams ?? null, defaultMaxPlayersPerTeam: d.defaultMaxPlayersPerTeam ?? null,
     defaultFeeType: d.defaultFeeType ?? null, defaultFeeAmount: d.defaultFeeAmount ?? null, defaultFeeCurrency: d.defaultFeeCurrency ?? 'EUR',

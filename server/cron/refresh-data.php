@@ -2,7 +2,9 @@
 declare(strict_types=1);
 /**
  * SiteGround cron: refresh public_html/data/*.json from the PubQuiz API between site builds.
- * Same output shape as scripts/fetch-data.mjs. Location details are refreshed once a day (cached), the rest every run.
+ * Same output shape as scripts/fetch-data.mjs. The lists are read every run; location details are
+ * cached and a slice of them re-read each run (see UKP_DETAIL_SLICE), so the whole map comes round
+ * in a few hours instead of once a day.
  * Images: uses the build's mirrored /img/api/<id>.webp when present; otherwise downloads the original bytes once.
  */
 /**
@@ -11,7 +13,13 @@ declare(strict_types=1);
  * It now keeps its own log next to itself, so the record survives however the cron is invoked,
  * and the run's health is also published in data/meta.json where it can be read over HTTP.
  */
-@set_time_limit(0); // the daily detail sweep is ~140 requests with retries
+@set_time_limit(0); // a first run with an empty cache is ~140 requests with retries
+require __DIR__ . '/refresh-lib.php';
+// How many location details a run re-reads on top of the ones it has never seen. Twelve brings all
+// ~130 venues round in about eleven runs, under three hours on a quarter-hourly cron, for ~1,200
+// requests a day - the whole map used to be re-read once every 24 h, which is how long an edited
+// description could sit behind a snapshot that was otherwise fifteen minutes old.
+define('UKP_DETAIL_SLICE', 12);
 define('UKP_LOG', __DIR__ . '/refresh.log');
 // Trim before writing rather than on a schedule; nobody is going to rotate this by hand.
 if (is_file(UKP_LOG) && filesize(UKP_LOG) > 262144) @file_put_contents(UKP_LOG, implode('', array_slice(file(UKP_LOG), -500)));
@@ -82,11 +90,12 @@ $weekdayFromName = function (string $n): ?int { $map = ['ponedjeljkom' => 1, 'ut
 $list = api('/api/pub-quiz-locations', $cfg, $base);
 if ($list === null) { logline('ABORT: location list unavailable, leaving the last snapshot in place'); exit(1); }
 /**
- * Location detail (description, fee, caps) is one request per location, so the map is cached for a
- * day. Two rules keep one bad run from owning that day. The map is stamped complete only when every
- * location resolved: a partial map is still written, because some detail beats none, but it is not
- * stamped, so the next run retries the gaps instead of serving them empty until tomorrow. And a
- * location created mid-day is fetched on the next run rather than waiting for the cache to age out.
+ * Location detail (fee, caps, registration deadline) is one request per location, so the map is
+ * cached and only a slice of it is re-read each run - the selection is ukp_details_to_refresh().
+ * Two rules keep a bad run from owning the cache. A location whose request failed is never stamped
+ * as read, so it stays a hole and is retried on the next run ahead of the rolling slice. And the
+ * map is stamped complete only when every location resolved: a partial map is still written,
+ * because some detail beats none, but the site is told so in meta.json and will not act on it.
  * Both were real: eleven venues lost their description, fee and team cap on the site for a full day
  * because a handful of requests failed while the cache was being written.
  */
@@ -94,29 +103,34 @@ $detailsFile = "$cacheDir/details.json";
 $cached = is_file($detailsFile) ? (json_decode(file_get_contents($detailsFile), true) ?: []) : [];
 // Envelope as of 2026-09; a bare id => detail map is the older format and re-reads once on upgrade.
 $details = isset($cached['details']) && is_array($cached['details']) ? $cached['details'] : $cached;
-$sweptAt = (int)($cached['at'] ?? 0);
-$sweep = $sweptAt <= time() - 86400; // the whole map is re-read once a day
+// When each venue's detail was last read. The older envelope only knew when the whole map was
+// swept, so every location it holds inherits that age and the rolling refresh carries on from it.
+$seen = isset($cached['seen']) && is_array($cached['seen'])
+  ? $cached['seen']
+  : array_fill_keys(array_keys($details), (int)($cached['at'] ?? 0));
 
-// A full sweep when the map is due, otherwise just the holes: a location created this morning, or
-// one whose request failed earlier. Retrying only the holes matters - a venue the API cannot serve
-// at all would otherwise drag the entire 137-request sweep back in every fifteen minutes.
-$want = [];
-foreach ($list as $l) if ($sweep || !isset($details[$l['pubQuizLocationId']])) $want[] = $l['pubQuizLocationId'];
+$ids = array_map(fn($l) => $l['pubQuizLocationId'], $list);
+$want = ukp_details_to_refresh($ids, $seen, UKP_DETAIL_SLICE);
 foreach ($want as $id) {
   $d = api("/api/pub-quiz-locations/$id", $cfg, $base);
-  if ($d) $details[$id] = $d;
+  // Only a fetch that answered counts as seen: a failed one stays a hole and is retried next run
+  // rather than waiting for its turn to come round again.
+  if ($d) { $details[$id] = $d; $seen[$id] = time(); }
   // 4/s. The API allows 600 requests a minute per IP; 137 of these run back to back, so the old
   // 120 ms gap sat close enough to the ceiling that scattered 429s were silently dropping venues.
   usleep(250000);
 }
-// A failed fetch leaves any previously cached detail in place, so the venue degrades to yesterday's
-// copy rather than to nothing. Only a venue with no detail at all counts as missing.
+// A failed fetch leaves any previously cached detail in place, so the venue degrades to the last
+// copy that arrived rather than to nothing. Only a venue with no detail at all counts as missing.
 $missing = [];
 foreach ($list as $l) if (!isset($details[$l['pubQuizLocationId']])) $missing[] = $l['pubQuizLocationId'];
 if ($want) {
-  // A top-up keeps the map's original age; only a full sweep resets it, or a location added every
-  // few hours would keep pushing the expiry out and the descriptions would never be re-read.
-  file_put_contents($detailsFile, json_encode(['at' => $sweep ? time() : $sweptAt, 'complete' => !$missing, 'details' => $details]));
+  // Locations that have left the list (deactivated, deleted) are dropped rather than kept for ever.
+  $live = array_flip($ids);
+  file_put_contents($detailsFile, json_encode([
+    'at' => time(), 'complete' => !$missing,
+    'seen' => array_intersect_key($seen, $live), 'details' => array_intersect_key($details, $live),
+  ]));
   if ($missing) logline('no detail for ' . count($missing) . ' of ' . count($list) . ' locations (retried next run): ' . implode(',', array_slice($missing, 0, 20)));
 }
 // Told to the site in meta.json: live.ts may only act on a missing description when the snapshot is
@@ -126,18 +140,21 @@ $detailsState = $missing ? 'partial' : 'complete';
 $events = api('/api/pub-quiz-events?from=' . date('Y-m-d'), $cfg, $base) ?? [];
 $news = api('/api/news?limit=100', $cfg, $base) ?? [];
 
+// The list is read every run; the detail map rolls round over hours. Wherever both carry a field
+// the fresh list wins, or a venue renamed or re-addressed in the admin waited for its turn.
+$listHasDescriptions = ukp_list_carries_descriptions($list);
 $locations = []; $byId = [];
 foreach ($list as $l) {
   $d = $details[$l['pubQuizLocationId']] ?? []; $id = $l['pubQuizLocationId']; $slug = slugify($l['name']);
   $next = $l['nextEventDate'] ?? ($d['nextEventDate'] ?? null);
   $row = [
-    'id' => $id, 'slug' => $slug, 'url' => "/lokacije/$id-$slug/", 'name' => $l['name'], 'venueName' => $l['venueName'], 'address' => $d['address'] ?? ($l['address'] ?? null),
+    'id' => $id, 'slug' => $slug, 'url' => "/lokacije/$id-$slug/", 'name' => $l['name'], 'venueName' => $l['venueName'], 'address' => $l['address'] ?? ($d['address'] ?? null),
     'city' => $city($l['city'] ?? []), 'lat' => $l['latitude'] ?? ($d['latitude'] ?? null), 'lng' => $l['longitude'] ?? ($d['longitude'] ?? null),
     'logo' => mirror($l['logoImageUrl'] ?? ($d['logoImageUrl'] ?? null), $base, $imgDir, $cfg), 'image' => mirror($l['imageUrl'] ?? ($d['imageUrl'] ?? null), $base, $imgDir, $cfg),
-    'description' => trim((string)($d['description'] ?? '')) ?: null, 'defaultStartTime' => $d['defaultStartTime'] ?? ($l['defaultStartTime'] ?? null),
+    'description' => ukp_description($l, $d, $listHasDescriptions), 'defaultStartTime' => $l['defaultStartTime'] ?? ($d['defaultStartTime'] ?? null),
     'defaultMaxTeams' => $d['defaultMaxTeams'] ?? null, 'defaultMaxPlayersPerTeam' => $d['defaultMaxPlayersPerTeam'] ?? null, 'defaultFeeType' => $d['defaultFeeType'] ?? null, 'defaultFeeCurrency' => $d['defaultFeeCurrency'] ?? 'EUR', 'defaultFeeAmount' => $d['defaultFeeAmount'] ?? null,
     'defaultRequiresApproval' => (bool)($d['defaultRequiresApproval'] ?? false), 'registrationDeadlineHours' => $d['registrationDeadlineHours'] ?? null,
-    'whatsapp' => $d['whatsAppCommunityLink'] ?? ($l['whatsAppCommunityLink'] ?? null),
+    'whatsapp' => $l['whatsAppCommunityLink'] ?? ($d['whatsAppCommunityLink'] ?? null),
     'weekday' => $weekdayFromName($l['name']) ?? ($next ? (int)date('w', strtotime(substr($next, 0, 10) . ' 12:00')) : null),
     'upcomingCount' => $l['upcomingEventsCount'] ?? 0, 'nextEventDate' => $next, 'nextEventStartTime' => $l['nextEventStartTime'] ?? null, 'nextEventName' => $l['nextEventName'] ?? null, 'isActive' => ($d['isActive'] ?? true) !== false,
   ];
