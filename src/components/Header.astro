@@ -23,13 +23,17 @@ const isActive = (href: string) => href !== '/' && path.startsWith(href);
       </button>
     </div>
   </div>
-  <div id="nav-panel" class="nav-panel" data-nav-panel hidden>
+  <!-- on-dark: the panel is a dark surface, and without saying so its ghost buttons kept the light
+       page's near-black ink and border and all but disappeared into the gradient. -->
+  <div id="nav-panel" class="nav-panel on-dark" data-nav-panel hidden>
     <div class="container nav-panel-inner">
       <nav aria-label="Navigacija" class="nav-panel-links">
         {SITE.nav.map((n, i) => <a href={n.href} class:list={['nav-panel-link', { 'is-active': isActive(n.href) }]} data-nav-item style={`--i:${i}`}><span class="num nav-panel-index">0{i + 1}</span>{n.label}</a>)}
       </nav>
       <div class="nav-panel-foot" data-nav-item>
-        <a href="/lokacije/" class="btn btn-accent btn-lg btn-block">Pronađi kviz u svom gradu <Icon name="arrow-right" /></a>
+        <!-- Cream, not the accent this CTA wears on light pages: --accent-dark is a burnt orange a
+             shade off the panel's own --night-2, so the button read as part of the background. -->
+        <a href="/lokacije/" class="btn btn-light btn-lg btn-block">Pronađi kviz u svom gradu <Icon name="arrow-right" /></a>
         <div class="cluster gap-2 mt-3">
           <a class="btn btn-ghost btn-sm" href={SITE.apps.ios} rel="noopener" target="_blank"><Icon name="apple" size={18} /> App Store</a>
           <a class="btn btn-ghost btn-sm" href={SITE.apps.android} rel="noopener" target="_blank"><Icon name="play" size={18} /> Google Play</a>
