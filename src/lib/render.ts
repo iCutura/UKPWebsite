@@ -4,7 +4,7 @@
  * Keep this file free of Node/Astro imports.
  */
 import type { EventItem, Location, NewsItem } from './data';
-import { parseApiDate, longDate, relativeDay, time, fee, plural, weekdayInstrumental, numericDate, isToday, isTomorrow } from './format';
+import { parseApiDate, longDate, relativeDay, time, fee, plural, weekdayInstrumental, numericDate, isToday, isTomorrow, spotsLeft, SPOTS_NAMED_BELOW } from './format';
 
 export const esc = (s: unknown) => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]!));
 const MON_SHORT = ['sij', 'velj', 'ožu', 'tra', 'svi', 'lip', 'srp', 'kol', 'ruj', 'lis', 'stu', 'pro'];
@@ -53,10 +53,13 @@ export function eventStatus(e: EventItem, now = new Date()): { key: 'cancelled' 
   // A quiz that has not been played yet cannot have results, whatever the flag says.
   if (e.resultsPublished && parseApiDate(e.date) < now) return { key: 'results', label: 'Rezultati objavljeni' };
   if (e.registrationDeadline && new Date(e.registrationDeadline) < now) return { key: 'closed', label: 'Prijave zatvorene' };
-  if (e.spotsRemaining != null && e.spotsRemaining <= 0) return { key: 'full', label: 'Popunjeno' };
-  if (e.spotsRemaining != null && e.spotsRemaining <= 3) return { key: 'few', label: `Još ${plural(e.spotsRemaining, 'mjesto', 'mjesta', 'mjesta')}` };
-  if (e.maxTeams) return { key: 'open', label: `${e.registered}/${e.maxTeams} ekipa` };
-  return { key: 'open', label: e.registered ? `${plural(e.registered, 'ekipa prijavljena', 'ekipe prijavljene', 'ekipa prijavljeno')}` : 'Prijave otvorene' };
+  // Capacity, never the sign-up count: see SPOTS_NAMED_BELOW in format.ts for why the number is
+  // only spoken once it is small, and why an uncapped quiz says nothing about numbers at all.
+  const left = spotsLeft(e);
+  if (left == null) return { key: 'open', label: 'Prijave otvorene' };
+  if (left <= 0) return { key: 'full', label: 'Popunjeno' };
+  if (left < SPOTS_NAMED_BELOW) return { key: 'few', label: `Još ${plural(left, 'mjesto', 'mjesta', 'mjesta')}` };
+  return { key: 'open', label: `${SPOTS_NAMED_BELOW}+ slobodnih mjesta` };
 }
 
 export function eventCardHTML(e: EventItem, o: EventCardOpts = {}): string {

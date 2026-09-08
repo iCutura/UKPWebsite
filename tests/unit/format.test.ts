@@ -148,23 +148,46 @@ describe('slugify symbols', () => {
 });
 
 describe('freeSpots / spotsText', () => {
-  it('says how many places are free, with the Croatian plural', () => {
-    expect(spotsText({ maxTeams: 18, registered: 12, spotsRemaining: 6 })).toBe('6 slobodnih mjesta za ekipe');
-    expect(spotsText({ maxTeams: 18, registered: 17, spotsRemaining: 1 })).toBe('1 slobodno mjesto za ekipe');
+  /**
+   * The exact number is only spoken once it is small. A venue asked for this: "3/15 ekipa" on a
+   * quiet week reads as "nobody is coming", and people were deciding not to sign up because of it.
+   * Above the threshold every quiz says the same thing, so a quiet one is indistinguishable from
+   * a busy one; below it the real count is the point, because then it is genuine urgency.
+   */
+  it('says only that there is room, while there is plenty of it', () => {
+    expect(spotsText({ maxTeams: 18, registered: 12, spotsRemaining: 6 })).toBe('5+ slobodnih mjesta za ekipe');
+    expect(spotsText({ maxTeams: 30, registered: 9, spotsRemaining: 21 })).toBe('5+ slobodnih mjesta za ekipe');
+    // The whole point: a nearly empty quiz and a nearly full one read alike up here.
+    expect(spotsText({ maxTeams: 15, registered: 3, spotsRemaining: 12 }))
+      .toBe(spotsText({ maxTeams: 15, registered: 10, spotsRemaining: 5 }));
+  });
+
+  it('counts down exactly once the room runs out, with Croatian plurals', () => {
+    expect(spotsText({ maxTeams: 18, registered: 14, spotsRemaining: 4 })).toBe('4 slobodna mjesta za ekipe');
     expect(spotsText({ maxTeams: 18, registered: 15, spotsRemaining: 3 })).toBe('3 slobodna mjesta za ekipe');
-    expect(spotsText({ maxTeams: 30, registered: 9, spotsRemaining: 21 })).toBe('21 slobodno mjesto za ekipe');
+    expect(spotsText({ maxTeams: 18, registered: 17, spotsRemaining: 1 })).toBe('1 slobodno mjesto za ekipe');
   });
-  it('falls back to the cap minus sign-ups when the API sends no remainder', () => {
-    expect(freeSpots({ maxTeams: 18, registered: 12, spotsRemaining: null })).toBe('6 slobodnih mjesta za ekipe');
+
+  it('draws the line at five', () => {
+    expect(spotsText({ maxTeams: 18, registered: 13, spotsRemaining: 5 })).toBe('5+ slobodnih mjesta za ekipe');
+    expect(spotsText({ maxTeams: 18, registered: 14, spotsRemaining: 4 })).toBe('4 slobodna mjesta za ekipe');
   });
-  it('never advertises a negative number of places', () => {
+
+  it('works out the free places when the API did not', () => {
+    expect(freeSpots({ maxTeams: 18, registered: 12, spotsRemaining: null })).toBe('5+ slobodnih mjesta za ekipe');
+    expect(freeSpots({ maxTeams: 18, registered: 16, spotsRemaining: null })).toBe('2 slobodna mjesta za ekipe');
+  });
+
+  it('says a full quiz is full', () => {
     expect(spotsText({ maxTeams: 10, registered: 12, spotsRemaining: null })).toBe('Nema slobodnih mjesta');
     expect(spotsText({ maxTeams: 10, registered: 10, spotsRemaining: 0 })).toBe('Nema slobodnih mjesta');
   });
-  it('describes an uncapped event by its sign-ups', () => {
+
+  it('never reports how many teams signed up when the quiz has no cap', () => {
+    // Without a cap the only number available is the sign-up count itself, which is the one
+    // number we are not telling. So an uncapped quiz says nothing about numbers at all.
     expect(freeSpots({ maxTeams: null, registered: 4, spotsRemaining: null })).toBeNull();
-    expect(spotsText({ maxTeams: null, registered: 4, spotsRemaining: null })).toBe('4 prijavljene ekipe');
-    expect(spotsText({ maxTeams: null, registered: 1, spotsRemaining: null })).toBe('1 prijavljena ekipa');
+    expect(spotsText({ maxTeams: null, registered: 4, spotsRemaining: null })).toBe('Bez ograničenja broja ekipa');
     expect(spotsText({ maxTeams: null, registered: 0, spotsRemaining: null })).toBe('Bez ograničenja broja ekipa');
   });
 });

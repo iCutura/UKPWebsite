@@ -102,13 +102,34 @@ describe('eventCardHTML: the date appears once', () => {
 });
 
 describe('eventStatus', () => {
-  it('reports capacity while places remain', () => {
-    expect(eventStatus(event(), NOW)).toMatchObject({ key: 'open', label: '12/18 ekipa' });
+  /**
+   * The chip used to read "12/18 ekipa", which on a quiet week reads as "nobody is coming" and was
+   * talking people out of signing up. It now says only that there is room until the room is nearly
+   * gone, at which point the real number is worth saying.
+   */
+  it('says only that there is room, while there is plenty of it', () => {
+    expect(eventStatus(event(), NOW)).toMatchObject({ key: 'open', label: '5+ slobodnih mjesta' });
+    // A quiet quiz and a busy one are indistinguishable above the threshold.
+    expect(eventStatus(event({ maxTeams: 15, registered: 2, spotsRemaining: 13 }), NOW).label)
+      .toBe(eventStatus(event({ maxTeams: 15, registered: 10, spotsRemaining: 5 }), NOW).label);
   });
 
   it('warns when only a few places are left, with Croatian plurals', () => {
     expect(eventStatus(event({ spotsRemaining: 1 }), NOW).label).toBe('Još 1 mjesto');
     expect(eventStatus(event({ spotsRemaining: 3 }), NOW).label).toBe('Još 3 mjesta');
+    expect(eventStatus(event({ spotsRemaining: 4 }), NOW).label).toBe('Još 4 mjesta');
+  });
+
+  it('keeps the urgent styling for the counted-down places only', () => {
+    expect(eventStatus(event({ spotsRemaining: 4 }), NOW).key).toBe('few');
+    expect(eventStatus(event({ spotsRemaining: 5 }), NOW).key).toBe('open');
+  });
+
+  it('never prints the sign-up count, whatever the shape of the event', () => {
+    for (const e of [event(), event({ spotsRemaining: 2 }), event({ maxTeams: null, spotsRemaining: null }),
+                     event({ maxTeams: null, spotsRemaining: null, registered: 7 })]) {
+      expect(eventStatus(e, NOW).label).not.toMatch(/\b12\b|\b7\b|prijavlj/);
+    }
   });
 
   it('reports a full quiz', () => {
@@ -135,11 +156,14 @@ describe('eventStatus', () => {
     // read "Rezultati objavljeni" and the detail page would not take registrations.
     const future = eventStatus(event({ date: '2026-09-14', resultsPublished: true, maxTeams: 18, registered: 12 }), NOW);
     expect(future.key).toBe('open');
-    expect(future.label).toBe('12/18 ekipa');
+    expect(future.label).toBe('5+ slobodnih mjesta');
   });
 
   it('says registration is open when no capacity is recorded', () => {
     expect(eventStatus(event({ maxTeams: null, spotsRemaining: null, registered: 0 }), NOW).label)
+      .toBe('Prijave otvorene');
+    // Even when teams have signed up: without a cap the count is the only number there is.
+    expect(eventStatus(event({ maxTeams: null, spotsRemaining: null, registered: 7 }), NOW).label)
       .toBe('Prijave otvorene');
   });
 });
