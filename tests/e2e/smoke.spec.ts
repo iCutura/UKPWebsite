@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { open, clickCard, PAGES } from './support';
+import { open, openEvent, clickCard, PAGES } from './support';
 
 for (const path of PAGES) {
   test(`${path} renders without errors`, async ({ page }) => {
@@ -36,12 +36,9 @@ test('a location page carries its venue, city and a way back', async ({ page }) 
 });
 
 test('an event page states the date, the venue and how to register', async ({ page }) => {
-  await open(page, '/dogadaji/');
-  const count = await page.locator('[data-event-id]').count();
-  test.skip(count === 0, 'no upcoming quizzes in the current snapshot');
-
-  await page.locator('[data-event-id]').first().click();
-  await page.waitForLoadState('load');
+  const e = await openEvent(page);
+  test.skip(!e, 'no quiz is open for registration in the current snapshot');
+  await open(page, e!.url);
 
   await expect(page.locator('.evd-when')).toBeVisible();
   await expect(page.locator('.evd-loc')).toBeVisible();
@@ -52,10 +49,9 @@ test('an event page states the date, the venue and how to register', async ({ pa
 });
 
 test('the registration flow steps forward to the form', async ({ page }) => {
-  await open(page, '/dogadaji/');
-  test.skip(await page.locator('[data-event-id]').count() === 0, 'no upcoming quizzes');
-  await page.locator('[data-event-id]').first().click();
-  await page.waitForLoadState('load');
+  const e = await openEvent(page);
+  test.skip(!e, 'no quiz is open for registration');
+  await open(page, e!.url);
 
   await page.locator('[data-step-panel="apps"] [data-step-go="form"]').click();
   await expect(page.locator('[data-step-panel="form"]')).toBeVisible();

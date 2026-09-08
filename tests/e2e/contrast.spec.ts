@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { open, PAGES } from './support';
+import { open, openEvent, PAGES } from './support';
 
 /**
  * Text that cannot be read. Every case below shipped: a ghost button kept its light-mode dark ink
@@ -16,7 +16,9 @@ const luminance = (c: string) => {
 };
 
 test('no text is painted on a ground of its own colour', async ({ page }) => {
-  await open(page, '/dogadaji/3145/');
+  const e = await openEvent(page);
+  test.skip(!e, 'no quiz is open for registration');
+  await open(page, e!.url);
   const unreadable = await page.evaluate(() => {
     const parse = (c: string) => { const m = c.match(/[\d.]+/g); return m && m.length >= 3
       ? { r: +m[0], g: +m[1], b: +m[2], a: m.length > 3 ? +m[3] : 1 } : null; };
@@ -59,7 +61,9 @@ test('no text is painted on a ground of its own colour', async ({ page }) => {
 });
 
 test('a placeholder inside a dark panel is legible', async ({ page }) => {
-  await open(page, '/dogadaji/3145/');
+  const e = await openEvent(page);
+  test.skip(!e, 'no quiz is open for registration');
+  await open(page, e!.url);
   const input = page.locator('.prijava-panel .input[placeholder]').first();
   await expect(input).toHaveCount(1);
   const colour = await input.evaluate(el => getComputedStyle(el, '::placeholder').color);
@@ -68,7 +72,9 @@ test('a placeholder inside a dark panel is legible', async ({ page }) => {
 
 test('a status chip flips with the surface it sits on', async ({ page }) => {
   // On the light detail hero it must be dark text; the pale-on-pale version was unreadable.
-  await open(page, '/dogadaji/3145/');
+  const e = await openEvent(page);
+  test.skip(!e, 'no quiz is open for registration');
+  await open(page, e!.url);
   const hero = page.locator('.chip-status').first();
   await expect(hero).toBeVisible();
   const onLight = await hero.evaluate(el => ({ colour: getComputedStyle(el).color, dark: !!el.closest('.card-dark, .on-dark, .band-dark') }));

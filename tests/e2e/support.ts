@@ -1,4 +1,7 @@
 import type { Page } from '@playwright/test';
+import { eventStatus } from '../../src/lib/render';
+import { isStillUpcoming } from '../../src/lib/order';
+import type { EventItem } from '../../src/lib/data';
 
 /** Every route the site serves from its own templates. */
 export const PAGES = [
@@ -45,4 +48,21 @@ export async function clickCard(page: Page, selector: string, index = 0) {
     Math.max(0, box.y + (await page.evaluate(() => window.scrollY)) - 120));
   await page.waitForTimeout(120);
   await card.click();
+}
+
+/**
+ * The soonest quiz a reader could still sign up for.
+ *
+ * Every spec that needs the registration panel used to pin one event id, or take the first card on
+ * /dogadaji/. Both go stale against live data: the pinned quiz dropped out of the API window within
+ * the week (which quietly turned three of these tests into a scan of the 404 page), and the soonest
+ * quiz is regularly full or past its deadline, which renders the closed panel and no form at all.
+ * Resolved from the snapshot instead, so the suite ages with the calendar.
+ */
+export async function openEvent(page: Page): Promise<EventItem | null> {
+  const list = (await (await page.request.get('/data/events.json')).json()) as EventItem[];
+  const closed = ['cancelled', 'full', 'closed', 'results'];
+  return list
+    .filter(e => isStillUpcoming(e) && !closed.includes(eventStatus(e).key))
+    .sort((a, b) => `${a.date}${a.startTime}`.localeCompare(`${b.date}${b.startTime}`))[0] ?? null;
 }

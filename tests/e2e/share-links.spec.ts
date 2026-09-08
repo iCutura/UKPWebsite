@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { open } from './support';
+import { open, openEvent } from './support';
 
 /**
  * Links a venue hands to its teams. Scanning a code at the bar should put someone in front of the
@@ -13,7 +13,9 @@ const inView = (panel: import('@playwright/test').Locator) => panel.evaluate(el 
 });
 
 test('an event link lands on the apps step of the registration panel', async ({ page }) => {
-  await open(page, '/dogadaji/3145/?prijava');
+  const e = await openEvent(page);
+  test.skip(!e, 'no quiz is open for registration');
+  await open(page, `${e!.url}?prijava`);
   const panel = page.locator('[data-prijava]');
   await expect(panel).toHaveAttribute('data-step', 'apps');
   // QR codes, store buttons, and the way in for people without the app.
@@ -25,7 +27,9 @@ test('an event link lands on the apps step of the registration panel', async ({ 
 });
 
 test('the same page without the parameter is unchanged', async ({ page }) => {
-  await open(page, '/dogadaji/3145/');
+  const e = await openEvent(page);
+  test.skip(!e, 'no quiz is open for registration');
+  await open(page, e!.url);
   await expect(page.locator('[data-prijava]')).toHaveAttribute('data-step', 'apps');
   await expect(page.locator('#p-team')).toBeHidden();
 });
@@ -46,16 +50,20 @@ test('the venue CTA carries the registration link, not just the event page', asy
 });
 
 test('the hash form works too, for links that lose their query string', async ({ page }) => {
+  const e = await openEvent(page);
+  test.skip(!e, 'no quiz is open for registration');
   // Navigated directly: the shared open() helper appends ?motion=off, which lands after the
   // fragment and breaks the URL rather than the feature.
-  await page.goto('/dogadaji/3145/#prijava', { waitUntil: 'load' });
+  await page.goto(`${e!.url}#prijava`, { waitUntil: 'load' });
   const panel = page.locator('[data-prijava]');
   await expect(panel).toHaveAttribute('data-step', 'apps', { timeout: 10000 });
   await expect.poll(() => inView(panel), { timeout: 5000 }).toBe(true);
 });
 
 test('stepping from the apps to the form and back keeps the panel whole', async ({ page }) => {
-  await open(page, '/dogadaji/3145/?prijava');
+  const e = await openEvent(page);
+  test.skip(!e, 'no quiz is open for registration');
+  await open(page, `${e!.url}?prijava`);
   const panel = page.locator('[data-prijava]');
   await page.locator('[data-step-panel="apps"] [data-step-go="form"]').click();
   await expect(page.locator('[data-step-panel="form"]')).toBeVisible();
