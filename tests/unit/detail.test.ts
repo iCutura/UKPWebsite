@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { mapsUrl, textToHTML, deadlineText, eventJsonLd, placeLine, eventGoneHTML, eventFactsHTML, aboutUpdate } from '../../src/lib/detail';
-import type { EventItem } from '../../src/lib/data';
+import { mapsUrl, textToHTML, deadlineText, eventJsonLd, placeLine, eventGoneHTML, eventFactsHTML, aboutUpdate, locationDetailHTML, nextPrijavaUrl } from '../../src/lib/detail';
+import type { EventItem, Location } from '../../src/lib/data';
 
 function event(over: Partial<EventItem> = {}): EventItem {
   return {
@@ -165,5 +165,119 @@ describe('aboutUpdate', () => {
     const u = aboutUpdate({ description: '<img src=x onerror=alert(1)>' }, 'complete');
     expect(u.action).toBe('set');
     expect('html' in u && u.html).not.toContain('<img');
+  });
+});
+
+/**
+ * A venue page is built at deploy time, so a venue added in the admin afterwards has no page: the
+ * cron carries it into the snapshot, every list links to it, and the link 404s. The 404 page draws
+ * it from the same snapshot, so the link an organiser shares works the hour the venue is created.
+ */
+describe('locationDetailHTML', () => {
+  function location(over: Partial<Location> = {}): Location {
+    return {
+      id: 159, slug: 'out-rooftop-zagreb', url: '/lokacije/159-out-rooftop-zagreb/',
+      name: 'OUT Rooftop - Zagreb', venueName: 'OUT Rooftop', address: 'Ilica 16, 10000, Zagreb',
+      city: { id: 386, name: 'Zagreb', country: 'Hrvatska' }, lat: 45.813, lng: 15.974,
+      logo: null, image: null, description: null, defaultStartTime: '20:00:00', defaultMaxTeams: 20,
+      defaultMaxPlayersPerTeam: 5, defaultFeeType: 'PerMember', defaultFeeAmount: 3, defaultFeeCurrency: 'EUR',
+      defaultRequiresApproval: false, registrationDeadlineHours: null, whatsapp: null, weekday: 3,
+      upcomingCount: 1, nextEventDate: '2026-09-16', nextEventStartTime: '20:00:00', nextEventName: null,
+      isActive: true, ...over,
+    };
+  }
+  const at = (over: Partial<EventItem> = {}) => event({ locationId: 159, venueName: 'OUT Rooftop', ...over });
+
+  it('names the venue and its town', () => {
+    const html = locationDetailHTML(location(), { events: [] });
+    expect(html).toContain('<h1 class="mt-1">OUT Rooftop</h1>');
+    expect(html).toContain('Zagreb · Hrvatska');
+  });
+
+  it('states the weekly rhythm and the house rules', () => {
+    const html = locationDetailHTML(location(), { events: [] });
+    expect(html).toContain('srijedom · 20:00');
+    expect(html).toContain('najviše 20 ekipa');
+    expect(html).toContain('do 5 igrača');
+    expect(html).toContain('3 € po osobi');
+  });
+
+  it('leaves the rhythm out when no quiz night is recorded', () => {
+    const html = locationDetailHTML(location({ weekday: null, defaultStartTime: null }), { events: [] });
+    expect(html).not.toContain('chip-dark');
+  });
+
+  it('points the address at a map', () => {
+    expect(locationDetailHTML(location(), { events: [] }))
+      .toContain('https://www.google.com/maps/search/?api=1&amp;query=45.813,15.974');
+  });
+
+  it('prints the description the admin wrote', () => {
+    const html = locationDetailHTML(location({ description: 'Krovna kvizaška manifestacija.\n\nSrijedom u 20:00.' }), { events: [] });
+    expect(html).toContain('<p>Krovna kvizaška manifestacija.</p>');
+    expect(html).toContain('<p>Srijedom u 20:00.</p>');
+  });
+
+  it('escapes markup arriving in the venue name or the description', () => {
+    const html = locationDetailHTML(location({ venueName: '<script>x</script>', description: '<img onerror=x>' }), { events: [] });
+    expect(html).not.toContain('<script>');
+    expect(html).not.toContain('<img onerror');
+  });
+
+  it('sends the reader to the next quiz, straight to the registration step', () => {
+    const html = locationDetailHTML(location(), { events: [at({ id: 3200, url: '/dogadaji/3200/' })] });
+    expect(html).toContain('href="/dogadaji/3200/?prijava"');
+    expect(html).toContain('Prijavi ekipu na sljedeći kviz');
+  });
+
+  it('offers the rest of the list when the venue has no quiz booked yet', () => {
+    const html = locationDetailHTML(location({ upcomingCount: 0, nextEventDate: null }), { events: [] });
+    expect(html).not.toContain('?prijava');
+    expect(html).toContain('Pogledaj druge lokacije');
+    expect(html).toContain('Trenutno nema zakazanih termina');
+  });
+
+  it('does not invite a sign-up to a cancelled quiz', () => {
+    const html = locationDetailHTML(location(), { events: [at({ isCancelled: true })] });
+    expect(html).not.toContain('?prijava');
+  });
+
+  it('lists the venue\'s upcoming termini', () => {
+    const html = locationDetailHTML(location(), { events: [at({ id: 3200, url: '/dogadaji/3200/' }), at({ id: 3201, url: '/dogadaji/3201/' })] });
+    expect(html).toContain('data-event-id="3200"');
+    expect(html).toContain('data-event-id="3201"');
+  });
+
+  it('shows the WhatsApp group only when the venue has one', () => {
+    expect(locationDetailHTML(location(), { events: [] })).not.toContain('WhatsApp grupa');
+    expect(locationDetailHTML(location({ whatsapp: 'https://chat.whatsapp.com/abc' }), { events: [] }))
+      .toContain('https://chat.whatsapp.com/abc');
+  });
+
+  it('offers the neighbouring venues it was given', () => {
+    const html = locationDetailHTML(location(), { events: [], nearby: [location({ id: 157, venueName: 'Club Roko', url: '/lokacije/157-club-roko/' })] });
+    expect(html).toContain('data-location-id="157"');
+  });
+
+  it('leaves the neighbours section out entirely when there are none', () => {
+    expect(locationDetailHTML(location(), { events: [], nearby: [] })).not.toContain('Kvizovi u blizini');
+  });
+
+  it('falls back to the season mascot when the venue has no photo', () => {
+    expect(locationDetailHTML(location(), { events: [], season: 'fall' })).toContain('/img/seasons/fall-mascot-820.webp');
+    expect(locationDetailHTML(location({ image: { full: '/img/api/9.jpg', small: '/img/api/9.jpg' } }), { events: [] }))
+      .toContain('/img/api/9.jpg');
+  });
+});
+
+describe('nextPrijavaUrl', () => {
+  it('is the next quiz that is still on', () => {
+    const list = [event({ id: 1, url: '/dogadaji/1/', isCancelled: true }), event({ id: 2, url: '/dogadaji/2/' })];
+    expect(nextPrijavaUrl(list)).toBe('/dogadaji/2/?prijava');
+  });
+
+  it('is nothing when the venue has no quiz to sign up for', () => {
+    expect(nextPrijavaUrl([])).toBeNull();
+    expect(nextPrijavaUrl([event({ isCancelled: true })])).toBeNull();
   });
 });

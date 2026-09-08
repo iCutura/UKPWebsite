@@ -1,7 +1,8 @@
-/** Isomorphic renderers for event / news detail blocks (build time + 404 client fallback). */
+/** Isomorphic renderers for event / location / news detail blocks (build time + 404 client fallback). */
 import type { EventItem, Location, NewsItem } from './data';
-import { esc, logoTile, eventStatus } from './render';
-import { parseApiDate, longDate, numericDate, time, fee, plural, spotsText } from './format';
+import { esc, logoTile, eventStatus, eventCardHTML, locationCardHTML, icon } from './render';
+import { parseApiDate, longDate, numericDate, time, fee, plural, spotsText, weekdayInstrumental } from './format';
+import { seasonFor } from './seasons';
 import { SITE } from '../config';
 
 export function mapsUrl(x: { lat: number | null; lng: number | null; address: string | null; venueName: string; city: { name: string } }): string {
@@ -200,6 +201,109 @@ export function newsArticleHTML(n: NewsItem, size?: { w: number; h: number }): s
   ${n.image ? `<img class="article-img" src="${esc(n.image.full)}" alt=""${size ? ` width="${size.w}" height="${size.h}"` : ''} decoding="async">` : ''}
   <div class="article-body">${textToHTML(n.content, n.summary)}</div>
 </article>`;
+}
+
+/**
+ * The next quiz someone can still sign up for, as the link that opens on the registration step.
+ * `/lokacije/<venue>/?prijava` is the link a venue prints once and shares for a season, so it has
+ * to land on whichever termin is next rather than on a fixed one.
+ */
+export function nextPrijavaUrl(events: EventItem[]): string | null {
+  const next = events.find(e => !e.isCancelled);
+  return next ? `${next.url}?prijava` : null;
+}
+
+const NO_TERMINI = 'Trenutno nema zakazanih termina na ovoj lokaciji. Zaprati nas i javit ćemo ti se čim krene nova sezona.';
+
+/** The venue page's rhythm line, "srijedom · 20:00", from whichever of the two the admin recorded. */
+function rhythmLine(l: Location): string {
+  return [
+    l.weekday != null ? weekdayInstrumental(new Date(2024, 0, 7 + l.weekday)) : null,
+    l.defaultStartTime ? time(l.defaultStartTime) : null,
+  ].filter(Boolean).join(' · ');
+}
+
+/**
+ * A whole venue page, drawn from the snapshot.
+ *
+ * Venue pages are static: `getStaticPaths` builds one per venue in the snapshot on disk, so a venue
+ * added in the admin after the last deploy has no page at all. The cron carries it into
+ * locations.json within the quarter hour and every list on the site starts linking to it, and until
+ * now each of those links was a 404 - the two venues added on 7 September 2026 were unreachable
+ * from the moment they were created. The 404 page renders this instead, the way it already renders
+ * an event or an article created after the build. Keep it in step with pages/lokacije/[slug].astro,
+ * which is the same page built ahead of time.
+ */
+export function locationDetailHTML(
+  l: Location,
+  o: { events: EventItem[]; nearby?: Location[]; now?: Date; season?: string },
+): string {
+  const now = o.now ?? new Date();
+  const nearby = o.nearby ?? [];
+  const season = o.season ?? seasonFor(now);
+  const rhythm = rhythmLine(l);
+  const feeTxt = fee(l.defaultFeeType, l.defaultFeeAmount, l.defaultFeeCurrency);
+  const prijava = nextPrijavaUrl(o.events);
+  const series = l.name !== l.venueName && !l.name.startsWith(l.venueName) ? l.name : null;
+  const sameCity = nearby.length > 0 && nearby.every(x => x.city.name === l.city.name);
+  const mascot = `/img/seasons/${season}-mascot-820.webp`;
+  return `<nav class="crumbs" aria-label="Putanja"><a href="/lokacije/">Lokacije</a> › <a href="/lokacije/?grad=${encodeURIComponent(l.city.name)}">${esc(l.city.name)}</a></nav>
+<div class="locd-hero mt-4">
+  <div>
+    <div class="cluster gap-2">
+      ${logoTile(l.logo, l.venueName, 88)}
+      <div>
+        <span class="eyebrow">${esc(l.city.name)}${l.city.country ? ` · ${esc(l.city.country)}` : ''}</span>
+        <h1 class="mt-1">${esc(l.venueName)}</h1>
+      </div>
+    </div>
+    ${series ? `<p class="muted mt-2">Kvizaški termin: <strong>${esc(series)}</strong></p>` : ''}
+    <div class="cluster gap-1 mt-3">
+      ${rhythm ? `<span class="chip chip-dark">${icon('calendar')} <span style="text-transform: capitalize">${esc(rhythm)}</span></span>` : ''}
+      ${l.defaultMaxTeams ? `<span class="chip">najviše ${l.defaultMaxTeams} ekipa</span>` : ''}
+      ${l.defaultMaxPlayersPerTeam ? `<span class="chip">${icon('users')} do ${l.defaultMaxPlayersPerTeam} igrača</span>` : ''}
+      ${feeTxt ? `<span class="chip">${esc(feeTxt)}</span>` : ''}
+      ${l.defaultRequiresApproval ? '<span class="chip">voditelj potvrđuje prijave</span>' : ''}
+    </div>
+    ${l.address ? `<p class="mt-3"><a class="sec-link" href="${esc(mapsUrl(l))}" rel="noopener" target="_blank">${icon('pin', 18)} ${esc(l.address)} ${icon('external', 16)}</a></p>` : ''}
+    ${l.description ? `<div class="prose mt-3">${textToHTML(l.description)}</div>` : ''}
+    <div class="cluster gap-2 mt-4">
+      ${prijava
+        ? `<a href="${esc(prijava)}" class="btn btn-accent btn-lg">Prijavi ekipu na sljedeći kviz ${icon('arrow-right', 20)}</a>`
+        : '<a href="/lokacije/" class="btn btn-dark btn-lg">Pogledaj druge lokacije</a>'}
+      ${l.whatsapp ? `<a href="${esc(l.whatsapp)}" class="btn btn-ghost btn-lg" rel="noopener" target="_blank">${icon('whatsapp', 20)} WhatsApp grupa</a>` : ''}
+    </div>
+  </div>
+  <figure class="locd-photo${l.image ? '' : ' is-mascot'}">
+    ${l.image
+      ? `<img src="${esc(l.image.full)}" alt="${esc(`${l.venueName}, ${l.city.name}`)}" width="1200" height="900" decoding="async">`
+      : `<img src="${mascot}" data-season-src="/img/seasons/{season}-mascot-820.webp" alt="" width="820" height="740" decoding="async">`}
+  </figure>
+</div>
+<section class="section-tight">
+  <div class="sec-head"><div><span class="eyebrow">Termini</span><h2>${o.events.length ? 'Nadolazeći kvizovi' : 'Trenutno nema zakazanih termina'}</h2></div></div>
+  <div class="grid grid-3" data-live="events" data-location="${l.id}" data-show-location="false" data-empty="${esc(NO_TERMINI)}">${o.events.length
+    ? o.events.map(e => eventCardHTML(e, { now, relative: true, showLocation: false })).join('')
+    : `<div class="empty">${NO_TERMINI}</div>`}</div>
+</section>
+${nearby.length ? `<section class="section-tight">
+  <div class="sec-head">
+    <div><span class="eyebrow">${sameCity ? `Još kvizova u gradu ${esc(l.city.name)}` : 'Kvizovi u blizini'}</span><h2>${sameCity ? 'Isti grad, drugi dan.' : 'Nije daleko.'}</h2></div>
+    <a class="sec-link" href="/lokacije/?grad=${encodeURIComponent(l.city.name)}">Sve lokacije ${icon('arrow-right', 18)}</a>
+  </div>
+  <div class="grid grid-3">${nearby.map(x => locationCardHTML(x, { now, relative: true })).join('')}</div>
+</section>` : ''}
+<section class="section-tight">
+  <div class="card-dark card-pad">
+    <span class="eyebrow">UKP Quiz aplikacija</span>
+    <h2 class="h3">Prijave i rezultati ove lokacije, u džepu.</h2>
+    <p class="mt-2 muted" style="max-width: 48ch">Zaprati lokaciju u aplikaciji i dobij obavijest kad voditelj objavi novi termin ili rezultate.</p>
+    <div class="cluster gap-1 mt-3">
+      <a class="btn btn-sm btn-light" href="${SITE.apps.ios}" rel="noopener" target="_blank">${icon('apple', 18)} App Store</a>
+      <a class="btn btn-sm btn-ghost" href="${SITE.apps.android}" rel="noopener" target="_blank">${icon('play', 18)} Google Play</a>
+    </div>
+  </div>
+</section>`;
 }
 
 /** Whether a snapshot carried every location's detail; see meta.json's `locationDetails`. */
