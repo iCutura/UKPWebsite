@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { sortLocations, upcomingEvents, isStillUpcoming } from '../../src/lib/order';
+import { sortLocations, upcomingEvents, isStillUpcoming, nearbyLocations } from '../../src/lib/order';
 
 const loc = (name: string, city: string, upcomingCount: number, nextEventDate: string | null) =>
   ({ name, city: { name: city }, upcomingCount, nextEventDate });
@@ -91,5 +91,44 @@ describe('upcomingEvents', () => {
       { id: 3, date: '2026-09-08', startTime: '20:00:00' },
     ];
     expect(upcomingEvents(list, now).map(e => e.id)).toEqual([2, 3]);
+  });
+});
+
+describe('nearbyLocations', () => {
+  const near = (id: number, city: string, lat: number | null = null, lng: number | null = null) =>
+    ({ id, city: { name: city }, lat, lng });
+
+  it('offers the other venues in the same city first', () => {
+    const zg = near(1, 'Zagreb', 45.81, 15.97);
+    const list = [zg, near(2, 'Zagreb'), near(3, 'Split', 43.5, 16.4), near(4, 'Zagreb')];
+    expect(nearbyLocations(zg, list).map(l => l.id)).toEqual([2, 4]);
+  });
+
+  it('never offers the venue itself', () => {
+    const zg = near(1, 'Zagreb');
+    expect(nearbyLocations(zg, [zg, near(2, 'Zagreb')]).map(l => l.id)).toEqual([2]);
+  });
+
+  it('stops at three, so the row stays a row', () => {
+    const zg = near(1, 'Zagreb');
+    const list = [zg, near(2, 'Zagreb'), near(3, 'Zagreb'), near(4, 'Zagreb'), near(5, 'Zagreb')];
+    expect(nearbyLocations(zg, list)).toHaveLength(3);
+  });
+
+  it('reaches out to the nearest venues when the city has only this one', () => {
+    // Vukovar's first venue: nothing else in town, but Vinkovci is 20 km away and Osijek 35.
+    const vu = near(1, 'Vukovar', 45.35, 19.0);
+    const list = [vu, near(2, 'Osijek', 45.55, 18.69), near(3, 'Vinkovci', 45.29, 18.8), near(4, 'Zagreb', 45.81, 15.97)];
+    expect(nearbyLocations(vu, list).map(l => l.id)).toEqual([3, 2]);
+  });
+
+  it('leaves out venues too far to count as nearby', () => {
+    const vu = near(1, 'Vukovar', 45.35, 19.0);
+    expect(nearbyLocations(vu, [vu, near(2, 'Zagreb', 45.81, 15.97)])).toEqual([]);
+  });
+
+  it('says nothing rather than guessing when the venue has no coordinates', () => {
+    const vu = near(1, 'Vukovar');
+    expect(nearbyLocations(vu, [vu, near(2, 'Osijek', 45.55, 18.69)])).toEqual([]);
   });
 });

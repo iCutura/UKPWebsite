@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { open } from './support';
+import { open, openEvent } from './support';
 
 /**
  * The registration panel is sticky on desktop. On a small laptop the form step is taller than the
@@ -11,10 +11,9 @@ test.describe('event page on a small laptop', () => {
 
   test('the whole registration form can be reached by scrolling', async ({ page }, info) => {
     test.skip(info.project.name === 'phone', 'the panel is not sticky on phones');
-    await open(page, '/dogadaji/');
-    test.skip(await page.locator('[data-event-id]').count() === 0, 'no upcoming quizzes');
-    await page.locator('[data-event-id]').first().click();
-    await page.waitForLoadState('load');
+    const e = await openEvent(page);
+    test.skip(!e, 'no quiz is open for registration');
+    await open(page, e!.url);
     await page.locator('[data-step-panel="apps"] [data-step-go="form"]').click();
     await expect(page.locator('[data-step-panel="form"]')).toBeVisible();
 
@@ -56,20 +55,18 @@ test('a page built for an event that has since vanished says so', async ({ page 
 });
 
 test('a page whose event is still on the calendar keeps its registration panel', async ({ page }) => {
-  await open(page, '/dogadaji/');
-  test.skip(await page.locator('[data-event-id]').count() === 0, 'no upcoming quizzes');
-  await page.locator('[data-event-id]').first().click();
-  await page.waitForLoadState('load');
+  const e = await openEvent(page);
+  test.skip(!e, 'no quiz is open for registration');
+  await open(page, e!.url);
   await page.waitForTimeout(400);
   await expect(page.locator('[data-prijava]')).toBeVisible();
   await expect(page.locator('.evd')).not.toHaveClass(/is-gone/);
 });
 
 test('a fee corrected in the admin shows on the built page without a deploy', async ({ page }) => {
-  await open(page, '/dogadaji/');
-  const ids = await page.locator('[data-event-id]').evaluateAll(els => els.map(e => (e as HTMLElement).dataset.eventId!));
-  test.skip(ids.length === 0, 'no upcoming quizzes');
-  const id = ids[0];
+  const open_ = await openEvent(page);
+  test.skip(!open_, 'no quiz is open for registration');
+  const id = String(open_!.id);
   await page.route('**/data/events.json', async route => {
     const res = await route.fetch();
     const list = (await res.json()) as { id: number; feeType: string | null; feeAmount: number | null; feeCurrency: string | null }[];

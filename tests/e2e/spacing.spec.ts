@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { open } from './support';
+import { open, openEvent } from './support';
 
 /**
  * Layout faults that look like nothing in the code and are obvious on screen. Each of these
@@ -8,7 +8,9 @@ import { open } from './support';
  */
 
 test('the alternative registration route is not glued to the QR codes', async ({ page }) => {
-  await open(page, '/dogadaji/3145/');
+  const e = await openEvent(page);
+  test.skip(!e, 'no quiz is open for registration');
+  await open(page, e!.url);
   const gap = await page.evaluate(() => {
     const grid = document.querySelector('.qr-grid')!.getBoundingClientRect();
     const btn = document.querySelector('[data-step-panel="apps"] [data-step-go="form"]')!.getBoundingClientRect();

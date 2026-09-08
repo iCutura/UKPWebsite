@@ -96,3 +96,78 @@ test('the venue description on an event page is redrawn too', async ({ page }) =
   await page.waitForFunction(() => document.querySelector<HTMLElement>('[data-event-page]')?.dataset.aboutDone === '1', null, { timeout: 5000 });
   await expect(page.locator('[data-about]')).toContainText('Opis lokacije osvježen bez deploya.');
 });
+
+/**
+ * A venue page is built by getStaticPaths from the snapshot on disk, so a venue added in the admin
+ * after the last deploy has no page: the cron carries it into locations.json within the quarter
+ * hour, every list on the site starts linking to it, and each of those links was a 404. It cost
+ * OUT Rooftop and Royal Palace their pages on the day they were created. The 404 page now draws
+ * the venue from the same snapshot, the way it already drew a new event or article.
+ */
+const NEW_ID = 999001;
+const NEW_URL = `/lokacije/${NEW_ID}-nova-lokacija-bez-stranice/`;
+
+/**
+ * Serve a snapshot carrying a venue the build never saw, optionally with a quiz booked at it.
+ * The rows are read once and served as fixed bodies rather than proxied: the ?prijava case
+ * navigates away mid-flight, which disposes a proxied response before it can be read.
+ */
+async function unbuiltVenue(page: Page, o: { withEvent?: boolean } = {}) {
+  const read = async (file: string) => (await page.request.get(`/data/${file}`)).json() as Promise<Record<string, unknown>[]>;
+  const locations = await read('locations.json');
+  const events = await read('events.json');
+  const sample = locations[0];
+  locations.push({
+    ...sample, id: NEW_ID, slug: 'nova-lokacija-bez-stranice', url: NEW_URL,
+    name: 'Nova lokacija', venueName: 'Nova lokacija', address: 'Ilica 16, 10000, Zagreb',
+    city: { id: 386, name: 'Zagreb', country: 'Hrvatska' }, lat: 45.813, lng: 15.974,
+    logo: null, image: null, description: 'Krovna kvizaška manifestacija u Zagrebu.',
+    defaultStartTime: '20:00:00', weekday: 3, whatsapp: null,
+    upcomingCount: o.withEvent ? 1 : 0, nextEventDate: null, nextEventStartTime: null, isActive: true,
+  });
+  // Hand the new venue a real, already-built termin, so the ?prijava link has somewhere to land.
+  // Dated well ahead so the fixture does not go stale and drop out of the upcoming window.
+  if (o.withEvent && events.length) {
+    Object.assign(events[0], { locationId: NEW_ID, date: '2099-01-07', isCancelled: false, registrationDeadline: null });
+  }
+  await page.route('**/data/locations.json', route => route.fulfill({ json: locations }));
+  await page.route('**/data/events.json', route => route.fulfill({ json: events }));
+  return events[0]?.url as string | undefined;
+}
+
+const drawn = (page: Page) => page.waitForFunction(
+  () => document.querySelector<HTMLElement>('[data-nf-live]')?.hidden === false, null, { timeout: 5000 },
+);
+
+test('a venue created after the last deploy still opens on its own link', async ({ page }) => {
+  await unbuiltVenue(page);
+  await open(page, NEW_URL);
+  await drawn(page);
+  await expect(page.locator('[data-nf-live] h1')).toHaveText('Nova lokacija');
+  await expect(page.locator('[data-nf-live]')).toContainText('Krovna kvizaška manifestacija u Zagrebu.');
+  await expect(page.locator('[data-nf-live]')).toContainText('srijedom · 20:00');
+  // Not the apology page.
+  await expect(page.locator('[data-nf-static]')).toBeHidden();
+});
+
+test('the link a new venue shares still forwards to its next quiz', async ({ page }) => {
+  const eventUrl = await unbuiltVenue(page, { withEvent: true });
+  await page.goto(`${NEW_URL}?prijava&motion=off`, { waitUntil: 'load' });
+  await page.waitForURL(/\/dogadaji\/\d+\/\?prijava/, { timeout: 5000 });
+  expect(new URL(page.url()).pathname).toBe(eventUrl);
+});
+
+test('a link that spells a new venue another way lands on its page, not on the apology', async ({ page }) => {
+  await unbuiltVenue(page);
+  await page.goto(`/lokacije/${NEW_ID}-staro-ime/?motion=off`, { waitUntil: 'load' });
+  await page.waitForURL(u => u.pathname === NEW_URL, { timeout: 5000 });
+  await drawn(page);
+  await expect(page.locator('[data-nf-live] h1')).toHaveText('Nova lokacija');
+});
+
+test('an id no venue answers to still stops on the 404, without looping', async ({ page }) => {
+  await page.goto('/lokacije/999999-ne-postoji/?motion=off', { waitUntil: 'load' });
+  await page.waitForURL(u => u.pathname === '/lokacije/999999/', { timeout: 5000 });
+  await expect(page.locator('[data-nf-static]')).toBeVisible();
+  await expect(page.locator('[data-nf-static]')).toContainText('Ovo pitanje nema odgovor.');
+});

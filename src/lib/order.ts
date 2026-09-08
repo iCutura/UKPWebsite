@@ -41,3 +41,24 @@ export function isStillUpcoming(e: Timed, now: Date = new Date()): boolean {
 export function upcomingEvents<T extends Timed>(list: T[], now: Date = new Date()): T[] {
   return list.filter(e => isStillUpcoming(e, now));
 }
+
+/** Rough kilometres between two venues; good enough to rank neighbours, and not used for anything else. */
+function distanceKm(a: Placed, b: Placed): number {
+  return (a.lat && a.lng && b.lat && b.lng) ? Math.hypot((a.lat - b.lat) * 111, (a.lng - b.lng) * 78) : Infinity;
+}
+
+export interface Placed { id: number; city: { name: string }; lat: number | null; lng: number | null }
+
+/**
+ * The venues to offer at the foot of a venue page: the rest of the town when the town has more,
+ * otherwise whatever is genuinely within reach. Shared by the built page and the 404 page's live
+ * fallback so a venue drawn from the snapshot ends the same way as one that was built.
+ */
+export function nearbyLocations<T extends Placed>(l: T, all: T[], limit = 3): T[] {
+  const others = all.filter(x => x.id !== l.id);
+  const sameCity = others.filter(x => x.city.name === l.city.name);
+  if (sameCity.length) return sameCity.slice(0, limit);
+  return others.filter(x => distanceKm(l, x) < 60)
+    .sort((a, b) => distanceKm(l, a) - distanceKm(l, b))
+    .slice(0, limit);
+}

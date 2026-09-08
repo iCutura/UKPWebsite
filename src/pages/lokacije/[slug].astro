@@ -5,6 +5,7 @@ import SectionHead from '../../components/SectionHead.astro';
 import AppBadges from '../../components/AppBadges.astro';
 import { getLocations, eventsForLocation, type Location } from '../../lib/data';
 import { eventCardHTML, locationCardHTML } from '../../lib/render';
+import { nearbyLocations } from '../../lib/order';
 import { mapsUrl, textToHTML } from '../../lib/detail';
 import { weekdayInstrumental, time, fee } from '../../lib/format';
 import { seasonFor } from '../../lib/seasons';
@@ -16,9 +17,10 @@ const { l } = Astro.props as { l: Location };
 const all = getLocations();
 const events = eventsForLocation(l.id);
 const next = events[0] ?? null;
-const sameCity = all.filter(x => x.id !== l.id && x.city.name === l.city.name);
-const dist = (a: Location, b: Location) => (a.lat && a.lng && b.lat && b.lng) ? Math.hypot((a.lat - b.lat) * 111, (a.lng - b.lng) * 78) : Infinity;
-const nearby = sameCity.length ? sameCity.slice(0, 3) : all.filter(x => x.id !== l.id && dist(l, x) < 60).sort((a, b) => dist(l, a) - dist(l, b)).slice(0, 3);
+// Shared with the 404 page's live fallback, which draws this same page for a venue added after
+// the last deploy; the two must end the same way.
+const nearby = nearbyLocations(l, all);
+const sameCity = nearby.length > 0 && nearby.every(x => x.city.name === l.city.name);
 const rhythm = [l.weekday != null ? weekdayInstrumental(new Date(2024, 0, 7 + l.weekday)) : null, l.defaultStartTime ? time(l.defaultStartTime) : null].filter(Boolean).join(' · ');
 const feeTxt = fee(l.defaultFeeType, l.defaultFeeAmount, l.defaultFeeCurrency);
 const season = seasonFor();
@@ -72,7 +74,7 @@ const desc = `Pub kviz Urbane kviz priče u ${l.city.name}: ${l.venueName}${rhyt
   {nearby.length > 0 && (
     <section class="section-tight">
       <div class="container">
-        <SectionHead eyebrow={sameCity.length ? `Još kvizova u gradu ${l.city.name}` : 'Kvizovi u blizini'} title={sameCity.length ? 'Isti grad, drugi dan.' : 'Nije daleko.'} href={`/lokacije/?grad=${encodeURIComponent(l.city.name)}`} linkLabel="Sve lokacije" />
+        <SectionHead eyebrow={sameCity ? `Još kvizova u gradu ${l.city.name}` : 'Kvizovi u blizini'} title={sameCity ? 'Isti grad, drugi dan.' : 'Nije daleko.'} href={`/lokacije/?grad=${encodeURIComponent(l.city.name)}`} linkLabel="Sve lokacije" />
         <div class="grid grid-3" set:html={nearby.map(x => locationCardHTML(x)).join('')} />
       </div>
     </section>

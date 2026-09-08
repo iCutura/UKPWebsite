@@ -27,9 +27,11 @@ import LayeredScene from '../components/LayeredScene.astro';
   </section>
 </Base>
 <script>
-  import { eventHeaderHTML, registrationPanelHTML, newsArticleHTML } from '../lib/detail';
+  import { eventHeaderHTML, registrationPanelHTML, newsArticleHTML, locationDetailHTML, nextPrijavaUrl } from '../lib/detail';
   import { eventCardHTML } from '../lib/render';
-  // Static host fallback: events/news created after the last build still get a page, rendered from the JSON snapshots.
+  import { nearbyLocations, upcomingEvents } from '../lib/order';
+  import type { EventItem, Location } from '../lib/data';
+  // Static host fallback: events/news/venues created after the last build still get a page, rendered from the JSON snapshots.
   async function init() {
     const root = document.querySelector<HTMLElement>('[data-nf]'); if (!root || root.dataset.bound) return; root.dataset.bound = '1';
     const path = location.pathname;
@@ -40,13 +42,31 @@ import LayeredScene from '../components/LayeredScene.astro';
     const ev = clean.match(/^\/dogadaji\/(\d+)$/), nw = clean.match(/^\/novosti\/(\d+)$/), lc = clean.match(/^\/lokacije\/(\d+)(?:-[^/]*)?$/);
     try {
       // A location link carries the id and a slug; the page lives under the slug the build made.
-      // A link spelled another way (a renamed venue, or a snapshot that slugged a symbol
-      // differently) lands here, so forward by id to the built alias, which knows the real page.
       if (lc) {
-        if (clean !== `/lokacije/${lc[1]}`) location.replace(`/lokacije/${lc[1]}/`);
-        return;
-      }
-      if (ev) {
+        const id = lc[1];
+        let all: Location[] = [];
+        try { all = ((await fetch('/data/locations.json', { cache: 'no-cache' }).then(r => r.json())) as Location[]).filter(x => x.isActive !== false); } catch {}
+        const l = all.find(x => String(x.id) === id);
+        // Nothing to go on (a failed fetch, or a venue taken down): forward by id to the built
+        // alias, which knows where the page is.
+        if (!l) { if (clean !== `/lokacije/${id}`) location.replace(`/lokacije/${id}/`); return; }
+        // The venue is real but this link spells it another way - renamed in the admin after the
+        // last deploy, or a snapshot that slugged a symbol differently. Send it where it belongs.
+        if (clean !== l.url.replace(/\/+$/, '')) { location.replace(l.url + location.search + location.hash); return; }
+        // Its own address, and still no page: the venue was created after the last deploy, so the
+        // build never saw it. Draw the page from the same snapshot the lists are drawn from.
+        const list: EventItem[] = await fetch('/data/events.json', { cache: 'no-cache' }).then(r => r.json()).catch(() => []);
+        const events = upcomingEvents(list.filter(e => e.locationId === l.id))
+          .sort((a, b) => `${a.date}${a.startTime}`.localeCompare(`${b.date}${b.startTime}`));
+        // /lokacije/<venue>/?prijava is the link a venue prints once: it forwards to whichever
+        // quiz is next, and that event page has a fallback of its own if it is new too.
+        if (new URLSearchParams(location.search).has('prijava') || location.hash === '#prijava') {
+          const target = nextPrijavaUrl(events);
+          if (target) { location.replace(target); return; }
+        }
+        document.title = `${l.venueName}, ${l.city.name} · UKP`;
+        live.innerHTML = locationDetailHTML(l, { events, nearby: nearbyLocations(l, all), season: document.documentElement.dataset.season });
+      } else if (ev) {
         const list = await fetch('/data/events.json', { cache: 'no-cache' }).then(r => r.json());
         const e = list.find((x: any) => String(x.id) === ev[1]); if (!e) return;
         document.title = `${e.name || 'Pub kviz'} · ${e.venueName} · UKP`;
