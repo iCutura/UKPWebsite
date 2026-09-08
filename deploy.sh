@@ -26,15 +26,29 @@ if [ "$WIPE" = 1 ]; then
   echo "▶ WIPING remote public_html (old WordPress) - backup lives in ../UKPWebsiteBackup"; read -r -p "type WIPE to continue: " c; [ "$c" = "WIPE" ] || exit 1
   lftp -u "$LEGACY_FTP_USER","$LEGACY_FTP_PASS" "ftp://$LEGACY_FTP_HOST" -e "$LFTP_OPTS mirror -R --delete --verbose=1 $DRY .deploy/public_html kvizovi.hr/public_html; bye"
 else
-  # data/ and img/api/ belong to the cron and are neither uploaded nor deleted, and
-  # .well-known/acme-challenge/ is Let's Encrypt's; the association files next to it are ours
-  # and mirror with the build. Everything else mirrors the build, deletions included: a page
-  # built for an event that was later hidden or removed must not outlive the next deploy
-  # (/dogadaji/3180/ stayed up a day after the event went).
+  # data/ is the cron's and is neither uploaded nor deleted, and .well-known/acme-challenge/ is
+  # Let's Encrypt's; the association files next to it are ours and mirror with the build.
+  # Everything else mirrors the build, deletions included: a page built for an event that was
+  # later hidden or removed must not outlive the next deploy (/dogadaji/3180/ stayed up a day
+  # after the event went).
+  #
+  # img/api/ is excluded HERE only to protect it from --delete: the cron writes files into it
+  # (<id>.jpg for artwork the build has not mirrored) that do not exist locally and must survive.
+  # The images themselves are uploaded by the second mirror below. Excluding the directory
+  # outright, which is what this did between 2026-09-04 and 2026-09-08, stops shipping the
+  # <id>-s.webp files every built page points at: 23 of 110 images 404'd and venues added since
+  # showed an empty logo box. See scripts/verify-images.sh.
   lftp -u "$LEGACY_FTP_USER","$LEGACY_FTP_PASS" "ftp://$LEGACY_FTP_HOST" -e "$LFTP_OPTS mirror -R --only-newer --delete -x '^data/' -x '^img/api/' -x '^\\.well-known/acme-challenge/' --verbose=1 $DRY .deploy/public_html kvizovi.hr/public_html; bye"
 fi
+# The artwork the built pages point at. Uploaded separately and WITHOUT --delete, so the cron's own
+# mirrored files (different names, not present locally) are left alone.
+if [ -d .deploy/public_html/img/api ]; then
+  lftp -u "$LEGACY_FTP_USER","$LEGACY_FTP_PASS" "ftp://$LEGACY_FTP_HOST" -e "$LFTP_OPTS mirror -R --only-newer --verbose=1 $DRY .deploy/public_html/img/api kvizovi.hr/public_html/img/api; bye"
+fi
+
 # put has no --dry-run of its own; skip it rather than let it error out the dry run.
 PUT_CFG="put .deploy/ukp-config.php -o kvizovi.hr/ukp-config.php;"; [ -n "$DRY" ] && PUT_CFG="echo '(dry run) would upload ukp-config.php';"
 lftp -u "$LEGACY_FTP_USER","$LEGACY_FTP_PASS" "ftp://$LEGACY_FTP_HOST" -e "$LFTP_OPTS mirror -R --verbose=1 $DRY .deploy/ukp-cron kvizovi.hr/ukp-cron; $PUT_CFG bye"
 rm -f .deploy/ukp-config.php
 echo "✔ deployed. Check: curl -sI https://kvizovi.hr/ | head -1"
+[ -n "$DRY" ] || ./scripts/verify-images.sh
