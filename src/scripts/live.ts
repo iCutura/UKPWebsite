@@ -7,7 +7,7 @@
 import type { EventItem, Location, NewsItem } from '../lib/data';
 import { sortLocations, upcomingEvents } from '../lib/order';
 import { eventCardHTML, locationCardHTML, newsCardHTML } from '../lib/render';
-import { eventGoneHTML, eventHeaderHTML, eventFactsHTML, aboutUpdate, type DetailsState } from '../lib/detail';
+import { eventGoneHTML, eventHeaderHTML, eventFactsHTML, aboutUpdate, locationEventsView, type DetailsState } from '../lib/detail';
 
 const cache = new Map<string, Promise<unknown>>();
 const load = <T,>(f: string) => { if (!cache.has(f)) cache.set(f, fetch(`/data/${f}`, { cache: 'no-cache' }).then(r => r.ok ? r.json() : Promise.reject(r.status))); return cache.get(f) as Promise<T>; };
@@ -49,12 +49,75 @@ async function redrawAbout(box: HTMLElement, locationId: string) {
   box.classList.add('is-in'); // [data-reveal] starts at opacity 0 and its observer has already run
 }
 
-/** The venue page: only the About block is redrawn; its termini ride the [data-live] grid. */
+/**
+ * The venue page's termini heading, hero CTA and shared ?prijava target, recomputed from the
+ * snapshot. The card grid under them always rode the [data-live] refresh, but these three were
+ * decided in the template at deploy time and nothing ever revisited them, so a venue whose quizzes
+ * were scheduled after the last deploy showed its cards under the words "Trenutno nema zakazanih
+ * termina" and offered a CTA that led away from the very quiz it was advertising.
+ *
+ * Returns where `?prijava` should go, so the caller can forward before anything else is drawn.
+ */
+async function applyLocationEvents(locationId: string): Promise<string | null> {
+  const builtTarget = () => document.querySelector<HTMLElement>('[data-next-prijava]')?.dataset.nextPrijava || null;
+  const list = await load<EventItem[]>('events.json');
+  // An empty snapshot is a failed refresh, not a venue that lost its season: change nothing.
+  if (!list.length) return builtTarget();
+
+  const view = locationEventsView(upcomingEvents(list.filter(e => String(e.locationId) === locationId)));
+  const title = document.querySelector<HTMLElement>('[data-termini-title]');
+  if (title) title.textContent = view.heading;
+  const cta = document.querySelector<HTMLAnchorElement>('[data-location-cta]');
+  if (cta) { cta.href = view.cta.href; cta.className = view.cta.className; cta.innerHTML = view.cta.html; }
+  const holder = document.querySelector<HTMLElement>('[data-next-prijava]');
+  if (holder) holder.dataset.nextPrijava = view.prijava ?? '';
+  return view.prijava;
+}
+
+/**
+ * `/lokacije/<venue>/?prijava` is the link a venue prints once and shares for a season, so it has
+ * to forward to whichever termin is next *now*. It used to be resolved from the build, which meant
+ * a venue that scheduled its quizzes after the last deploy shared a link that did nothing at all.
+ */
+function forwardToPrijava(target: string | null) {
+  if (!target) return;
+  if (new URLSearchParams(location.search).has('prijava') || location.hash === '#prijava') location.replace(target);
+}
+
+/** The venue page: the About block, and everything the termini decide. */
 async function checkLocationPage() {
   const page = document.querySelector<HTMLElement>('[data-location-page]');
   if (!page || page.dataset.liveChecked) return;
   page.dataset.liveChecked = '1';
-  try { await applyAbout(page, page.dataset.locationPage); } catch { /* keep the built page */ }
+  const id = page.dataset.locationPage;
+  try { await applyAbout(page, id); } catch { /* keep the built page */ }
+  if (!id) return;
+  try {
+    forwardToPrijava(await applyLocationEvents(id));
+  } catch {
+    // Snapshot unreachable: the built page stands, and the built target is still better than none.
+    forwardToPrijava(document.querySelector<HTMLElement>('[data-next-prijava]')?.dataset.nextPrijava || null);
+  } finally {
+    page.dataset.eventsDone = '1';
+  }
+}
+
+/**
+ * The share button, bound here rather than on the event page because the 404 page renders the same
+ * button for an event created after the last build and would otherwise ship a dead control.
+ */
+function bindShare() {
+  document.querySelectorAll<HTMLButtonElement>('[data-share]').forEach(b => {
+    if (b.dataset.bound) return;
+    b.dataset.bound = '1';
+    b.addEventListener('click', async () => {
+      const data = { url: b.dataset.share!, title: b.dataset.shareTitle || document.title };
+      try {
+        if (navigator.share) await navigator.share(data);
+        else { await navigator.clipboard.writeText(data.url); b.textContent = 'Link kopiran'; }
+      } catch { /* the reader dismissed the sheet */ }
+    });
+  });
 }
 
 /**
@@ -93,6 +156,7 @@ async function checkEventPage() {
 
 async function refresh() {
   const now = new Date();
+  bindShare();
   await checkEventPage();
   await checkLocationPage();
   const boxes = document.querySelectorAll<HTMLElement>('[data-live]');

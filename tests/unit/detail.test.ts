@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { mapsUrl, textToHTML, deadlineText, eventJsonLd, placeLine, eventGoneHTML, eventFactsHTML, aboutUpdate, locationDetailHTML, nextPrijavaUrl } from '../../src/lib/detail';
+import { mapsUrl, textToHTML, deadlineText, eventJsonLd, placeLine, eventGoneHTML, eventFactsHTML, aboutUpdate, locationDetailHTML, nextPrijavaUrl, locationEventsView, eventActionsHTML, sectionHeadHTML } from '../../src/lib/detail';
 import type { EventItem, Location } from '../../src/lib/data';
 
 function event(over: Partial<EventItem> = {}): EventItem {
@@ -279,5 +279,78 @@ describe('nextPrijavaUrl', () => {
   it('is nothing when the venue has no quiz to sign up for', () => {
     expect(nextPrijavaUrl([])).toBeNull();
     expect(nextPrijavaUrl([event({ isCancelled: true })])).toBeNull();
+  });
+});
+
+/**
+ * The venue page's termini heading, its CTA and its ?prijava target were decided in the Astro
+ * template at deploy time, while the card grid under them was refreshed live. So a venue whose
+ * quizzes were scheduled after the last deploy showed the cards and, directly above them,
+ * "Trenutno nema zakazanih termina" (reported 2026-09-08 for Pub 022 and Yesterday) - and, worse,
+ * kept the CTA and the ?prijava target it was built with, which is the link the venue prints once
+ * and shares for a season. Build and browser now both derive them from here.
+ */
+describe('locationEventsView', () => {
+  const at = (over: Partial<EventItem> = {}) => event({ locationId: 71, venueName: 'Pub 022', ...over });
+
+  it('names the section after the termini it was actually given', () => {
+    expect(locationEventsView([at()]).heading).toBe('Nadolazeći kvizovi');
+    expect(locationEventsView([]).heading).toBe('Trenutno nema zakazanih termina');
+  });
+
+  it('points the CTA and the shared link at the next quiz', () => {
+    const view = locationEventsView([at({ id: 3239, url: '/dogadaji/3239/' })]);
+    expect(view.prijava).toBe('/dogadaji/3239/?prijava');
+    expect(view.cta.href).toBe('/dogadaji/3239/?prijava');
+    expect(view.cta.html).toContain('Prijavi ekipu na sljedeći kviz');
+    expect(view.cta.className).toContain('btn-accent');
+  });
+
+  it('offers the rest of the list when there is nothing to sign up to', () => {
+    const view = locationEventsView([]);
+    expect(view.prijava).toBeNull();
+    expect(view.cta.href).toBe('/lokacije/');
+    expect(view.cta.html).toContain('Pogledaj druge lokacije');
+    expect(view.cta.className).toContain('btn-dark');
+  });
+
+  it('still says a termin exists when the only one is cancelled, but will not sign anyone up to it', () => {
+    const view = locationEventsView([at({ isCancelled: true })]);
+    expect(view.heading).toBe('Nadolazeći kvizovi');
+    expect(view.prijava).toBeNull();
+  });
+});
+
+describe('eventActionsHTML', () => {
+  it('offers directions and a share button', () => {
+    const html = eventActionsHTML(event(), 'Pub kviz · Caffe bar La resistance');
+    expect(html).toContain('Kako doći');
+    expect(html).toContain('Podijeli');
+    expect(html).toContain('https://www.google.com/maps/search/?api=1&amp;query=44.86,13.85');
+    expect(html).toContain('data-share="https://kvizovi.hr/dogadaji/3140/"');
+  });
+
+  it('shows the venue WhatsApp group only when there is one', () => {
+    expect(eventActionsHTML(event(), 't')).not.toContain('WhatsApp grupa');
+    expect(eventActionsHTML(event({ whatsapp: 'https://chat.whatsapp.com/abc' }), 't')).toContain('https://chat.whatsapp.com/abc');
+  });
+
+  it('escapes a share title that carries markup', () => {
+    expect(eventActionsHTML(event(), '<script>x</script>')).not.toContain('<script>');
+  });
+});
+
+describe('sectionHeadHTML', () => {
+  it('renders the eyebrow, the heading and an optional link', () => {
+    const html = sectionHeadHTML({ eyebrow: 'Termini', title: 'Nadolazeći kvizovi', href: '/lokacije/', linkLabel: 'Sve lokacije' });
+    expect(html).toContain('<span class="eyebrow">Termini</span>');
+    expect(html).toContain('Nadolazeći kvizovi');
+    expect(html).toContain('href="/lokacije/"');
+    expect(html).toContain('Sve lokacije');
+  });
+
+  it('carries the hook the live layer needs to rewrite the heading', () => {
+    expect(sectionHeadHTML({ title: 'x', titleAttr: 'data-termini-title' }))
+      .toContain('<h2 data-termini-title>');
   });
 });

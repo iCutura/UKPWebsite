@@ -88,3 +88,34 @@ test('a location link with the wrong slug forwards to the page by id', async ({ 
   await page.waitForURL(new RegExp(`/lokacije/${id}-(?!neko-drugo-ime)[a-z0-9-]+/$`), { timeout: 10000 });
   await expect(page.locator('h1')).not.toContainText('nema odgovor');
 });
+
+/**
+ * A quiz scheduled after the last deploy has no built page, so the 404 page draws it from the
+ * snapshot. That fallback was a header and a registration panel only, and shipped a page missing
+ * its fact tiles, the venue description and the entire actions row - no "Kako doći", no WhatsApp
+ * group, no "Podijeli" (reported 2026-09-08). It now renders what the built page renders.
+ */
+test('an event drawn after the deploy is the whole page, not a stub', async ({ page }) => {
+  const events = await (await page.request.get('/data/events.json')).json();
+  test.skip(events.length === 0, 'no upcoming quizzes in the fixture');
+  const sample = events.find((e: Record<string, unknown>) => !e.isCancelled) ?? events[0];
+  events.push({ ...sample, id: 999903, url: '/dogadaji/999903/', date: '2099-01-07',
+                startTime: '20:00:00', isCancelled: false, registrationDeadline: null,
+                maxTeams: 20, registered: 2, spotsRemaining: 18,
+                whatsapp: 'https://chat.whatsapp.com/fixture' });
+  await page.route('**/data/events.json', r => r.fulfill({ json: events }));
+
+  const res = await page.goto('/dogadaji/999903/?motion=off', { waitUntil: 'load' });
+  // The static host answers 404 and the page renders itself; that is the design, not the bug.
+  expect(res?.status()).toBe(404);
+  await page.waitForFunction(() => document.querySelector<HTMLElement>('[data-nf-live]')?.hidden === false,
+    null, { timeout: 8000 });
+
+  const live = page.locator('[data-nf-live]');
+  await expect(live.locator('.evd-head')).toBeVisible();
+  await expect(live.locator('.facts')).toBeVisible();
+  await expect(live.getByRole('link', { name: /Kako doći/ })).toBeVisible();
+  await expect(live.getByRole('link', { name: /WhatsApp grupa/ })).toBeVisible();
+  await expect(live.getByRole('button', { name: /Podijeli/ })).toBeVisible();
+  await expect(live.locator('.prijava-panel')).toBeVisible();
+});

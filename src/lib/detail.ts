@@ -306,6 +306,56 @@ ${nearby.length ? `<section class="section-tight">
 </section>`;
 }
 
+/** A section heading, shared so the build and the browser cannot draw it differently. */
+export function sectionHeadHTML(o: { eyebrow?: string; title: string; href?: string; linkLabel?: string; titleAttr?: string }): string {
+  return `<div class="sec-head" data-reveal>
+  <div>${o.eyebrow ? `<span class="eyebrow">${esc(o.eyebrow)}</span>` : ''}<h2${o.titleAttr ? ` ${o.titleAttr}` : ''}>${esc(o.title)}</h2></div>
+  ${o.href ? `<a class="sec-link" href="${esc(o.href)}">${esc(o.linkLabel ?? 'Sve')} ${icon('arrow-right', 18)}</a>` : ''}
+</div>`;
+}
+
+/** Directions, the venue's WhatsApp group and the share button, under an event's facts. */
+export function eventActionsHTML(e: EventItem, shareTitle: string): string {
+  return `<div class="cluster gap-2 mt-4">
+  <a class="btn btn-ghost" href="${esc(mapsUrl(e))}" rel="noopener" target="_blank">${icon('map', 20)} Kako doći</a>
+  ${e.whatsapp ? `<a class="btn btn-ghost" href="${esc(e.whatsapp)}" rel="noopener" target="_blank">${icon('whatsapp', 20)} WhatsApp grupa</a>` : ''}
+  <button class="btn btn-ghost" type="button" data-share="${esc(SITE.url + e.url)}" data-share-title="${esc(shareTitle)}">${icon('arrow-up-right', 20)} Podijeli</button>
+</div>`;
+}
+
+/**
+ * The parts of a venue page that are decided by its termini.
+ *
+ * These lived in the Astro template, so they were frozen at deploy time while the card grid under
+ * them was refreshed live from the cron snapshot. A venue whose quizzes were scheduled after the
+ * last deploy therefore showed the cards and, immediately above them, "Trenutno nema zakazanih
+ * termina" - and kept a CTA and a ?prijava target that pointed nowhere, which is the link the venue
+ * prints once and shares for a season. The list pages never had this problem because they recompute
+ * everything derived on the `ukp:live` event; the venue page simply never subscribed.
+ *
+ * Build and browser both call this, so the two cannot disagree. See `applyLocationEvents` in
+ * scripts/live.ts for the browser half.
+ */
+export interface LocationEventsView {
+  heading: string;
+  /** Ready to apply to the built anchor: href, class list and inner markup all come from here. */
+  cta: { href: string; className: string; html: string };
+  /** Where `/lokacije/<venue>/?prijava` should land, or null when there is nothing to sign up to. */
+  prijava: string | null;
+}
+
+export function locationEventsView(events: EventItem[]): LocationEventsView {
+  const prijava = nextPrijavaUrl(events);
+  return {
+    // A cancelled termin is still a termin: the section is not empty, but nobody is signed up to it.
+    heading: events.length ? 'Nadolazeći kvizovi' : 'Trenutno nema zakazanih termina',
+    cta: prijava
+      ? { href: prijava, className: 'btn btn-accent btn-lg', html: `Prijavi ekipu na sljedeći kviz ${icon('arrow-right', 20)}` }
+      : { href: '/lokacije/', className: 'btn btn-dark btn-lg', html: 'Pogledaj druge lokacije' },
+    prijava,
+  };
+}
+
 /** Whether a snapshot carried every location's detail; see meta.json's `locationDetails`. */
 export type DetailsState = 'complete' | 'partial';
 

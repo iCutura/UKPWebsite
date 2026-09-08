@@ -27,7 +27,8 @@ import LayeredScene from '../components/LayeredScene.astro';
   </section>
 </Base>
 <script>
-  import { eventHeaderHTML, registrationPanelHTML, newsArticleHTML, locationDetailHTML, nextPrijavaUrl } from '../lib/detail';
+  import { eventHeaderHTML, eventFactsHTML, eventActionsHTML, sectionHeadHTML, registrationPanelHTML, newsArticleHTML, locationDetailHTML, nextPrijavaUrl, textToHTML } from '../lib/detail';
+  import { longDate, parseApiDate } from '../lib/format';
   import { eventCardHTML } from '../lib/render';
   import { nearbyLocations, upcomingEvents } from '../lib/order';
   import type { EventItem, Location } from '../lib/data';
@@ -71,9 +72,20 @@ import LayeredScene from '../components/LayeredScene.astro';
         const e = list.find((x: any) => String(x.id) === ev[1]); if (!e) return;
         document.title = `${e.name || 'Pub kviz'} · ${e.venueName} · UKP`;
         const others = list.filter((x: any) => x.locationId === e.locationId && x.id !== e.id).slice(0, 3);
+        // Everything the built page shows, drawn from the same helpers. This used to be the header
+        // and the panel only, so a quiz scheduled after the last deploy lost its fact tiles, the
+        // venue description and the whole actions row - no "Kako doći", no WhatsApp group, no
+        // "Podijeli" (reported 2026-09-08).
+        const venues = await fetch('/data/locations.json', { cache: 'no-cache' }).then(r => r.json()).catch(() => []);
+        const venue = venues.find((l: any) => l.id === e.locationId);
+        const about = venue?.description ? `<div class="prose mt-4">${textToHTML(venue.description)}</div>` : '';
+        const shareTitle = `${e.name || 'Pub kviz'} · ${e.venueName}, ${longDate(parseApiDate(e.date))}`;
         live.innerHTML = `<nav class="crumbs" aria-label="Putanja"><a href="/dogadaji/">Događaji</a> › <a href="${e.locationUrl || '/lokacije/'}">${e.venueName}</a></nav>
-          <div class="evd mt-4"><div class="evd-main">${eventHeaderHTML(e)}</div><aside class="evd-side">${registrationPanelHTML(e, root.dataset.registration === '1')}</aside></div>
-          ${others.length ? `<h2 class="h3 mt-6">Ostali termini</h2><div class="grid grid-3 mt-3">${others.map((x: any) => eventCardHTML(x, { showLocation: false })).join('')}</div>` : ''}`;
+          <div class="evd mt-4">
+            <div class="evd-main">${eventHeaderHTML(e)}${eventFactsHTML(e)}${about}${eventActionsHTML(e, shareTitle)}</div>
+            <aside class="evd-side">${registrationPanelHTML(e, root.dataset.registration === '1')}</aside>
+          </div>
+          ${others.length ? `<div class="mt-6">${sectionHeadHTML({ eyebrow: 'Ista lokacija', title: 'Ostali termini', href: e.locationUrl || '/lokacije/', linkLabel: 'O lokaciji' })}</div><div class="grid grid-3">${others.map((x: any) => eventCardHTML(x, { showLocation: false })).join('')}</div>` : ''}`;
       } else if (nw) {
         const list = await fetch('/data/news.json', { cache: 'no-cache' }).then(r => r.json());
         const n = list.find((x: any) => String(x.id) === nw[1]); if (!n) return;

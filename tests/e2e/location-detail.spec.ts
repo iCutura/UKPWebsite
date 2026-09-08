@@ -171,3 +171,93 @@ test('an id no venue answers to still stops on the 404, without looping', async 
   await expect(page.locator('[data-nf-static]')).toBeVisible();
   await expect(page.locator('[data-nf-static]')).toContainText('Ovo pitanje nema odgovor.');
 });
+
+/**
+ * The invariant these exist to hold: **a detail page must agree with the snapshot it is shown, not
+ * with the snapshot it was built from.**
+ *
+ * The card grid was refreshed live from the cron snapshot, but the heading above it, the hero CTA
+ * and the ?prijava target were decided in the Astro template at deploy time and nothing revisited
+ * them. So Pub 022 and Yesterday, whose September termini were scheduled after the last deploy,
+ * advertised their own cards under the words "Trenutno nema zakazanih termina" (reported
+ * 2026-09-08), offered a CTA leading away from the quiz on screen, and shared a ?prijava link that
+ * did nothing at all. The list pages never had this problem: they recompute on `ukp:live`.
+ */
+
+/** Serve fixed snapshot bodies (read once) so a navigating test cannot race a proxied response. */
+async function withEvents(page: Page, edit: (events: any[], locations: any[]) => void) {
+  const read = async (f: string) => (await page.request.get(`/data/${f}`)).json();
+  const events = await read('events.json');
+  const locations = await read('locations.json');
+  edit(events, locations);
+  await page.route('**/data/events.json', r => r.fulfill({ json: events }));
+  await page.route('**/data/locations.json', r => r.fulfill({ json: locations }));
+}
+
+/** A venue the build gave no termini, and one it gave some. */
+async function venues(page: Page) {
+  const events = await (await page.request.get('/data/events.json')).json();
+  const locations = await (await page.request.get('/data/locations.json')).json();
+  const busy = new Set(events.map((e: any) => e.locationId));
+  return {
+    quiet: locations.find((l: any) => !busy.has(l.id) && l.isActive !== false),
+    busy: locations.find((l: any) => busy.has(l.id)),
+    sample: events[0],
+  };
+}
+
+const liveDone = (page: Page) => page.waitForFunction(
+  () => document.querySelector<HTMLElement>('[data-location-page]')?.dataset.eventsDone === '1',
+  null, { timeout: 5000 },
+);
+
+test('a termin added after the deploy is announced, not contradicted', async ({ page }) => {
+  const { quiet, sample } = await venues(page);
+  test.skip(!quiet || !sample, 'every venue in the fixture already has a termin');
+  await withEvents(page, events => {
+    events.push({ ...sample, id: 999901, url: '/dogadaji/999901/', locationId: quiet!.id,
+                  date: '2099-01-07', startTime: '20:00:00', isCancelled: false,
+                  registrationDeadline: null, maxTeams: 20, registered: 2, spotsRemaining: 18 });
+  });
+  await open(page, quiet!.url);
+  await liveDone(page);
+  // The heading the build wrote was "Trenutno nema zakazanih termina"; the snapshot disagrees.
+  await expect(page.locator('[data-termini-title]')).toHaveText('Nadolazeći kvizovi');
+  await expect(page.locator('[data-location-cta]')).toHaveAttribute('href', '/dogadaji/999901/?prijava');
+  await expect(page.locator('[data-location-cta]')).toContainText('Prijavi ekipu na sljedeći kviz');
+  await expect(page.locator('[data-event-id="999901"]')).toBeVisible();
+});
+
+test('the link a venue shares reaches a termin scheduled after the deploy', async ({ page }) => {
+  const { quiet, sample } = await venues(page);
+  test.skip(!quiet || !sample, 'every venue in the fixture already has a termin');
+  await withEvents(page, events => {
+    events.push({ ...sample, id: 999902, url: '/dogadaji/999902/', locationId: quiet!.id,
+                  date: '2099-01-07', startTime: '20:00:00', isCancelled: false, registrationDeadline: null });
+  });
+  // This link did nothing at all before: the build rendered no target for it to read.
+  await page.goto(`${quiet!.url}?prijava&motion=off`, { waitUntil: 'load' });
+  await page.waitForURL(/\/dogadaji\/999902\/\?prijava/, { timeout: 8000 });
+});
+
+test('a termin removed after the deploy stops being advertised', async ({ page }) => {
+  const { busy } = await venues(page);
+  test.skip(!busy, 'no venue in the fixture has a termin');
+  await withEvents(page, events => {
+    for (let i = events.length - 1; i >= 0; i--) if (events[i].locationId === busy!.id) events.splice(i, 1);
+  });
+  await open(page, busy!.url);
+  await liveDone(page);
+  await expect(page.locator('[data-termini-title]')).toHaveText('Trenutno nema zakazanih termina');
+  await expect(page.locator('[data-location-cta]')).toContainText('Pogledaj druge lokacije');
+});
+
+test('an unreachable snapshot leaves the built page exactly as it was', async ({ page }) => {
+  const { busy } = await venues(page);
+  test.skip(!busy, 'no venue in the fixture has a termin');
+  await page.route('**/data/events.json', r => r.abort());
+  await open(page, busy!.url);
+  await liveDone(page);
+  // Whatever the build knew still stands; a failed refresh must never blank a page.
+  await expect(page.locator('[data-termini-title]')).toHaveText('Nadolazeći kvizovi');
+});

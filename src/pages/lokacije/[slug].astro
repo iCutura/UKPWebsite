@@ -6,7 +6,7 @@ import AppBadges from '../../components/AppBadges.astro';
 import { getLocations, eventsForLocation, type Location } from '../../lib/data';
 import { eventCardHTML, locationCardHTML } from '../../lib/render';
 import { nearbyLocations } from '../../lib/order';
-import { mapsUrl, textToHTML } from '../../lib/detail';
+import { mapsUrl, textToHTML, locationEventsView, sectionHeadHTML } from '../../lib/detail';
 import { weekdayInstrumental, time, fee } from '../../lib/format';
 import { seasonFor } from '../../lib/seasons';
 
@@ -16,7 +16,10 @@ export function getStaticPaths() {
 const { l } = Astro.props as { l: Location };
 const all = getLocations();
 const events = eventsForLocation(l.id);
-const next = events[0] ?? null;
+// Everything the termini decide - the heading, the CTA and the ?prijava target - comes from one
+// shared view, and scripts/live.ts recomputes it from the snapshot on load. Deciding any of it here
+// alone is what left venues advertising "Trenutno nema zakazanih termina" above their own cards.
+const view = locationEventsView(events);
 // Shared with the 404 page's live fallback, which draws this same page for a venue added after
 // the last deploy; the two must end the same way.
 const nearby = nearbyLocations(l, all);
@@ -53,7 +56,7 @@ const desc = `Pub kviz Urbane kviz priče u ${l.city.name}: ${l.venueName}${rhyt
               after this page was built has no element to appear in otherwise. */}
           <div class="prose mt-3" data-about data-reveal hidden={!l.description} set:html={l.description ? textToHTML(l.description) : ''} />
           <div class="cluster gap-2 mt-4" data-reveal>
-            {next && !next.isCancelled ? <a href={`${next.url}?prijava`} class="btn btn-accent btn-lg" data-magnetic="10">Prijavi ekipu na sljedeći kviz <Icon name="arrow-right" /></a> : <a href="/lokacije/" class="btn btn-dark btn-lg">Pogledaj druge lokacije</a>}
+            <a href={view.cta.href} class={view.cta.className} data-location-cta data-magnetic="10" set:html={view.cta.html} />
             {l.whatsapp && <a href={l.whatsapp} class="btn btn-ghost btn-lg" rel="noopener" target="_blank"><Icon name="whatsapp" /> WhatsApp grupa</a>}
           </div>
         </div>
@@ -66,7 +69,7 @@ const desc = `Pub kviz Urbane kviz priče u ${l.city.name}: ${l.venueName}${rhyt
 
   <section class="section-tight">
     <div class="container">
-      <SectionHead eyebrow="Termini" title={events.length ? 'Nadolazeći kvizovi' : 'Trenutno nema zakazanih termina'} />
+      <Fragment set:html={sectionHeadHTML({ eyebrow: 'Termini', title: view.heading, titleAttr: 'data-termini-title' })} />
       <div class="grid grid-3" data-live="events" data-location={l.id} data-show-location="false" data-empty="Trenutno nema zakazanih termina na ovoj lokaciji. Zaprati nas i javit ćemo ti se čim krene nova sezona." set:html={events.length ? events.map(e => eventCardHTML(e, { showLocation: false })).join('') : '<div class="empty">Trenutno nema zakazanih termina na ovoj lokaciji. Zaprati nas i javit ćemo ti se čim krene nova sezona.</div>'} />
     </div>
   </section>
@@ -92,16 +95,10 @@ const desc = `Pub kviz Urbane kviz priče u ${l.city.name}: ${l.venueName}${rhyt
       </div>
     </div>
   </section>
-  {next && !next.isCancelled && <div data-next-prijava={`${next.url}?prijava`} hidden></div>}
-  <script>
-    // /lokacije/<venue>/?prijava is the link a venue shares once. It forwards to whichever quiz
-    // is next, so a printed code keeps working week after week.
-    document.addEventListener('astro:page-load', () => {
-      if (!new URLSearchParams(location.search).has('prijava')) return;
-      const target = document.querySelector<HTMLElement>('[data-next-prijava]')?.dataset.nextPrijava;
-      if (target) location.replace(target);
-    });
-  </script>
+  {/* Always rendered, even empty: scripts/live.ts refreshes it from the snapshot and owns the
+      forward, so a termin scheduled after this page was built still has somewhere to send the
+      reader. It is the fallback target when the snapshot cannot be reached. */}
+  <div data-next-prijava={view.prijava ?? ''} hidden></div>
 </Base>
 <style>
   .app-cta { display: grid; }
