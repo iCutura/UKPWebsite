@@ -1,0 +1,154 @@
+---
+import Landing from '../layouts/Landing.astro';
+import StoreBadge from '../components/StoreBadge.astro';
+import { SITE } from '../config';
+import { LANDING_COPY, HR_LANGUAGES } from '../lib/appLanding';
+import { UA_ANDROID, UA_IOS, UA_MAC } from '../lib/device';
+
+/**
+ * kvizovi.hr/app - where the global Meta campaigns land.
+ *
+ * Both languages ship in the markup and one is hidden by CSS, rather than two URLs or a redirect:
+ * an ad set points at one address, and a redirect on arrival costs a paint and some of the clicks.
+ *
+ * Language and device are decided in an inline script before first paint, because both change what
+ * the page looks like. The script is built from the same regexes `lib/appLanding.ts` and
+ * `lib/device.ts` export and `tests/unit/app-landing.test.ts` covers, so the rule that ships and the
+ * rule that is tested are one thing. Without JavaScript the page shows Croatian with both store
+ * buttons equal, which is the safe default rather than a broken one.
+ */
+const hr = LANDING_COPY.hr;
+const en = LANDING_COPY.en;
+const year = new Date().getFullYear();
+
+const rx = (r: RegExp) => `/${r.source}/${r.flags}`;
+const boot = `(function(){var h=document.documentElement;try{`
+  + `var L=navigator.languages&&navigator.languages.length?navigator.languages:[navigator.language||''],hr=false;`
+  + `for(var i=0;i<L.length;i++){if(${rx(HR_LANGUAGES)}.test(L[i])){hr=true;break}}`
+  + `h.dataset.appLang=hr?'hr':'en';h.lang=hr?'hr':'en';`
+  + `var u=navigator.userAgent||'',p='desktop';`
+  + `if(${rx(UA_ANDROID)}.test(u))p='android';`
+  + `else if(${rx(UA_IOS)}.test(u))p='ios';`
+  + `else if(${rx(UA_MAC)}.test(u)&&navigator.maxTouchPoints>1)p='ios';`
+  + `h.dataset.platform=p}catch(e){}})();`;
+---
+<Landing title={`UKP Quiz · ${hr.headline}`} description={hr.sub}>
+  <script is:inline set:html={boot} />
+
+  <div class="app on-dark">
+    <div class="app-glow" aria-hidden="true"></div>
+    <div class="app-inner">
+
+      <header class="app-top">
+        <a class="app-brand" href={SITE.url} aria-label={hr.home}>
+          <img src="/img/brand/mascot-white-96.webp" width="40" height="40" alt="" />
+          <span class="app-brand-text">
+            <span class="app-brand-line">Urbana</span>
+            <span class="app-brand-line">kviz priča</span>
+          </span>
+        </a>
+        <span class="app-host">kvizovi.hr</span>
+      </header>
+
+      <div class="app-main">
+        <div class="app-copy">
+          <p class="eyebrow">{hr.eyebrow}</p>
+          <h1 class="app-h1">
+            <span data-lang="hr">{hr.headline}</span><span data-lang="en">{en.headline}</span>
+          </h1>
+          <p class="app-sub">
+            <span data-lang="hr">{hr.sub}</span><span data-lang="en">{en.sub}</span>
+          </p>
+          <div class="app-badges">
+            <StoreBadge store="ios" event="AppStoreClick" bilingual />
+            <StoreBadge store="android" event="GooglePlayClick" bilingual />
+          </div>
+          <p class="app-note">
+            <span data-lang="hr">{hr.note}</span><span data-lang="en">{en.note}</span>
+          </p>
+        </div>
+
+        <div class="app-shots">
+          <img class="shot shot-quiz" src="/img/promo/quiz-framed.webp" width="640" height="1308" alt="" loading="lazy" decoding="async" />
+          <img class="shot shot-home" src="/img/promo/home-framed.webp" width="640" height="1308" alt={hr.shots} loading="lazy" decoding="async" />
+        </div>
+      </div>
+
+      <footer class="app-legal">
+        <span>© {year} {SITE.name}</span>
+        <a href="/pravila-privatnosti/"><span data-lang="hr">{hr.privacy}</span><span data-lang="en">{en.privacy}</span></a>
+        <a href="/kolacici/"><span data-lang="hr">{hr.cookies}</span><span data-lang="en">{en.cookies}</span></a>
+      </footer>
+
+    </div>
+  </div>
+</Landing>
+
+<script>
+  import { track, trackCustom } from '../scripts/pixel';
+
+  document.addEventListener('astro:page-load', () => {
+    // Queued until the visitor accepts marketing cookies, then sent; dropped if they refuse.
+    track('ViewContent', { content_name: 'UKP Quiz app landing' });
+    document.querySelectorAll<HTMLElement>('[data-pixel-event]').forEach(el => {
+      if (el.dataset.pixelBound) return;
+      el.dataset.pixelBound = '1';
+      el.addEventListener('click', () => trackCustom(el.dataset.pixelEvent!, {
+        platform: document.documentElement.dataset.platform || 'unknown',
+      }));
+    });
+  });
+</script>
+
+<style>
+  .app {
+    position: relative; min-height: 100dvh; overflow: clip; color: var(--on-dark);
+    background: linear-gradient(160deg, var(--night-0) 0%, var(--night-1) 55%, var(--night-2) 100%);
+  }
+  .app-glow {
+    position: absolute; right: -8%; top: 6%; width: min(720px, 92vw); aspect-ratio: 1; border-radius: 50%;
+    background: radial-gradient(closest-side, var(--warm-1), transparent 72%); opacity: .5; filter: blur(30px); pointer-events: none;
+  }
+  .app-inner {
+    position: relative; display: flex; flex-direction: column; gap: 32px; min-height: 100dvh; box-sizing: border-box;
+    width: min(100% - 2 * var(--gutter), var(--container)); margin-inline: auto;
+    /* viewport-fit=cover, so the notch and the home bar are ours to keep clear. */
+    padding: max(40px, calc(env(safe-area-inset-top) + 16px)) 0
+             calc(max(28px, env(safe-area-inset-bottom) + 16px) + var(--cc-space, 0px));
+  }
+
+  .app-top { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+  .app-brand { display: inline-flex; align-items: center; gap: 12px; color: inherit; text-decoration: none !important; }
+  .app-brand img { width: 40px; height: 40px; box-sizing: border-box; padding: 5px; border-radius: var(--r-md); background: rgb(255 255 255 / .16); }
+  .app-brand-text { display: flex; flex-direction: column; font-weight: 800; font-size: .95rem; line-height: 1; letter-spacing: -.02em; text-transform: uppercase; }
+  .app-brand-line + .app-brand-line { margin-top: 3px; font-weight: 600; opacity: .8; font-size: .78rem; letter-spacing: .02em; }
+  .app-host { font-size: var(--fs-small); font-weight: 600; color: var(--on-dark-md); }
+
+  .app-main { flex-grow: 1; display: grid; gap: 28px; align-items: center; }
+  @media (min-width: 900px) { .app-main { grid-template-columns: minmax(0, 1.02fr) minmax(0, .98fr); gap: 48px; } }
+  .app-copy { display: flex; flex-direction: column; align-items: flex-start; }
+  .app-h1 { margin-top: 14px; padding-top: .1em; font-size: clamp(2.5rem, 1.7rem + 3.4vw, 4.875rem); max-width: 13ch; }
+  .app-sub { margin-top: 20px; font-size: var(--fs-lead); line-height: 1.45; color: var(--on-dark-md); max-width: 44ch; }
+  .app-badges { display: flex; flex-wrap: wrap; align-items: center; gap: 14px; margin-top: 32px; --bh: 56px; }
+  /* --on-dark-lo is the faint tier; tests/e2e/contrast.spec.ts forbids text under half ink. */
+  .app-note { margin-top: 20px; font-size: var(--fs-small); color: var(--on-dark-md); }
+
+  /* A phone can install exactly one of these, so there they stack with the usable one on top and
+     larger (global.css sizes them). A desktop can install neither: both stay equal, side by side. */
+  :global(html[data-platform="ios"]) .app-badges,
+  :global(html[data-platform="android"]) .app-badges { flex-direction: column; align-items: flex-start; }
+
+  .app-shots { position: relative; display: flex; justify-content: center; }
+  .shot { width: 168px; height: auto; filter: drop-shadow(0 22px 30px rgb(0 0 0 / .55)); }
+  .shot-quiz { display: none; }
+  @media (min-width: 900px) {
+    .app-shots { display: block; height: 640px; }
+    .shot { position: absolute; width: auto; }
+    .shot-quiz { display: block; right: 2%; top: 74px; width: 40%; transform: rotate(6deg); z-index: 1; }
+    .shot-home { left: 15%; top: 18px; width: 47%; z-index: 2; }
+  }
+
+  .app-legal { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 18px; font-size: var(--fs-caption); color: var(--on-dark-md); }
+  .app-legal a { color: var(--on-dark-md); text-decoration: underline; text-underline-offset: 3px; padding: 6px 0; }
+  .app-legal a:hover { color: var(--on-dark); }
+</style>

@@ -1,5 +1,6 @@
 ---
 import Icon from './Icon.astro';
+import AppBadges from './AppBadges.astro';
 import { SITE } from '../config';
 import { SEASONS, SEASON_TOKENS, LOCKED_SEASON } from '../lib/seasons';
 const year = new Date().getFullYear();
@@ -11,10 +12,7 @@ const seasonIcon: Record<string, 'leaf' | 'sun' | 'leaf-fall' | 'snowflake'> = {
       <div class="footer-brand">
         <img src="/img/brand/mascot-white-512.webp" width="72" height="72" alt="" class="footer-mark" loading="lazy" />
         <p class="footer-claim">Kvizaški smo entuzijasti koji kreiraju pub kvizove općeg znanja, tematske kvizove i teambuilding kvizove. A i sami nerijetko i s guštom igramo.</p>
-        <div class="cluster gap-1 mt-3">
-          <a class="btn btn-light btn-sm" href={SITE.apps.ios} rel="noopener" target="_blank"><Icon name="apple" size={18} /> App Store</a>
-          <a class="btn btn-ghost btn-sm" href={SITE.apps.android} rel="noopener" target="_blank"><Icon name="play" size={18} /> Google Play</a>
-        </div>
+        <div class="mt-3"><AppBadges /></div>
       </div>
       <nav class="footer-col" aria-label="Stranice">
         <h2 class="footer-h">Stranice</h2>
@@ -51,13 +49,14 @@ const seasonIcon: Record<string, 'leaf' | 'sun' | 'leaf-fall' | 'snowflake'> = {
       <p class="footer-legal">
         <strong>{SITE.company.name}</strong> · {SITE.company.seat} · {SITE.company.court}, MBS {SITE.company.mbs} · {SITE.company.director} · {SITE.company.capital}
       </p>
-      <p class="footer-legal">© {year} Urbana kviz priča · <a href="/pravila-privatnosti/">Pravila privatnosti</a> · <a href="/kolacici/">Kolačići</a><br>Developed by <a href="https://www.injeel-it.hr" rel="noopener" target="_blank">Injeel IT</a></p>
+      <p class="footer-legal">© {year} Urbana kviz priča · <a href="/pravila-privatnosti/">Pravila privatnosti</a> · <a href="/kolacici/">Kolačići</a> · <button type="button" class="footer-linkbtn" data-cookie-settings>Postavke kolačića</button><br>Developed by <a href="https://www.injeel-it.hr" rel="noopener" target="_blank">Injeel IT</a></p>
     </div>
   </div>
 </footer>
 
 <style>
-  .footer { padding-block: clamp(56px, 8vw, 96px) 32px; margin-top: calc(var(--section) * .5); }
+  /* The trailing value reserves room for the cookie bar (see CookieConsent.astro), so the legal line is never underneath it. */
+  .footer { padding-block: clamp(56px, 8vw, 96px) calc(32px + var(--cc-space, 0px)); margin-top: calc(var(--section) * .5); }
   .footer-top { display: grid; gap: 40px; grid-template-columns: 1fr; }
   /* An auto-fit repeat may not sit beside an fr track: the browser threw the whole declaration
      away and every column stacked, at every width, into a 1060px footer. Auto-flow gives the same
@@ -87,4 +86,8 @@ const seasonIcon: Record<string, 'leaf' | 'sun' | 'leaf-fall' | 'snowflake'> = {
   @media (min-width: 900px) { .footer-bottom { flex-direction: row; justify-content: space-between; align-items: flex-start; gap: 32px; } }
   .footer-legal { font-size: var(--fs-caption); color: var(--on-dark-md); line-height: 1.6; max-width: 70ch; }
   .footer-legal a { color: var(--on-dark); text-decoration: underline; text-underline-offset: 3px; padding: 6px 0; display: inline-block; }
+  /* Reads as one of the legal links beside it, but it opens the cookie panel rather than navigating. */
+  /* inline-flex with a floor rather than the anchors' padding: a real button has to be hittable, and tests/e2e/layout.spec.ts measures it. */
+  .footer-linkbtn { font: inherit; color: var(--on-dark); text-decoration: underline; text-underline-offset: 3px; display: inline-flex; align-items: center; min-height: 44px; cursor: pointer; }
+  .footer-linkbtn:hover { color: var(--accent-soft); }
 </style>

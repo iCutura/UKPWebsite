@@ -1,10 +1,12 @@
 ---
-import Icon from './Icon.astro';
-import { SITE } from '../config';
-interface Props { light?: boolean }
-const { light = false } = Astro.props;
+import StoreBadge from './StoreBadge.astro';
+/**
+ * The pair of store badges, for anywhere on the site that points at the apps. There is no light or
+ * dark variant any more: the badges are Apple's and Google's artwork and they look the same on
+ * every surface, which is the point of them.
+ */
 ---
 <div class="cluster gap-1">
-  <a class:list={['btn btn-sm', light ? 'btn-light' : 'btn-dark']} href={SITE.apps.ios} rel="noopener" target="_blank"><Icon name="apple" size={18} /> App Store</a>
-  <a class:list={['btn btn-sm', light ? 'btn-ghost' : 'btn-dark']} href={SITE.apps.android} rel="noopener" target="_blank"><Icon name="play" size={18} /> Google Play</a>
+  <StoreBadge store="ios" />
+  <StoreBadge store="android" />
 </div>

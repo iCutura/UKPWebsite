@@ -1,0 +1,11 @@
+---
+import { LOCKED_SEASON } from '../lib/seasons';
+/**
+ * Sets `<html data-season>` before first paint, so no page ever renders one frame in the wrong
+ * palette. Shared by `Base.astro` and `Landing.astro`: `:root` in global.css defaults to spring, so
+ * a layout that forgets this renders the whole page in coral while the rest of the site is in fall.
+ */
+---
+<script is:inline data-astro-rerun set:html={LOCKED_SEASON
+  ? `document.documentElement.setAttribute('data-season','${LOCKED_SEASON}');document.documentElement.classList.add('js');`
+  : `(function(){var d=new Date(),md=(d.getMonth()+1)*100+d.getDate();var s=md>=320&&md<=620?'spring':md>=621&&md<=921?'summer':md>=922&&md<=1220?'fall':'winter';try{var q=new URLSearchParams(location.search).get('season');if(q&&/^(spring|summer|fall|winter|auto)$/.test(q)){q==='auto'?localStorage.removeItem('ukp-season'):localStorage.setItem('ukp-season',q)}var o=localStorage.getItem('ukp-season');if(o&&/^(spring|summer|fall|winter)$/.test(o))s=o}catch(e){}var h=document.documentElement;h.setAttribute('data-season',s);h.classList.add('js')})();`} />

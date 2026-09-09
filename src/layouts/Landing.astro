@@ -1,0 +1,67 @@
+---
+import { ClientRouter } from 'astro:transitions';
+import CookieConsent from '../components/CookieConsent.astro';
+import SeasonBoot from '../components/SeasonBoot.astro';
+import { SITE } from '../config';
+import { seasonFor } from '../lib/seasons';
+import '../styles/global.css';
+
+/**
+ * One page, no navigation.
+ *
+ * `Base.astro` renders the header and the footer and there is no way to ask it not to, which is the
+ * whole reason this layout exists: the campaign landing page has exactly one job, and a nav bar is
+ * six ways to leave before doing it. The two exceptions the brief allows are in the page itself: the
+ * logo, which goes to kvizovi.hr, and the legal links at the foot.
+ *
+ * `noindex, nofollow` on every page that uses this. A landing page competing with the real site in
+ * search results is a worse result for both. It also has to be kept out of sitemap.xml, which is
+ * done by the SKIP list in scripts/build-sitemap.mjs, not here: noindex in a sitemapped URL is a
+ * contradiction a crawler reports.
+ *
+ * `ClientRouter` is here even though there is nowhere to navigate. `astro:page-load` is its event,
+ * and both the consent bar and the pixel bind to it; without the router they would never start.
+ */
+interface Props { title: string; description: string }
+const { title, description } = Astro.props;
+const season = seasonFor();
+const canonical = new URL(Astro.url.pathname, SITE.url).href;
+---
+<!doctype html>
+<html lang="hr" data-season={season}>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+    <meta name="robots" content="noindex, nofollow" />
+    <meta name="theme-color" content="#2C1C10" />
+    <link rel="icon" href={`/img/seasons/${season}-icon-64.png`} sizes="64x64" type="image/png" />
+    <link rel="apple-touch-icon" href={`/img/seasons/${season}-icon-192.png`} />
+    <meta property="og:site_name" content={SITE.name} />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:image" content={new URL(`/og/${season}.jpg`, SITE.url).href} />
+    <meta name="twitter:card" content="summary_large_image" />
+    <SeasonBoot />
+    <ClientRouter />
+  </head>
+  <body class="landing">
+    <main id="main">
+      <slot />
+    </main>
+    <CookieConsent />
+    <script>
+      import '../scripts/season';
+      import '../scripts/cookieConsent';
+      import '../scripts/pixel';
+    </script>
+  </body>
+</html>
+
+<style is:global>
+  body.landing { background: var(--dark); }
+</style>

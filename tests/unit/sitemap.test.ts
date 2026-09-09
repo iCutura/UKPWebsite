@@ -42,4 +42,10 @@ describe('sitemap and robots', () => {
     const xml = readFileSync(dist('sitemap.xml'), 'utf8');
     expect(xml).not.toContain('/link/');
   });
+
+  it('keeps the campaign landing page out, because it is noindex', () => {
+    // A noindex page listed in the sitemap is a contradiction a crawler reports back as an error.
+    const xml = readFileSync(dist('sitemap.xml'), 'utf8');
+    expect(xml).not.toContain('/app/');
+  });
 });

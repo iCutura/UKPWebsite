@@ -7,6 +7,9 @@ import type { EventItem } from '../../src/lib/data';
 export const PAGES = [
   '/', '/lokacije/', '/dogadaji/', '/novosti/', '/o-nama/',
   '/team-building/', '/partneri/', '/kontakt/', '/pravila-privatnosti/', '/kolacici/', '/link/',
+  // The campaign landing page has no header and no footer, but it is still a page a reader sees, so
+  // it takes the same overflow, contrast and heading-clearance checks as the rest.
+  '/app/',
 ];
 
 /** Load a page with animation disabled so reveals do not hide content from the assertions. */

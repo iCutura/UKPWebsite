@@ -1,0 +1,152 @@
+---
+/**
+ * The cookie banner: a bar at the foot of the page, never a full-screen wall.
+ *
+ * Two categories only. Nužni is the site's own localStorage and is not negotiable; Marketing is the
+ * Meta Pixel and starts off. A third, empty category for analytics would be a promise the site does
+ * not keep, so it is not here until an analytics tool is.
+ *
+ * Odbij sve and Prihvati sve are both `.btn-light`: same size, same fill, same weight. Equal
+ * geometry with a filled button beside a ghost one is exactly the pattern supervisory authorities
+ * point at, and this banner is the one place on the site where a design preference would be a legal
+ * problem. Postavke is a text button below them, which is a third choice rather than the refusal.
+ *
+ * The bar does not dim the page. /app is paid traffic, and a full-screen obstacle in front of an ad
+ * click costs real money.
+ */
+---
+<section class="cc" data-cookie-consent data-cc-step="banner" hidden aria-label="Pristanak na kolačiće">
+  <div class="cc-card card-dark on-dark" data-cc-card>
+
+    <div class="cc-panel cc-banner" data-cc-panel="banner">
+      <div class="cc-text">
+        <p class="eyebrow">Kolačići</p>
+        <h2 class="cc-h">Nužni kolačići, a marketinški samo ako dopustiš.</h2>
+        <p class="cc-p muted">Nužni pamte tvoje postavke na ovom uređaju. Marketinške (Meta Pixel) postavljamo samo uz tvoj pristanak, kako bismo vidjeli koji oglasi dovode ljude na kviz. <a href="/kolacici/">Više u Kolačićima</a></p>
+      </div>
+      <div class="cc-actions">
+        <div class="cc-row">
+          <button type="button" class="btn btn-light" data-cc-reject>Odbij sve</button>
+          <button type="button" class="btn btn-light" data-cc-accept>Prihvati sve</button>
+        </div>
+        <button type="button" class="link-btn cc-link" data-cc-open>Postavke</button>
+      </div>
+    </div>
+
+    <div class="cc-panel cc-prefs" data-cc-panel="prefs" hidden>
+      <div>
+        <p class="eyebrow">Kolačići</p>
+        <h2 class="cc-h">Postavke kolačića</h2>
+      </div>
+
+      <div class="cc-cats">
+        <div class="cc-cat">
+          <div class="cc-cat-text">
+            <div class="cc-cat-top">
+              <span class="cc-cat-name">Nužni</span>
+              <span class="chip">Uvijek uključeno</span>
+            </div>
+            <p class="cc-p muted">Pamte ono što odabereš na ovom uređaju: temu, isključene animacije, odluku o prikazu udaljenosti i ovaj izbor. Nisu kolačići nego lokalna pohrana; ne napuštaju uređaj i ne služe za praćenje.</p>
+            <p class="hint">ukp-season · ukp-motion · ukp-geo · ukp-consent</p>
+          </div>
+          <input type="checkbox" class="cc-switch" role="switch" checked disabled aria-label="Nužni, uvijek uključeno" />
+        </div>
+
+        <div class="cc-cat">
+          <div class="cc-cat-text">
+            <div class="cc-cat-top">
+              <label class="cc-cat-name" for="cc-marketing">Marketing</label>
+              <span class="chip" data-cc-state>Isključeno</span>
+            </div>
+            <p class="cc-p muted" id="cc-marketing-desc">Meta Pixel, za Facebook i Instagram oglase. Mjeri koliko ljudi s oglasa preuzme aplikaciju ili prijavi ekipu i omogućuje da oglas pokažemo sličnoj publici.</p>
+            <p class="hint">_fbp · _fbc · primatelj: Meta Platforms Ireland Ltd.</p>
+          </div>
+          <input type="checkbox" class="cc-switch" role="switch" id="cc-marketing" aria-describedby="cc-marketing-desc" data-cc-marketing />
+        </div>
+      </div>
+
+      <div class="cc-foot">
+        <button type="button" class="link-btn cc-link" data-cc-back>Natrag</button>
+        <div class="cc-row">
+          <button type="button" class="btn btn-light" data-cc-reject>Odbij sve</button>
+          <button type="button" class="btn btn-light" data-cc-save>Spremi odabir</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<style>
+  /**
+   * The bar is fixed, so whatever is at the foot of the page ends up underneath it: on /app that is
+   * the privacy link, which is the one thing on that page that may not be unreachable. The script
+   * publishes the bar's height as --cc-space and the two feet that matter (the site footer and the
+   * landing page) reserve it, so nothing is ever hidden behind the question.
+   */
+  .cc { position: fixed; left: 0; right: 0; bottom: 0; z-index: 60; padding: 0 var(--gutter) 16px; pointer-events: none; }
+  .cc[hidden] { display: none; }
+  /* The mobile nav panel is full screen; the bar has no business over it. */
+  :global(body.nav-open) .cc { display: none; }
+  .cc-card {
+    width: min(100%, var(--container)); margin-inline: auto; padding: 22px 24px; pointer-events: auto;
+    max-height: calc(100dvh - 32px); overflow-y: auto; box-shadow: 0 22px 50px -14px rgb(0 0 0 / .5);
+  }
+  .js .cc-card { animation: cc-in .45s var(--ease-out) both; }
+  @keyframes cc-in { from { opacity: 0; transform: translateY(18px); } }
+  @media (prefers-reduced-motion: reduce) { .js .cc-card { animation: none; } }
+
+  .cc-panel { display: flex; flex-direction: column; gap: 16px; }
+  .cc-panel[hidden] { display: none; }
+  .cc-h { font-size: 1.25rem; font-weight: 800; letter-spacing: -.02em; line-height: 1.22; margin-top: 8px; }
+  .cc-p { font-size: var(--fs-small); line-height: 1.5; }
+  .cc-text { display: flex; flex-direction: column; }
+  .cc-actions { display: flex; flex-direction: column; gap: 8px; }
+  .cc-row { display: flex; gap: 10px; }
+  .cc-row .btn { flex: 1 1 0; min-width: 0; }
+  /* .link-btn alone measures 35px, under the 36px floor the phone layout test holds. */
+  .cc-link { align-self: center; display: inline-flex; align-items: center; min-height: 44px; }
+
+  /* From the tablet up the copy and the buttons share a line; the buttons keep a fixed column so
+     the two of them stay the same width whatever their labels say. */
+  @media (min-width: 760px) {
+    .cc-banner { flex-direction: row; align-items: center; gap: 40px; }
+    .cc-text { flex-grow: 1; max-width: 78ch; }
+    .cc-actions { flex: none; width: 300px; }
+    .cc-link { align-self: center; }
+  }
+
+  .cc-cats { display: flex; flex-direction: column; gap: 12px; }
+  .cc-cat {
+    display: flex; align-items: flex-start; gap: 16px; padding: 18px 20px; border-radius: var(--r-lg);
+    background: rgb(255 255 255 / .05); border: 1px solid rgb(255 255 255 / .08);
+  }
+  .cc-cat-text { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+  .cc-cat-top { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+  .cc-cat-name { font-size: 1.0625rem; font-weight: 700; }
+  label.cc-cat-name { cursor: pointer; }
+  @media (min-width: 900px) { .cc-cats { flex-direction: row; } .cc-cat { flex: 1 1 0; } }
+
+  .cc-switch {
+    appearance: none; -webkit-appearance: none; flex: none; position: relative; margin: 0;
+    width: 52px; height: 30px; border-radius: var(--r-pill); background: rgb(255 255 255 / .22);
+    cursor: pointer; transition: background-color .25s;
+  }
+  .cc-switch::after {
+    content: ""; position: absolute; top: 3px; left: 3px; width: 24px; height: 24px; border-radius: 50%;
+    background: var(--on-dark); transition: transform .25s var(--ease-out);
+  }
+  .cc-switch:checked { background: var(--accent); }
+  .cc-switch:checked::after { transform: translateX(22px); }
+  .cc-switch:disabled { opacity: .55; cursor: default; }
+  @media (prefers-reduced-motion: reduce) { .cc-switch, .cc-switch::after { transition: none; } }
+
+  .cc-foot { display: flex; flex-direction: column; gap: 10px; padding-top: 14px; border-top: 1px solid var(--dark-divider); }
+  .cc-foot .cc-link { align-self: flex-start; order: 2; min-height: 44px; }
+  @media (min-width: 620px) {
+    .cc-foot { flex-direction: row; align-items: center; justify-content: space-between; }
+    .cc-foot .cc-link { order: 0; }
+    .cc-foot .cc-row { flex: none; }
+    .cc-foot .cc-row .btn { flex: none; }
+  }
+</style>

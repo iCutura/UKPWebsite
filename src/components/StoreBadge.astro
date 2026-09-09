@@ -1,0 +1,54 @@
+---
+import { SITE } from '../config';
+
+/**
+ * Apple's and Google's own badges, as they ship them.
+ *
+ * Both companies publish these as finished artwork and both forbid redrawing, recolouring or
+ * restretching them, so this component only ever places an image and sets its height; the width
+ * follows. Sizes come from `--bh` so a caller can promote one badge without a second component.
+ *
+ * `bilingual` is for /app, the one page that carries two languages at once: it renders both files
+ * and the `[data-lang]` rules in global.css hide the one the visitor's browser did not ask for.
+ * The hidden image leaves the accessibility tree with it, so each keeps its real alt text and the
+ * link needs no aria-label of its own. Everywhere else the site is Croatian and only the Croatian
+ * badge is fetched.
+ *
+ * Not lazy: on /app these are the call to action, and a deferred download button is a download
+ * button that some visitors scroll past before it exists. Four files, 8 to 10 KB each, cached across
+ * the site after the first page.
+ *
+ * Assets: `toolbox.marketingtools.apple.com` (SVG, as delivered) and `play.google.com/intl/*\/badges`
+ * (PNG, trimmed of its transparent clear space so the two languages render at one height; the
+ * artwork itself is untouched and the layout gives back more clear space than the guideline asks).
+ */
+interface Props { store: 'ios' | 'android'; event?: string; bilingual?: boolean }
+const { store, event, bilingual = false } = Astro.props;
+
+const ART = {
+  ios: {
+    href: SITE.apps.ios,
+    hr: { src: '/img/store/app-store-hr.svg', alt: 'Preuzmi u App Storeu', w: 130, h: 41 },
+    en: { src: '/img/store/app-store-en.svg', alt: 'Download on the App Store', w: 120, h: 40 },
+  },
+  android: {
+    href: SITE.apps.android,
+    hr: { src: '/img/store/google-play-hr.png', alt: 'Preuzmite Google Play', w: 646, h: 192 },
+    en: { src: '/img/store/google-play-en.png', alt: 'Get it on Google Play', w: 564, h: 168 },
+  },
+}[store];
+
+const langs = bilingual ? (['hr', 'en'] as const) : (['hr'] as const);
+---
+<a
+  class:list={['badge', `badge-${store}`]}
+  href={ART.href}
+  rel="noopener"
+  target="_blank"
+  data-store-badge={store}
+  data-pixel-event={event}
+>
+  {langs.map(l => (
+    <img class="badge-img" src={ART[l].src} alt={ART[l].alt} width={ART[l].w} height={ART[l].h} data-lang={l} decoding="async" />
+  ))}
+</a>

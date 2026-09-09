@@ -4,6 +4,7 @@
  * Keep this file free of Node/Astro imports.
  */
 import type { EventItem, Location, NewsItem } from './data';
+import { SITE } from '../config';
 import { parseApiDate, longDate, relativeDay, time, fee, plural, weekdayInstrumental, numericDate, isToday, isTomorrow, spotsLeft, SPOTS_NAMED_BELOW } from './format';
 
 export const esc = (s: unknown) => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]!));
@@ -31,6 +32,18 @@ const ICON_PATHS = {
 
 export function icon(name: keyof typeof ICON_PATHS, size = 14, stroke = 1.75): string {
   return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${stroke}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICON_PATHS[name]}</svg>`;
+}
+
+/**
+ * The pair of store badges as a string, for the renderers the browser shares with the build.
+ * Same markup and same class names as `StoreBadge.astro`, which is why the badge styles live in
+ * global.css: a scoped style would never reach the HTML this function writes.
+ */
+export function storeBadgesHTML(): string {
+  return `<div class="cluster gap-1">
+  <a class="badge badge-ios" href="${SITE.apps.ios}" rel="noopener" target="_blank" data-store-badge="ios"><img class="badge-img" src="/img/store/app-store-hr.svg" alt="Preuzmi u App Storeu" width="130" height="41" decoding="async"></a>
+  <a class="badge badge-android" href="${SITE.apps.android}" rel="noopener" target="_blank" data-store-badge="android"><img class="badge-img" src="/img/store/google-play-hr.png" alt="Preuzmite Google Play" width="646" height="192" decoding="async"></a>
+</div>`;
 }
 
 const svg = {

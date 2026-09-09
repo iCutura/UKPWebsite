@@ -11,8 +11,12 @@ import { join, relative, sep } from 'node:path';
 const SITE = 'https://kvizovi.hr';
 const DIST = 'dist';
 
-/** Pages we do not want in the index: thin, legal-only, or duplicated by a canonical elsewhere. */
-const SKIP = [/^404\//, /^_a\//, /^link\//];
+/**
+ * Pages we do not want in the index: thin, legal-only, duplicated by a canonical elsewhere, or
+ * `noindex`. `/app/` is the campaign landing page: sitemapping a noindex URL is a contradiction a
+ * crawler reports, and the page has no business competing with the real site in search results.
+ */
+const SKIP = [/^404\//, /^_a\//, /^link\//, /^app\//];
 
 /** Rough importance, so the crawler spends its budget on the pages people search for. */
 const priority = (route) => {

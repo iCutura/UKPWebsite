@@ -2,8 +2,10 @@
 import { ClientRouter } from 'astro:transitions';
 import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
+import CookieConsent from '../components/CookieConsent.astro';
+import SeasonBoot from '../components/SeasonBoot.astro';
 import { SITE } from '../config';
-import { seasonFor, LOCKED_SEASON } from '../lib/seasons';
+import { seasonFor } from '../lib/seasons';
 import '../styles/global.css';
 import '../styles/cards.css';
 import '../styles/detail.css';
@@ -35,9 +37,7 @@ const og = image ?? `/og/${season}.jpg`;
     <meta property="og:image" content={new URL(og, SITE.url).href} />
     <meta property="og:locale" content="hr_HR" />
     <meta name="twitter:card" content="summary_large_image" />
-    <script is:inline data-astro-rerun set:html={LOCKED_SEASON
-      ? `document.documentElement.setAttribute('data-season','${LOCKED_SEASON}');document.documentElement.classList.add('js');`
-      : `(function(){var d=new Date(),md=(d.getMonth()+1)*100+d.getDate();var s=md>=320&&md<=620?'spring':md>=621&&md<=921?'summer':md>=922&&md<=1220?'fall':'winter';try{var q=new URLSearchParams(location.search).get('season');if(q&&/^(spring|summer|fall|winter|auto)$/.test(q)){q==='auto'?localStorage.removeItem('ukp-season'):localStorage.setItem('ukp-season',q)}var o=localStorage.getItem('ukp-season');if(o&&/^(spring|summer|fall|winter)$/.test(o))s=o}catch(e){}var h=document.documentElement;h.setAttribute('data-season',s);h.classList.add('js')})();`} />
+    <SeasonBoot />
     <ClientRouter />
   </head>
   <body class={cls}>
@@ -47,12 +47,15 @@ const og = image ?? `/og/${season}.jpg`;
       <slot />
     </main>
     <Footer />
+    <CookieConsent />
     <script>
       import '../scripts/season';
       import '../scripts/motion';
       import '../scripts/live';
       import '../scripts/prijava';
       import '../scripts/stickyAside';
+      import '../scripts/cookieConsent';
+      import '../scripts/pixel';
     </script>
   </body>
 </html>

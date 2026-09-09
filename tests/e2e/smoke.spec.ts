@@ -18,7 +18,9 @@ for (const path of PAGES) {
 }
 
 test('every page is in Croatian and says so', async ({ page }) => {
-  for (const path of PAGES) {
+  // /app is the exception by design: it follows the visitor's own browser, because the campaigns
+  // that land on it are bought globally. tests/e2e/app-landing.spec.ts covers both of its languages.
+  for (const path of PAGES.filter(p => p !== '/app/')) {
     await page.goto(path + '?motion=off');
     await expect(page.locator('html')).toHaveAttribute('lang', 'hr');
   }

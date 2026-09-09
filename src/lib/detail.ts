@@ -1,6 +1,6 @@
 /** Isomorphic renderers for event / location / news detail blocks (build time + 404 client fallback). */
 import type { EventItem, Location, NewsItem } from './data';
-import { esc, logoTile, eventStatus, eventCardHTML, locationCardHTML, icon } from './render';
+import { esc, logoTile, eventStatus, eventCardHTML, locationCardHTML, icon, storeBadgesHTML } from './render';
 import { parseApiDate, longDate, numericDate, time, fee, plural, spotsText, weekdayInstrumental } from './format';
 import { seasonFor } from './seasons';
 import { SITE } from '../config';
@@ -63,10 +63,7 @@ export function registrationPanelHTML(e: EventItem, enabled: boolean): string {
   <p class="eyebrow">Prijava ekipe</p>
   <h2 class="h3">Prijavi ekipu kroz UKP Quiz aplikaciju.</h2>
   <p class="mt-2 muted">Napravi ekipu, prijavi se u par dodira i prati potvrdu voditelja. ${dl ? esc(dl) + '.' : ''}</p>
-  <div class="cluster gap-1 mt-3">
-    <a class="btn btn-light" href="${SITE.apps.ios}" rel="noopener" target="_blank">App Store</a>
-    <a class="btn btn-ghost" href="${SITE.apps.android}" rel="noopener" target="_blank">Google Play</a>
-  </div>
+  <div class="mt-3">${storeBadgesHTML()}</div>
   ${e.whatsapp ? `<a class="btn btn-ghost btn-block mt-2" href="${esc(e.whatsapp)}" rel="noopener" target="_blank">WhatsApp grupa lokacije</a>` : ''}
   <p class="hint mt-3">Radije telefonom? <a href="${SITE.phoneHref}">${SITE.phone}</a></p>
 </div>`;
@@ -298,10 +295,7 @@ ${nearby.length ? `<section class="section-tight">
     <span class="eyebrow">UKP Quiz aplikacija</span>
     <h2 class="h3">Prijave i rezultati ove lokacije, u džepu.</h2>
     <p class="mt-2 muted" style="max-width: 48ch">Zaprati lokaciju u aplikaciji i dobij obavijest kad voditelj objavi novi termin ili rezultate.</p>
-    <div class="cluster gap-1 mt-3">
-      <a class="btn btn-sm btn-light" href="${SITE.apps.ios}" rel="noopener" target="_blank">${icon('apple', 18)} App Store</a>
-      <a class="btn btn-sm btn-ghost" href="${SITE.apps.android}" rel="noopener" target="_blank">${icon('play', 18)} Google Play</a>
-    </div>
+    <div class="mt-3">${storeBadgesHTML()}</div>
   </div>
 </section>`;
 }

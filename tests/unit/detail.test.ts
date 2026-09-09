@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { mapsUrl, textToHTML, deadlineText, eventJsonLd, placeLine, eventGoneHTML, eventFactsHTML, aboutUpdate, locationDetailHTML, nextPrijavaUrl, locationEventsView, eventActionsHTML, sectionHeadHTML } from '../../src/lib/detail';
+import { mapsUrl, textToHTML, deadlineText, eventJsonLd, placeLine, eventGoneHTML, eventFactsHTML, aboutUpdate, locationDetailHTML, nextPrijavaUrl, locationEventsView, eventActionsHTML, sectionHeadHTML, registrationPanelHTML } from '../../src/lib/detail';
 import type { EventItem, Location } from '../../src/lib/data';
 
 function event(over: Partial<EventItem> = {}): EventItem {
@@ -352,5 +352,35 @@ describe('sectionHeadHTML', () => {
   it('carries the hook the live layer needs to rewrite the heading', () => {
     expect(sectionHeadHTML({ title: 'x', titleAttr: 'data-termini-title' }))
       .toContain('<h2 data-termini-title>');
+  });
+});
+
+/**
+ * The pixel's `WebRegistration` hangs off a button in this markup, and the attribute that names it
+ * is not unique. This pins the shape the listener in `scripts/prijava.ts` has to select against: if
+ * a future edit makes `[data-step-go="form"]` unique, that selector can be simplified, and if it
+ * adds a third one, the count below says so before the campaign numbers do.
+ */
+describe('the registration panel, as the pixel selector sees it', () => {
+  const panel = () => registrationPanelHTML(event(), true);
+
+  it('carries more than one button that opens the form, so the pixel selector must be scoped', () => {
+    const all = [...panel().matchAll(/data-step-go="form"/g)];
+    expect(all.length, 'the funnel event would fire once per button that matches').toBeGreaterThan(1);
+  });
+
+  it('puts exactly one of them on the apps step, which is the one that counts', () => {
+    const apps = panel().split('<section data-step-panel="apps">')[1].split('</section>')[0];
+    expect([...apps.matchAll(/data-step-go="form"/g)]).toHaveLength(1);
+    expect(apps).toContain('Nemam aplikaciju, prijavi me ovdje');
+  });
+
+  it('keeps the other one where a reader goes back to fix a typo', () => {
+    // "Promijeni podatke" in the code step: a correction, not a new registration.
+    expect(panel()).toContain('data-step-go="form">Promijeni podatke');
+  });
+
+  it('has no such button at all once registration is closed, so nothing can fire there', () => {
+    expect(registrationPanelHTML(event(), false)).not.toContain('data-step-go');
   });
 });

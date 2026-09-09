@@ -1,4 +1,5 @@
 import gsap from 'gsap';
+import { trackCustom } from './pixel';
 /**
  * Website team registration (people without the app): apps step -> form -> e-mail code -> done.
  * Talks only to the same-origin PHP proxy (/api/prijava.php), which holds the API key and forwards to
@@ -159,7 +160,18 @@ function bind() {
       show('code'); if (state.timer) clearTimeout(state.timer); tickResend();
     };
 
-    panel.querySelectorAll<HTMLButtonElement>('[data-step-go]').forEach(b => b.addEventListener('click', () => show(b.dataset.stepGo!)));
+    panel.querySelectorAll<HTMLButtonElement>('[data-step-go]').forEach(b => b.addEventListener('click', () => {
+      /**
+       * The top of the web funnel: someone without the app asking for the form. The same
+       * `data-step-go="form"` sits on "Promijeni podatke" in the code step, so the panel has to be
+       * named too, or the event fires a second time for every reader who goes back to fix a typo in
+       * their e-mail and the number stops meaning anything.
+       */
+      if (b.dataset.stepGo === 'form' && b.closest<HTMLElement>('[data-step-panel]')?.dataset.stepPanel === 'apps') {
+        trackCustom('WebRegistration', { event_id: eventId });
+      }
+      show(b.dataset.stepGo!);
+    }));
 
     form.addEventListener('submit', async ev => {
       ev.preventDefault();
@@ -200,6 +212,9 @@ function bind() {
           ? `Vidimo se u ${HR_DAYS[d.getDay()]}, ${d.getDate()}. ${d.getMonth() + 1}. u ${time} h, ${j.venueName}. Ako ne možete doći, javite voditelju.`
           : `Voditelj potvrđuje prijave za ovaj termin. Prijava je zaprimljena i čeka potvrdu; do tada je mjesto rezervirano.`;
         show('done');
+        // The bottom of the funnel, and the only event that means a team is actually on the list.
+        // Campaigns optimise towards this one; the click above only says the form was opened.
+        trackCustom('WebRegistrationComplete', { event_id: eventId, status: j.status });
       } catch (e) {
         const err = e as Error & { code?: string }; msg(codeForm, err.message, 'error');
         // A wrong code should leave the boxes ready for another try, not make the reader clear

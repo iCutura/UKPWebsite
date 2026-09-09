@@ -33,6 +33,12 @@ export const SITE = {
   },
   /** Website team registration through the API's external-registrations flow (e-mail code). PHP proxy: server/api/prijava.php. */
   registrationEnabled: true,
+  /**
+   * Meta Pixel, for the Facebook and Instagram campaigns. Loaded only after a visitor accepts
+   * marketing cookies (src/scripts/pixel.ts); an empty string is the kill switch and makes every
+   * track() call a no-op without touching the pages that fire events.
+   */
+  metaPixelId: '936573106036970',
   partners: [
     { name: 'OTP banka', img: '/img/partners/otp-icon-1.webp' },
     { name: 'Jungle', img: '/img/partners/jungle.webp' },

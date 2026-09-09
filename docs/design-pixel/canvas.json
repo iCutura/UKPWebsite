@@ -1,0 +1,26 @@
+{
+  "pages": [
+    { "id": "page-1", "name": "Landing /app" },
+    { "id": "page-2", "name": "Kolačići i Pixel" }
+  ],
+  "artboards": [
+    { "file": "Main.dc.html", "title": "/app · desktop · HR", "page": "page-1", "x": 0, "y": 0, "w": 1440, "h": 1140, "is_interactive": true },
+    { "file": "MainEN.dc.html", "title": "/app · desktop · EN", "page": "page-1", "x": 1560, "y": 0, "w": 1440, "h": 1140, "is_interactive": true },
+    { "file": "PhoneIOS.dc.html", "title": "/app · iPhone · App Store istaknut", "page": "page-1", "x": 3120, "y": 0, "w": 390, "h": 844 },
+    { "file": "PhoneAndroid.dc.html", "title": "/app · Android · Google Play istaknut", "page": "page-1", "x": 3590, "y": 0, "w": 390, "h": 844 },
+    { "file": "Consent.dc.html", "title": "Cookie banner · desktop · klikabilno", "page": "page-2", "x": 0, "y": 0, "w": 1440, "h": 1100, "is_interactive": true },
+    { "file": "ConsentPhone.dc.html", "title": "Cookie banner · mobitel · klikabilno", "page": "page-2", "x": 1560, "y": 0, "w": 390, "h": 844, "is_interactive": true },
+    { "file": "ConsentSpec.dc.html", "title": "Pravila pristanka", "page": "page-2", "x": 2030, "y": 0, "w": 1120, "h": 1620 },
+    { "file": "PixelEvents.dc.html", "title": "Meta Pixel i događaji", "page": "page-2", "x": 0, "y": 1800, "w": 1120, "h": 1800 },
+    { "file": "EventCTA.dc.html", "title": "WebRegistration na stranici događaja", "page": "page-2", "x": 1240, "y": 1800, "w": 900, "h": 1320 },
+    { "file": "Kolacici.dc.html", "title": "Kolačići · prepisana stranica", "page": "page-2", "x": 2260, "y": 1800, "w": 860, "h": 3100, "print": "flow" }
+  ],
+  "annotations": [
+    { "id": "app-brief", "page": "page-1", "x": 0, "y": -300, "w": 700, "text": "Landing /app, destinacija Meta oglasa.\nBez navigacije i bez podnožja: znak vodi na kvizovi.hr, a u dnu stoje samo Pravila privatnosti i Kolačići (zahtjev za pristanak pojavljuje se i ovdje, pa mu treba put natrag).\nDetekcija uređaja mijenja samo istaknutost gumba, ne i sadržaj: desktop oba ravnopravno, iPhone App Store istaknut, Android Google Play istaknut.\nJezik se bira po pregledniku: hrvatski za hrvatski, engleski za sve ostalo." },
+    { "id": "copy-note", "page": "page-1", "x": 760, "y": -300, "w": 700, "text": "Engleska verzija namjerno ne obećava isto što hrvatska.\nHrvatski posjetitelj može prijaviti ekipu na kviz u svom gradu, pa hrvatska verzija to i nudi. Posjetitelj iz globalnog oglasa ne može doći u Zagreb ni ući u ligu, pa engleska verzija nudi ono što mu je stvarno dostupno: dnevni kviz i dnevni nogometni izazov.\nDrukčije bi bilo obećanje koje aplikacija toj osobi ne može isporučiti, a to su povrati i loše ocjene." },
+    { "id": "badges-note", "page": "page-1", "x": 3120, "y": -420, "w": 860, "text": "Značke su ovdje nacrtane. U izgradnju idu službeni materijali s Applea i Googlea, koji se ne smiju prebojiti ni prerisati; skaliranje i prozirnost sekundarne značke su dopušteni. Apple ima i hrvatske značke; ako ih uzmemo, engleski tekst na hrvatskoj verziji zamjenjuje hrvatski.\nSnimke zaslona su postojeće, iz scripts/build-promo-frames.mjs, i imaju dva problema koje na plaćenoj landing stranici vrijedi riješiti: aplikacija je na njima na engleskom, a tema je koraljna (proljeće ili ljeto) dok je stranica zaključana na jesen. Za hrvatsku verziju treba snimiti hrvatski ekran u jesenjoj temi.\nOkvir je iPhone 17 Pro na obje verzije. Stranica ga svjesno ne mijenja po uređaju: mijenja se samo koja je značka istaknuta." },
+    { "id": "consent-note", "page": "page-2", "x": 0, "y": -320, "w": 700, "text": "Klikaj po banneru: Postavke otvara panel, prekidač Marketing radi, a traka pri dnu ploče pokazuje što bi se zapisalo u lokalnu pohranu i bi li se pixel učitao.\nOdbij sve i Prihvati sve su isti gumb: ista veličina i ista ispuna. Nadzorna tijela traže jednaku vizualnu istaknutost, pa puni gumb uz prozirni ne prolazi, ma koliko bio iste visine.\nBanner ne zatamnjuje stranicu. Na /app dolaze ljudi iz plaćenih oglasa, pa svaka prepreka preko cijelog ekrana tamo doslovno košta." },
+    { "id": "spec-note", "page": "page-2", "x": 2030, "y": -320, "w": 860, "text": "Četiri ploče desno i ispod su specifikacija i gotovi tekstovi za razvoj, ne dizajn stranice: kategorije i oblik zapisa, pixel sa šest događaja, mjesto gdje se šalju WebRegistration i WebRegistrationComplete, i prepisana stranica Kolačići.\nStranica /kolacici danas tvrdi da kvizovi.hr ne koristi kolačiće za praćenje ni oglašavanje. To prestaje biti točno u trenutku kad pixel ide na stranicu, pa je cijeli tekst prepisan. Nova verzija i odlomak za Pravila privatnosti su na ploči Kolačići i idu u isti deploy kao pixel.\nTrajanje kolačića (90 dana) i okvir za prijenos podataka u SAD prepiši iz Metine dokumentacije prije objave, jer se to mijenja bez najave." }
+  ],
+  "launch": { "view": "canvas", "page": "page-2" }
+}

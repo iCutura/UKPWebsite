@@ -43,6 +43,11 @@ assets-src/
 # tracked. The assembled page is a 2.4 MB build output, re-made by seeding.
 # ---------------------------------------------------------------------------
 docs/design-review/ukp-website-design-review.html
+# Design canvas build output and the assets copied in from public/ to seed it (see docs/design-pixel/README.md)
+docs/design-pixel/pixel-kolacici-i-app.html
+docs/design-pixel/cobe.b64
+docs/design-pixel/*.webp
+docs/design-pixel/qr-*.svg
 
 # ---------------------------------------------------------------------------
 # Legacy kvizovi.hr salvage (kept in ../UKPWebsiteBackup, not here)
