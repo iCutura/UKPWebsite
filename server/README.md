@@ -5,9 +5,12 @@ Deployed by `./deploy.sh` (see repo root):
 | Local | Remote (FTP root = `kvizovi.hr/`) | Purpose |
 |-------|-----------------------------------|---------|
 | `dist/` (Astro build) | `public_html/` | the static site |
-| `server/public_html/.htaccess` | `public_html/.htaccess` | redirects, caching, security headers, 404 |
+| `server/public_html/.htaccess` | `public_html/.htaccess` | redirects, caching, security headers, 404, app-link rewrites |
+| `server/api/_config.php` | `public_html/api/_config.php` | shared config loader for the HTML endpoints |
 | `server/api/kontakt.php` | `public_html/api/kontakt.php` | contact form → e-mail |
 | `server/api/prijava.php` | `public_html/api/prijava.php` | team registration proxy (feature-flagged) |
+| `server/api/link.php` | `public_html/api/link.php` | landing page for app invite links: `/join/team/{code}`, `/join/arena/{code}`, `/play/quiz/{id}`, `/get` |
+| `server/api/link-arena-lib.php` | `public_html/api/link-arena-lib.php` | the arena landing's pure decisions (code validation, Croatian copy); `tests/unit/link-arena.test.ts` |
 | `server/cron/refresh-data.php` | `ukp-cron/refresh-data.php` (outside web root) | rewrites `public_html/data/*.json` from the API |
 | generated from `.env` | `ukp-config.php` (outside web root) | API key, mail settings, flags. Never in git, never in public_html. |
 
