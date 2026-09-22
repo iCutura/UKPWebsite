@@ -28,7 +28,7 @@ describe('sitemap and robots', () => {
   it('keeps build artefacts and the error page out', () => {
     const xml = readFileSync(dist('sitemap.xml'), 'utf8');
     expect(xml).not.toContain('/_a/');
-    expect(xml).not.toContain('404');
+    expect(xml).not.toContain('/404');   // the error page, not an event whose id happens to contain 404 (e.g. /dogadaji/4404/)
   });
 
   it('points crawlers at the sitemap', () => {
