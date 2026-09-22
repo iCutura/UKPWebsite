@@ -22,7 +22,9 @@ ErrorDocument 404 /404.html
   # App invite links (Universal Links / App Links). With the app installed the OS opens these
   # before the browser loads them; without it the PHP landing page renders a store hand-off.
   # Event links go to the event page with the registration panel open; it already exists.
+  # Arena codes are six characters; anything else falls through to the static 404 page.
   RewriteRule ^join/team/([A-Za-z0-9]{4,16})/?$ /api/link.php?kind=team&code=$1 [L,QSA]
+  RewriteRule ^join/arena/([A-Za-z0-9]{6})/?$ /api/link.php?kind=arena&code=$1 [L,QSA]
   RewriteRule ^join/event/(\d+)/?$ /dogadaji/$1/?prijava [R=302,L]
   RewriteRule ^play/quiz/(\d+)/?$ /api/link.php?kind=quiz&id=$1 [L,QSA]
   RewriteRule ^get/?$ /api/link.php?kind=get [L]

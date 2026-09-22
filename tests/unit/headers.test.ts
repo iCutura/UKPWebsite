@@ -45,8 +45,17 @@ describe('production headers', () => {
     expect(htaccess).toMatch(/<Files "apple-app-site-association">[\s\S]*ForceType application\/json/);
     expect(htaccess).toMatch(/RewriteRule \^join\/team\/\(\[A-Za-z0-9\]\{4,16\}\)\/\?\$ \/api\/link\.php\?kind=team&code=\$1 \[L,QSA\]/);
     expect(htaccess).toMatch(/RewriteRule \^join\/event\/\(\\d\+\)\/\?\$ \/dogadaji\/\$1\/\?prijava \[R=302,L\]/);
+    expect(htaccess).toMatch(/RewriteRule \^join\/arena\/\(\[A-Za-z0-9\]\{6\}\)\/\?\$ \/api\/link\.php\?kind=arena&code=\$1 \[L,QSA\]/);
     expect(htaccess).toMatch(/RewriteRule \^play\/quiz\/\(\\d\+\)\/\?\$ \/api\/link\.php\?kind=quiz&id=\$1 \[L,QSA\]/);
     expect(htaccess).toMatch(/RewriteRule \^get\/\?\$ \/api\/link\.php\?kind=get \[L\]/);
+  });
+
+  it('routes arena invite links before the trailing-slash redirect can touch them', () => {
+    const arenaAt = htaccess.indexOf('RewriteRule ^join/arena/');
+    const slashAt = htaccess.indexOf('RewriteCond %{REQUEST_FILENAME} -d');
+    expect(arenaAt, 'no arena rewrite rule').toBeGreaterThan(-1);
+    expect(slashAt, 'no trailing-slash rule').toBeGreaterThan(-1);
+    expect(arenaAt).toBeLessThan(slashAt);
   });
 
   it('keeps the certificate challenge folder out of the deploy, and only that', () => {
