@@ -1,12 +1,16 @@
 <?php
 // Landing page for app invite links when the app is not installed (or on desktop).
-// Rewritten to by .htaccess: /join/team/{code}, /play/quiz/{id}, /get. Fills the built
-// /link/index.html template with the team or quiz the visitor was sent to, using the API's
-// api/links metadata with the website key. Never called by the browser directly.
+// Rewritten to by .htaccess: /join/team/{code}, /join/arena/{code}, /play/quiz/{id}, /get. Fills
+// the built /link/index.html template with the team, match or quiz the visitor was sent to, using
+// the API's api/links metadata with the website key. Never called by the browser directly.
 declare(strict_types=1);
 require_once __DIR__ . '/_config.php';
+require_once __DIR__ . '/link-arena-lib.php';
 
 const UKP_LINK_CACHE_TTL = 300;
+// A private match changes by the minute (players join, it starts, it ends), so its preview and
+// its "no such match" answer are held for a minute, not five.
+const UKP_ARENA_LINK_CACHE_TTL = 60;
 
 function ukp_api_json(string $path, array $cfg): ?array {
   $ch = curl_init(rtrim($cfg['api_base'], '/') . $path);
@@ -17,10 +21,10 @@ function ukp_api_json(string $path, array $cfg): ?array {
   return is_array($j) ? $j : null;
 }
 
-/** Five-minute file cache per link so a crawler storm never turns into an API storm. */
-function ukp_api_cached(string $path, array $cfg): ?array {
+/** File cache per link so a crawler storm never turns into an API storm. Negatives are cached too. */
+function ukp_api_cached(string $path, array $cfg, int $ttl = UKP_LINK_CACHE_TTL): ?array {
   $f = sys_get_temp_dir() . '/ukp-link-' . md5($path);
-  if (is_file($f) && filemtime($f) > time() - UKP_LINK_CACHE_TTL) {
+  if (is_file($f) && filemtime($f) > time() - $ttl) {
     $j = json_decode((string)file_get_contents($f), true);
     if (is_array($j) && array_key_exists('data', $j)) return $j['data'];
   }
@@ -58,6 +62,16 @@ if ($kind === 'team') {
       $players = $n === 1 ? '1 igrač te čeka. ' : ($n > 1 ? "$n igrača te čeka. " : '');
       $desc = $players . 'Otvori UKP Quiz aplikaciju i uđi u ekipu jednim dodirom.';
     }
+  }
+} elseif ($kind === 'arena') {
+  $code = ukp_arena_code((string)($_GET['code'] ?? ''));
+  if ($code === null) {
+    ['status' => $status, 'title' => $title, 'desc' => $desc] = ukp_arena_copy(null);
+  } else {
+    $open = "https://api.injeel-it.hr/join/arena/$code";
+    $canonical = "https://kvizovi.hr/join/arena/$code";
+    $match = ukp_api_cached("/api/links/arena/$code", $cfg, UKP_ARENA_LINK_CACHE_TTL);
+    ['status' => $status, 'title' => $title, 'desc' => $desc] = ukp_arena_copy($match);
   }
 } elseif ($kind === 'quiz') {
   $id = (int)($_GET['id'] ?? 0);

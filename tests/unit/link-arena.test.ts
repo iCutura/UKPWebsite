@@ -97,3 +97,30 @@ describe.skipIf(!hasPhp)('arena landing copy', () => {
     expect(readFileSync(lib, 'utf8')).not.toMatch(/[–—]/);
   });
 });
+
+describe('link.php wires the arena kind', () => {
+  const src = readFileSync(linkPhp, 'utf8');
+
+  it('loads the decisions from the tested library', () => {
+    expect(src).toContain("require_once __DIR__ . '/link-arena-lib.php';");
+  });
+
+  it('caches a match preview for a minute, not the five minutes a team gets', () => {
+    expect(src).toContain('const UKP_ARENA_LINK_CACHE_TTL = 60;');
+    expect(src).toMatch(/function ukp_api_cached\(string \$path, array \$cfg, int \$ttl = UKP_LINK_CACHE_TTL\): \?array/);
+    expect(src).toMatch(/filemtime\(\$f\) > time\(\) - \$ttl/);
+    expect(src).toMatch(/ukp_api_cached\("\/api\/links\/arena\/\$code", \$cfg, UKP_ARENA_LINK_CACHE_TTL\)/);
+  });
+
+  it('validates the code with the library and points the button at the API host', () => {
+    expect(src).toContain("$kind === 'arena'");
+    expect(src).toContain("ukp_arena_code((string)($_GET['code'] ?? ''))");
+    expect(src).toContain('$open = "https://api.injeel-it.hr/join/arena/$code";');
+    expect(src).toContain('$canonical = "https://kvizovi.hr/join/arena/$code";');
+  });
+
+  it('keeps the team and quiz kinds on the default cache', () => {
+    expect(src).toMatch(/ukp_api_cached\("\/api\/links\/team\/\$code", \$cfg\)/);
+    expect(src).toMatch(/ukp_api_cached\("\/api\/links\/quiz\/\$id", \$cfg\)/);
+  });
+});
