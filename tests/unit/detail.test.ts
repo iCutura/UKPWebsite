@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { mapsUrl, textToHTML, deadlineText, eventJsonLd, placeLine, eventGoneHTML, eventFactsHTML, aboutUpdate, locationDetailHTML, nextPrijavaUrl, locationEventsView, eventActionsHTML, sectionHeadHTML, registrationPanelHTML } from '../../src/lib/detail';
+import { mapsUrl, textToHTML, deadlineText, eventJsonLd, placeLine, eventGoneHTML, eventFactsHTML, aboutUpdate, locationDetailHTML, nextPrijavaUrl, locationEventsView, eventActionsHTML, sectionHeadHTML, registrationPanelHTML, registrationPanelKey } from '../../src/lib/detail';
 import type { EventItem, Location } from '../../src/lib/data';
 
 function event(over: Partial<EventItem> = {}): EventItem {
@@ -362,7 +362,11 @@ describe('sectionHeadHTML', () => {
  * adds a third one, the count below says so before the campaign numbers do.
  */
 describe('the registration panel, as the pixel selector sees it', () => {
-  const panel = () => registrationPanelHTML(event(), true);
+  // The fixture's deadline is a fixed date, so this block rendered the *closed* panel from
+  // 14 September 2026 onwards and three tests failed on a calendar, not on a change. A deadline
+  // measured from now cannot rot.
+  const openEvent = () => event({ registrationDeadline: new Date(Date.now() + 864e5).toISOString() });
+  const panel = () => registrationPanelHTML(openEvent(), true);
 
   it('carries more than one button that opens the form, so the pixel selector must be scoped', () => {
     const all = [...panel().matchAll(/data-step-go="form"/g)];
@@ -381,6 +385,65 @@ describe('the registration panel, as the pixel selector sees it', () => {
   });
 
   it('has no such button at all once registration is closed, so nothing can fire there', () => {
-    expect(registrationPanelHTML(event(), false)).not.toContain('data-step-go');
+    expect(registrationPanelHTML(openEvent(), false)).not.toContain('data-step-go');
+  });
+});
+
+/**
+ * The registration panel is the one part of an event page that bakes a *verdict* into static HTML,
+ * and live.ts used to leave it alone on the grounds that it was already wired up. On 22 September
+ * 2026 a venue lifted the 24 h deadline on event 3241 a couple of hours before the quiz; the cron
+ * carried that into the snapshot within the quarter hour and the header above the panel duly
+ * redrew itself to "5+ slobodnih mjesta" - while the panel beside it went on saying "Prijave
+ * zatvorene / Rok za prijave je prosao" until the next deploy, with no way in at all.
+ *
+ * Redrawing it needs a way to tell "the same panel, redrawn" from "a different verdict", because
+ * replacing that DOM costs the reader whatever they have typed. This key is that way, and it is
+ * printed on the panel so the browser can compare a built page against a fresh snapshot.
+ */
+describe('registrationPanelKey', () => {
+  const soon = () => new Date(Date.now() + 864e5).toISOString();
+  const past = () => new Date(Date.now() - 864e5).toISOString();
+
+  it('is unchanged for the same event, so a redraw is never forced', () => {
+    const e = event({ registrationDeadline: soon() });
+    expect(registrationPanelKey(e, true)).toBe(registrationPanelKey({ ...e }, true));
+  });
+
+  it('changes when a deadline is lifted in the admin', () => {
+    const closed = event({ registrationDeadline: past() });
+    const reopened = event({ registrationDeadline: null });
+    expect(registrationPanelKey(closed, true)).not.toBe(registrationPanelKey(reopened, true));
+  });
+
+  it('names why the panel is shut, so one closed verdict is not mistaken for another', () => {
+    expect(registrationPanelKey(event({ registrationDeadline: past() }), true)).toContain('closed');
+    expect(registrationPanelKey(event({ isCancelled: true }), true)).toContain('cancelled');
+    expect(registrationPanelKey(event({ registrationDeadline: null, maxTeams: 10, registered: 10, spotsRemaining: 0 }), true)).toContain('full');
+  });
+
+  it('tells the form apart from the app-only panel', () => {
+    const e = event({ registrationDeadline: soon() });
+    expect(registrationPanelKey(e, true)).not.toBe(registrationPanelKey(e, false));
+  });
+
+  it('moves when the deadline hint under the form changes', () => {
+    const a = event({ registrationDeadline: soon() });
+    const b = event({ registrationDeadline: new Date(Date.now() + 2 * 864e5).toISOString() });
+    expect(registrationPanelKey(a, true)).not.toBe(registrationPanelKey(b, true));
+  });
+
+  it('rides on every panel the renderer can produce, closed ones included', () => {
+    const openish = event({ registrationDeadline: soon() });
+    for (const [html, e, enabled] of [
+      [registrationPanelHTML(openish, true), openish, true],
+      [registrationPanelHTML(openish, false), openish, false],
+      [registrationPanelHTML(event({ registrationDeadline: past() }), true), event({ registrationDeadline: past() }), true],
+    ] as [string, EventItem, boolean][]) {
+      expect(html).toContain(`data-panel-key="${registrationPanelKey(e, enabled)}"`);
+      // The browser has to know which panel the build was asked for, or a redraw silently
+      // downgrades a working form to a pair of store badges.
+      expect(html).toContain(`data-registration="${enabled ? '1' : '0'}"`);
+    }
   });
 });

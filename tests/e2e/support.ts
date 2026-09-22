@@ -69,3 +69,28 @@ export async function openEvent(page: Page): Promise<EventItem | null> {
     .filter(e => isStillUpcoming(e) && !closed.includes(eventStatus(e).key))
     .sort((a, b) => `${a.date}${a.startTime}`.localeCompare(`${b.date}${b.startTime}`))[0] ?? null;
 }
+
+/**
+ * A quiz whose built page already says registration is shut. The lifted-deadline case needs one:
+ * the panel has to reopen from the snapshot, not wait for a deploy.
+ */
+export async function closedEvent(page: Page): Promise<EventItem | null> {
+  const list = (await (await page.request.get('/data/events.json')).json()) as EventItem[];
+  const closed = ['cancelled', 'full', 'closed', 'results'];
+  return list
+    .filter(e => isStillUpcoming(e) && closed.includes(eventStatus(e).key))
+    .sort((a, b) => `${a.date}${a.startTime}`.localeCompare(`${b.date}${b.startTime}`))[0] ?? null;
+}
+
+/** The snapshot as the page will read it, with one event rewritten. */
+export async function withEvent(page: Page, id: number | string, patch: Partial<EventItem>) {
+  await page.route('**/data/events.json', async route => {
+    const res = await route.fetch();
+    const list = (await res.json()) as EventItem[];
+    for (const e of list) if (String(e.id) === String(id)) Object.assign(e, patch);
+    await route.fulfill({ response: res, json: list });
+  });
+}
+
+/** Yesterday / tomorrow, as the API writes a registration deadline. */
+export const daysOut = (n: number) => new Date(Date.now() + n * 864e5).toISOString().slice(0, 19);

@@ -7,7 +7,8 @@
 import type { EventItem, Location, NewsItem } from '../lib/data';
 import { sortLocations, upcomingEvents } from '../lib/order';
 import { eventCardHTML, locationCardHTML, newsCardHTML } from '../lib/render';
-import { eventGoneHTML, eventHeaderHTML, eventFactsHTML, aboutUpdate, locationEventsView, type DetailsState } from '../lib/detail';
+import { eventGoneHTML, eventHeaderHTML, eventFactsHTML, registrationPanelHTML, registrationPanelKey, aboutUpdate, locationEventsView, type DetailsState } from '../lib/detail';
+import { bindPrijava } from './prijava';
 
 const cache = new Map<string, Promise<unknown>>();
 const load = <T,>(f: string) => { if (!cache.has(f)) cache.set(f, fetch(`/data/${f}`, { cache: 'no-cache' }).then(r => r.ok ? r.json() : Promise.reject(r.status))); return cache.get(f) as Promise<T>; };
@@ -121,13 +122,41 @@ function bindShare() {
 }
 
 /**
+ * The registration panel, checked against the same snapshot as the header above it.
+ *
+ * The panel was the one block on the page that kept its build-time verdict, on the grounds that it
+ * was already wired up and the API re-checks every rule at submit time. That left the page arguing
+ * with itself whenever a venue changed a rule between deploys: on 22 September 2026 one lifted the
+ * 24 h deadline on that evening's quiz, the header duly redrew to "5+ slobodnih mjesta" - and the
+ * panel beside it still said "Prijave zatvorene", so the link the venue had shared led to a page
+ * with no way in. It closes the other way round too: a quiz that filled up after the deploy went on
+ * offering a form the API would only refuse.
+ *
+ * Two rules keep this from costing more than it fixes. The verdict is compared first, so an
+ * unchanged panel is never touched - the DOM it holds is a form somebody may be typing into. And a
+ * reader who has moved off the apps step is left alone whatever the snapshot says, because losing a
+ * half-filled form mid-sentence is worse than an error message the API gives in words.
+ */
+function applyRegistrationPanel(page: HTMLElement, fresh: EventItem) {
+  const side = page.querySelector<HTMLElement>('.evd-side');
+  const panel = side?.querySelector<HTMLElement>('.prijava-panel');
+  // No key means a page built before this existed: it never stated a verdict, so there is nothing
+  // to compare against and the built panel stands.
+  if (!side || !panel || !panel.dataset.panelKey) return;
+  const enabled = panel.dataset.registration === '1';
+  if (panel.dataset.panelKey === registrationPanelKey(fresh, enabled)) return;
+  if (panel.dataset.step && panel.dataset.step !== 'apps') return;
+  side.innerHTML = registrationPanelHTML(fresh, enabled);
+  bindPrijava();
+}
+
+/**
  * A detail page is built for every upcoming event and the host keeps it until the next deploy, so
  * it shows the event as it was at build time. Checked against the snapshot the cron rewrites
  * every 15 minutes: the header (status, fee, time) and the fact tiles are redrawn from the fresh
  * record, so a fee or a cap corrected in the admin shows within the quarter hour; and when the
  * event is gone (hidden or deleted), the panel says so instead of inviting a sign-up the API will
- * refuse. The registration panel itself is left alone: it is already wired up, and the API
- * re-checks every rule at submit time anyway.
+ * refuse. The registration panel follows the same snapshot - see applyRegistrationPanel.
  */
 async function checkEventPage() {
   const page = document.querySelector<HTMLElement>('[data-event-page]');
@@ -144,6 +173,7 @@ async function checkEventPage() {
       const head = page.querySelector<HTMLElement>('.evd-head'), facts = page.querySelector<HTMLElement>('.facts');
       if (head) head.outerHTML = eventHeaderHTML(fresh);
       if (facts) facts.outerHTML = eventFactsHTML(fresh);
+      applyRegistrationPanel(page, fresh);
       return;
     }
     page.classList.add('is-gone');

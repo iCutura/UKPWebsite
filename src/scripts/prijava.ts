@@ -35,7 +35,12 @@ async function call(body: Record<string, unknown>) {
   return j;
 }
 
-function bind() {
+/**
+ * Wire every panel that is not wired yet. Exported because the panel is no longer only ever drawn
+ * by the build: live.ts redraws it when the snapshot disagrees with the verdict the build reached,
+ * and a form nobody has bound is a form that does nothing.
+ */
+export function bindPrijava() {
   document.querySelectorAll<HTMLElement>('[data-prijava]').forEach(panel => {
     if (panel.dataset.bound) return; panel.dataset.bound = '1';
     const eventId = Number(panel.dataset.eventId);
@@ -239,4 +244,4 @@ function bind() {
     openFromLink();
   });
 }
-document.addEventListener('astro:page-load', bind);
+document.addEventListener('astro:page-load', bindPrijava);

@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { open, openEvent } from './support';
+import { open, openEvent, closedEvent, withEvent, daysOut } from './support';
 
 /**
  * The registration panel is sticky on desktop. On a small laptop the form step is taller than the
@@ -118,4 +118,61 @@ test('an event drawn after the deploy is the whole page, not a stub', async ({ p
   await expect(live.getByRole('link', { name: /WhatsApp grupa/ })).toBeVisible();
   await expect(live.getByRole('button', { name: /Podijeli/ })).toBeVisible();
   await expect(live.locator('.prijava-panel')).toBeVisible();
+});
+
+/**
+ * The registration panel used to be the one part of an event page live.ts deliberately left alone,
+ * on the grounds that it was already wired up and the API re-checks every rule at submit time. It
+ * is also the one part that carries a verdict, so a rule changed in the admin left the page
+ * arguing with itself: on 22 September 2026 a venue lifted the 24 h deadline on that evening's
+ * quiz, the header above the panel redrew from the snapshot to "5+ slobodnih mjesta" within the
+ * quarter hour, and the panel beside it went on saying "Prijave zatvorene - rok za prijave je
+ * prosao" with no way in at all. Both directions are the same bug.
+ */
+test('a deadline lifted in the admin reopens the panel without a deploy', async ({ page }) => {
+  const shut = await closedEvent(page);
+  test.skip(!shut, 'no quiz on the calendar is closed at build time');
+  await withEvent(page, shut!.id, {
+    registrationDeadline: null, isCancelled: false, resultsPublished: false,
+    maxTeams: 20, registered: 2, spotsRemaining: 18,
+  });
+  await open(page, `/dogadaji/${shut!.id}/`);
+  await expect(page.locator('[data-prijava]')).toBeVisible();
+  await expect(page.locator('.evd-side .prijava-panel')).not.toContainText('Prijave zatvorene');
+  await expect(page.locator('.evd-head .chip-status')).not.toHaveText('Prijave zatvorene');
+});
+
+test('a deadline set in the admin closes the panel without a deploy', async ({ page }) => {
+  const live = await openEvent(page);
+  test.skip(!live, 'no quiz is open for registration');
+  await withEvent(page, live!.id, { registrationDeadline: daysOut(-1) });
+  await open(page, `/dogadaji/${live!.id}/`);
+  await expect(page.locator('.evd-side .prijava-panel')).toContainText('Rok za prijave je prošao');
+  await expect(page.locator('[data-prijava]')).toHaveCount(0);
+});
+
+/**
+ * Redrawing the panel costs the reader whatever they have typed, so it must not happen once they
+ * have moved off the apps step. The snapshot is held back here until the form is open and filled,
+ * which is the slow connection this race actually needs.
+ */
+test('a reader who has started the form is not interrupted by the refresh', async ({ page }) => {
+  const live = await openEvent(page);
+  test.skip(!live, 'no quiz is open for registration');
+  let release = () => {};
+  const held = new Promise<void>(r => { release = r; });
+  await page.route('**/data/events.json', async route => {
+    await held;
+    const res = await route.fetch();
+    const list = (await res.json()) as { id: number; registrationDeadline: string | null }[];
+    for (const e of list) if (String(e.id) === String(live!.id)) e.registrationDeadline = daysOut(-1);
+    await route.fulfill({ response: res, json: list });
+  });
+  await page.goto(`/dogadaji/${live!.id}/?motion=off`, { waitUntil: 'load' });
+  await page.locator('[data-step-panel="apps"] [data-step-go="form"]').click();
+  await page.locator('#p-team').fill('Pametnjakovići');
+  release();
+  await page.waitForTimeout(600);
+  await expect(page.locator('#p-team')).toHaveValue('Pametnjakovići');
+  await expect(page.locator('[data-step-panel="form"]')).toBeVisible();
 });

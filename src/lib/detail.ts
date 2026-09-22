@@ -51,15 +51,43 @@ export function eventFactsHTML(e: EventItem): string {
 </dl>`;
 }
 
+/** The verdicts that leave a reader with nothing to sign up to. */
+const PANEL_CLOSED = ['cancelled', 'full', 'closed', 'results'];
+
+/**
+ * The registration panel in one comparable string.
+ *
+ * The panel is the only part of an event page that bakes a *verdict* - sign up here, sold out,
+ * deadline passed - into static HTML, and live.ts used to leave it alone on the grounds that it was
+ * already wired up. So a venue that lifted the 24 h deadline on the afternoon of its own quiz left
+ * the page arguing with itself: the header redrew from the fresh snapshot to "5+ slobodnih mjesta"
+ * while the panel beside it went on saying "Prijave zatvorene", with no way in at all, until the
+ * next deploy (event 3241, 22 September 2026).
+ *
+ * Redrawing it needs a way to tell "the same panel, redrawn" from "a different verdict", because
+ * replacing that DOM costs the reader whatever they have typed. Every input the renderer below
+ * reads is in here, and the key is printed on the panel so a built page can be compared with the
+ * snapshot it is being shown next to. See `applyRegistrationPanel` in scripts/live.ts.
+ */
+export function registrationPanelKey(e: EventItem, enabled: boolean): string {
+  const st = eventStatus(e);
+  if (PANEL_CLOSED.includes(st.key)) return `closed:${st.key}:${e.locationUrl ?? ''}`;
+  const dl = deadlineText(e) ?? '';
+  if (!enabled) return `apps:${dl}:${e.whatsapp ?? ''}`;
+  return `form:${Math.min(e.maxPlayersPerTeam || 6, 20)}:${dl}:${e.requiresApproval ? 1 : 0}`;
+}
+
 export function registrationPanelHTML(e: EventItem, enabled: boolean): string {
-  const st = eventStatus(e); const closed = ['cancelled', 'full', 'closed', 'results'].includes(st.key);
+  const st = eventStatus(e); const closed = PANEL_CLOSED.includes(st.key);
   const dl = deadlineText(e);
+  // Stamped on every branch: the verdict the build reached, and which panel it was asked for.
+  const stamp = `data-panel-key="${esc(registrationPanelKey(e, enabled))}" data-registration="${enabled ? '1' : '0'}"`;
   if (closed) {
     const why = st.key === 'cancelled' ? 'Ovaj je termin otkazan.' : st.key === 'full' ? 'Sva su mjesta popunjena.' : st.key === 'results' ? 'Kviz je odigran i rezultati su objavljeni.' : 'Rok za prijave je prošao.';
-    return `<div class="card-dark card-pad prijava-panel"><p class="eyebrow">Prijava ekipe</p><h2 class="h3">${esc(st.label)}</h2><p class="mt-2 muted">${why} ${e.locationUrl ? `Pogledaj <a href="${esc(e.locationUrl)}">ostale termine na ovoj lokaciji</a>.` : ''}</p></div>`;
+    return `<div class="card-dark card-pad prijava-panel" ${stamp}><p class="eyebrow">Prijava ekipe</p><h2 class="h3">${esc(st.label)}</h2><p class="mt-2 muted">${why} ${e.locationUrl ? `Pogledaj <a href="${esc(e.locationUrl)}">ostale termine na ovoj lokaciji</a>.` : ''}</p></div>`;
   }
   if (!enabled) {
-    return `<div class="card-dark card-pad prijava-panel">
+    return `<div class="card-dark card-pad prijava-panel" ${stamp}>
   <p class="eyebrow">Prijava ekipe</p>
   <h2 class="h3">Prijavi ekipu kroz UKP Quiz aplikaciju.</h2>
   <p class="mt-2 muted">Napravi ekipu, prijavi se u par dodira i prati potvrdu voditelja. ${dl ? esc(dl) + '.' : ''}</p>
@@ -70,7 +98,7 @@ export function registrationPanelHTML(e: EventItem, enabled: boolean): string {
   }
   const max = Math.min(e.maxPlayersPerTeam || 6, 20);
   const opts = Array.from({ length: max }, (_, i) => `<option value="${i + 1}">${i + 1}</option>`).join('');
-  return `<div class="card-dark card-pad prijava-panel prijava" data-prijava data-event-id="${e.id}" data-step="apps">
+  return `<div class="card-dark card-pad prijava-panel prijava" data-prijava data-event-id="${e.id}" data-step="apps" ${stamp}>
   <p class="eyebrow">Prijava ekipe</p>
   <ol class="steps" data-steps aria-hidden="true">
     <li data-step-dot="form"><span class="steps-n">1</span>Podaci</li>
