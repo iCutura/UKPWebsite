@@ -71,7 +71,7 @@ import LayeredScene from '../components/LayeredScene.astro';
         const list = await fetch('/data/events.json', { cache: 'no-cache' }).then(r => r.json());
         const e = list.find((x: any) => String(x.id) === ev[1]); if (!e) return;
         document.title = `${e.name || 'Pub kviz'} · ${e.venueName} · UKP`;
-        const others = list.filter((x: any) => x.locationId === e.locationId && x.id !== e.id).slice(0, 3);
+        const others = list.filter((x: any) => x.locationId === e.locationId && x.id !== e.id && !x.isCancelled).slice(0, 3);
         // Everything the built page shows, drawn from the same helpers. This used to be the header
         // and the panel only, so a quiz scheduled after the last deploy lost its fact tiles, the
         // venue description and the whole actions row - no "Kako doći", no WhatsApp group, no

@@ -13,7 +13,7 @@ export function getStaticPaths() {
 }
 const { e } = Astro.props as { e: EventItem };
 const loc = getLocation(e.locationId);
-const others = eventsForLocation(e.locationId).filter(x => x.id !== e.id).slice(0, 3);
+const others = eventsForLocation(e.locationId).filter(x => x.id !== e.id && !x.isCancelled).slice(0, 3);
 const d = parseApiDate(e.date);
 const feeTxt = fee(e.feeType, e.feeAmount, e.feeCurrency);
 const title = `${e.name || 'Pub kviz'} · ${e.venueName}, ${longDate(d)}`;

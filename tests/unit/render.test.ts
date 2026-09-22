@@ -11,7 +11,7 @@ function event(over: Partial<EventItem> = {}): EventItem {
     city: { id: 1, name: 'Bjelovar', country: 'Hrvatska' }, address: null, lat: null, lng: null,
     logo: null, image: null, date: '2026-09-14', startTime: '20:00:00', name: null,
     category: null, subCategory: null, maxTeams: 18, registered: 12, spotsRemaining: 6,
-    registrationDeadline: null, requiresApproval: false, isCancelled: false,
+    registrationDeadline: null, requiresApproval: false, isCancelled: false, cancellationReason: null,
     feeType: null, feeAmount: null, feeCurrency: 'EUR', maxPlayersPerTeam: null, resultsPublished: false,
     season: null, whatsapp: null, ...over,
   };

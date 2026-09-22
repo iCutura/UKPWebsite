@@ -3,7 +3,8 @@ import Base from '../../layouts/Base.astro';
 import { getEvents } from '../../lib/data';
 import { eventCardHTML } from '../../lib/render';
 import NearbyControls from '../../components/NearbyControls.astro';
-const events = getEvents();
+// Cancelled quizzes stay on their own page and on their venue's page; here a reader is choosing one to go to.
+const events = getEvents().filter(e => !e.isCancelled);
 const cities = [...new Map(events.map(e => [e.city.name, e.city])).values()].sort((a, b) => a.name.localeCompare(b.name, 'hr'));
 const coords = Object.fromEntries(events.map(e => [e.id, { lat: e.lat, lng: e.lng }]));
 ---

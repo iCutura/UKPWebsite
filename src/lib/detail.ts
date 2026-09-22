@@ -50,12 +50,17 @@ export function eventFactsHTML(e: EventItem): string {
   <div class="fact"><dt>Format</dt><dd>3 kruga · minimalno 15 pitanja u svakom krugu</dd></div>
   <div class="fact"><dt>Ekipa</dt><dd>${e.maxPlayersPerTeam ? `do ${e.maxPlayersPerTeam} igrača` : 'do 5 igrača'}</dd></div>
   ${feeTxt ? `<div class="fact"><dt>Kotizacija</dt><dd>${esc(feeTxt)}</dd></div>` : ''}
-  <div class="fact"><dt>Mjesta</dt><dd>${esc(spotsText(e))}</dd></div>
+  <div class="fact"><dt>Mjesta</dt><dd>${e.isCancelled ? 'Kviz je otkazan' : esc(spotsText(e))}</dd></div>
 </dl>`;
 }
 
 /** The verdicts that leave a reader with nothing to sign up to. */
 const PANEL_CLOSED = ['cancelled', 'full', 'closed', 'results'];
+
+/** The host's reason, trimmed; empty for a snapshot written before the field existed. */
+function cancellationReason(e: EventItem): string {
+  return (e.cancellationReason ?? '').trim();
+}
 
 /**
  * The registration panel in one comparable string.
@@ -74,6 +79,8 @@ const PANEL_CLOSED = ['cancelled', 'full', 'closed', 'results'];
  */
 export function registrationPanelKey(e: EventItem, enabled: boolean): string {
   const st = eventStatus(e);
+  // The reason is printed on the cancelled panel, so a reason the host adds later is a new verdict.
+  if (st.key === 'cancelled') return `closed:cancelled:${cancellationReason(e)}:${e.locationUrl ?? ''}`;
   if (PANEL_CLOSED.includes(st.key)) return `closed:${st.key}:${e.locationUrl ?? ''}`;
   const dl = deadlineText(e) ?? '';
   if (!enabled) return `apps:${dl}:${e.whatsapp ?? ''}`;
@@ -85,9 +92,17 @@ export function registrationPanelHTML(e: EventItem, enabled: boolean): string {
   const dl = deadlineText(e);
   // Stamped on every branch: the verdict the build reached, and which panel it was asked for.
   const stamp = `data-panel-key="${esc(registrationPanelKey(e, enabled))}" data-registration="${enabled ? '1' : '0'}"`;
+  const more = e.locationUrl ? `Pogledaj <a href="${esc(e.locationUrl)}">ostale termine na ovoj lokaciji</a>.` : '';
+  if (st.key === 'cancelled') {
+    // People arrive here from the QR code and the share link, so this is where they learn why the
+    // form is gone. A team that had signed up is told there is nothing to do; the host's own words
+    // are the reason, when there are any.
+    const reason = cancellationReason(e);
+    return `<div class="card-dark card-pad prijava-panel" ${stamp}><p class="eyebrow">Prijava ekipe</p><h2 class="h3">Kviz je otkazan.</h2>${reason ? `<p class="mt-2"><strong>Razlog:</strong> ${esc(reason)}</p>` : ''}<p class="mt-2 muted">Voditelj je otkazao ovaj termin. Ako je tvoja ekipa bila prijavljena, ne trebaš ništa poduzeti. ${more}</p></div>`;
+  }
   if (closed) {
-    const why = st.key === 'cancelled' ? 'Ovaj je termin otkazan.' : st.key === 'full' ? 'Sva su mjesta popunjena.' : st.key === 'results' ? 'Kviz je odigran i rezultati su objavljeni.' : 'Rok za prijave je prošao.';
-    return `<div class="card-dark card-pad prijava-panel" ${stamp}><p class="eyebrow">Prijava ekipe</p><h2 class="h3">${esc(st.label)}</h2><p class="mt-2 muted">${why} ${e.locationUrl ? `Pogledaj <a href="${esc(e.locationUrl)}">ostale termine na ovoj lokaciji</a>.` : ''}</p></div>`;
+    const why = st.key === 'full' ? 'Sva su mjesta popunjena.' : st.key === 'results' ? 'Kviz je odigran i rezultati su objavljeni.' : 'Rok za prijave je prošao.';
+    return `<div class="card-dark card-pad prijava-panel" ${stamp}><p class="eyebrow">Prijava ekipe</p><h2 class="h3">${esc(st.label)}</h2><p class="mt-2 muted">${why} ${more}</p></div>`;
   }
   if (!enabled) {
     return `<div class="card-dark card-pad prijava-panel" ${stamp}>

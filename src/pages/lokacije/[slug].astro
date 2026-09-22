@@ -70,7 +70,7 @@ const desc = `Pub kviz Urbane kviz priče u ${l.city.name}: ${l.venueName}${rhyt
   <section class="section-tight">
     <div class="container">
       <Fragment set:html={sectionHeadHTML({ eyebrow: 'Termini', title: view.heading, titleAttr: 'data-termini-title' })} />
-      <div class="grid grid-3" data-live="events" data-location={l.id} data-show-location="false" data-empty="Trenutno nema zakazanih termina na ovoj lokaciji. Zaprati nas i javit ćemo ti se čim krene nova sezona." set:html={events.length ? events.map(e => eventCardHTML(e, { showLocation: false })).join('') : '<div class="empty">Trenutno nema zakazanih termina na ovoj lokaciji. Zaprati nas i javit ćemo ti se čim krene nova sezona.</div>'} />
+      <div class="grid grid-3" data-live="events" data-location={l.id} data-with-cancelled="true" data-show-location="false" data-empty="Trenutno nema zakazanih termina na ovoj lokaciji. Zaprati nas i javit ćemo ti se čim krene nova sezona." set:html={events.length ? events.map(e => eventCardHTML(e, { showLocation: false })).join('') : '<div class="empty">Trenutno nema zakazanih termina na ovoj lokaciji. Zaprati nas i javit ćemo ti se čim krene nova sezona.</div>'} />
     </div>
   </section>
 

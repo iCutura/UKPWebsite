@@ -1,6 +1,7 @@
 /* Event / location / news cards (markup from lib/render.ts) */
 .ev-card { display: flex; flex-direction: column; gap: 14px; padding: 18px; min-height: 100%; text-decoration: none !important; }
 .ev-card.is-cancelled { opacity: .6; }
+.ev-card.is-cancelled .ev-title { text-decoration: line-through; }
 /* Date, title and mark on one line: the card carries little data, so it should not pretend otherwise. */
 .ev-head { display: flex; align-items: center; gap: 14px; }
 .ev-date {

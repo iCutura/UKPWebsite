@@ -11,7 +11,7 @@ function event(over: Partial<EventItem> = {}): EventItem {
     name: 'Opći kviz', category: null, subCategory: null, maxTeams: 50, registered: 0,
     spotsRemaining: 50, registrationDeadline: '2026-09-14T19:00:00', requiresApproval: true,
     isCancelled: false, feeType: 'PerTeam', feeAmount: 12, feeCurrency: 'EUR', maxPlayersPerTeam: 5,
-    resultsPublished: false, season: null, whatsapp: null, ...over,
+    resultsPublished: false, season: null, whatsapp: null, cancellationReason: null, ...over,
   };
 }
 
@@ -459,5 +459,46 @@ describe('registrationPanelKey', () => {
       // downgrades a working form to a pair of store badges.
       expect(html).toContain(`data-registration="${enabled ? '1' : '0'}"`);
     }
+  });
+});
+
+/**
+ * A cancelled quiz used to vanish from the snapshot altogether (the API list dropped it), so the
+ * page could only say "više nije u ponudi", and the static build went on advertising the quiz with
+ * an open form for the rest of the evening (event 4268, 22 September 2026). It now stays in the
+ * snapshot with the host's reason, and every block that spoke of free places says why instead.
+ */
+describe('a cancelled quiz', () => {
+  const gone = () => event({ isCancelled: true, cancellationReason: 'Bolest voditelja', registrationDeadline: null });
+
+  it('is named as cancelled by the panel, with the host\'s reason, and offers no form', () => {
+    const html = registrationPanelHTML(gone(), true);
+    expect(html).toContain('Kviz je otkazan');
+    expect(html).toContain('Bolest voditelja');
+    expect(html).not.toContain('data-prijava');
+    expect(html).toContain('ostale termine na ovoj lokaciji');
+  });
+
+  it('keeps the panel readable when the host gave no reason', () => {
+    const html = registrationPanelHTML(event({ isCancelled: true, cancellationReason: null }), true);
+    expect(html).toContain('Kviz je otkazan');
+    expect(html).not.toContain('Razlog');
+  });
+
+  it('carries the reason in the panel key, so a reason added later redraws the panel', () => {
+    expect(registrationPanelKey(gone(), true)).not.toBe(registrationPanelKey(event({ isCancelled: true, cancellationReason: null }), true));
+  });
+
+  it('says so in the Mjesta tile instead of counting free places', () => {
+    const html = eventFactsHTML(gone());
+    expect(html).toContain('Kviz je otkazan');
+    expect(html).not.toContain('slobodnih mjesta');
+  });
+
+  it('tolerates a snapshot written before the reason existed', () => {
+    const legacy = event({ isCancelled: true });
+    delete (legacy as Partial<EventItem>).cancellationReason;
+    expect(() => registrationPanelHTML(legacy, true)).not.toThrow();
+    expect(registrationPanelKey(legacy, true)).toBe(registrationPanelKey(event({ isCancelled: true, cancellationReason: null }), true));
   });
 });

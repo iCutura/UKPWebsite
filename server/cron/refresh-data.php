@@ -137,7 +137,8 @@ if ($want) {
 // known whole, so a partial run can never blank a description the build got right.
 $detailsState = $missing ? 'partial' : 'complete';
 
-$events = api('/api/pub-quiz-events?from=' . date('Y-m-d'), $cfg, $base) ?? [];
+// includeCancelled: see scripts/fetch-data.mjs; the two fetchers must produce the same shape.
+$events = api('/api/pub-quiz-events?from=' . date('Y-m-d') . '&includeCancelled=true', $cfg, $base) ?? [];
 $news = api('/api/news?limit=100', $cfg, $base) ?? [];
 
 // The list is read every run; the detail map rolls round over hours. Wherever both carry a field
@@ -169,7 +170,7 @@ foreach ($events as $e) {
     'image' => mirror($e['eventImageUrl'] ?? null, $base, $imgDir, $cfg) ?? ($loc['image'] ?? null),
     'date' => substr($e['eventDate'], 0, 10), 'startTime' => $e['startTime'], 'name' => trim((string)($e['name'] ?? '')) ?: null, 'category' => $e['categoryName'] ?? null, 'subCategory' => $e['subCategoryName'] ?? null,
     'maxTeams' => $e['maxTeams'] ?? null, 'registered' => $e['registeredTeamsCount'] ?? 0, 'spotsRemaining' => $e['spotsRemaining'] ?? null, 'registrationDeadline' => $e['registrationDeadline'] ?? null, 'requiresApproval' => (bool)($e['requiresApproval'] ?? false),
-    'isCancelled' => (bool)($e['isCancelled'] ?? false), 'feeType' => $e['feeType'] ?? null, 'feeAmount' => $e['feeAmount'] ?? null, 'feeCurrency' => $e['feeCurrency'] ?? 'EUR', 'maxPlayersPerTeam' => $e['maxPlayersPerTeam'] ?? null, 'resultsPublished' => (bool)($e['resultsPublished'] ?? false), 'season' => $e['season']['name'] ?? null, 'whatsapp' => $loc['whatsapp'] ?? null,
+    'isCancelled' => (bool)($e['isCancelled'] ?? false), 'cancellationReason' => $e['cancellationReason'] ?? null, 'feeType' => $e['feeType'] ?? null, 'feeAmount' => $e['feeAmount'] ?? null, 'feeCurrency' => $e['feeCurrency'] ?? 'EUR', 'maxPlayersPerTeam' => $e['maxPlayersPerTeam'] ?? null, 'resultsPublished' => (bool)($e['resultsPublished'] ?? false), 'season' => $e['season']['name'] ?? null, 'whatsapp' => $loc['whatsapp'] ?? null,
   ];
 }
 usort($eventsOut, fn($a, $b) => strcmp($a['date'] . $a['startTime'], $b['date'] . $b['startTime']));

@@ -51,7 +51,7 @@ test('a page built for an event that has since vanished says so', async ({ page 
   await open(page, `/dogadaji/${gone}/`);
   await expect(page.locator('.evd-side .prijava-panel')).toContainText('više nije u ponudi');
   await expect(page.locator('[data-prijava]')).toHaveCount(0);
-  await expect(page.locator('.chip-status')).toHaveText('Termin nije dostupan');
+  await expect(page.locator('.evd-head .chip-status')).toHaveText('Termin nije dostupan');
 });
 
 test('a page whose event is still on the calendar keeps its registration panel', async ({ page }) => {
@@ -175,4 +175,39 @@ test('a reader who has started the form is not interrupted by the refresh', asyn
   await page.waitForTimeout(600);
   await expect(page.locator('#p-team')).toHaveValue('Pametnjakovići');
   await expect(page.locator('[data-step-panel="form"]')).toBeVisible();
+});
+
+/**
+ * A quiz cancelled in the admin used to vanish from the snapshot altogether (the public API list
+ * dropped cancelled events), so the most this page could say was "više nije u ponudi", and the
+ * static build went on advertising the quiz with an open form for the rest of the evening: on
+ * 22 September 2026 a host cancelled that night's quiz at 17:10 and at 20:30 the page still read
+ * "5+ slobodnih mjesta" (event 4268). The snapshot now keeps a cancelled quiz, with the host's
+ * reason, and the page says so where people arriving from the QR code will read it.
+ */
+test('a quiz cancelled in the admin says so on the built page, with the reason, without a deploy', async ({ page }) => {
+  const live = await openEvent(page);
+  test.skip(!live, 'no quiz is open for registration');
+  await withEvent(page, live!.id, { isCancelled: true, cancellationReason: 'Bolest voditelja' });
+  await open(page, `/dogadaji/${live!.id}/`);
+  const panel = page.locator('.evd-side .prijava-panel');
+  await expect(panel).toContainText('Kviz je otkazan');
+  await expect(panel).toContainText('Bolest voditelja');
+  await expect(page.locator('[data-prijava]')).toHaveCount(0);
+  await expect(page.locator('.evd-head .chip-status')).toHaveText('Otkazano');
+  await expect(page.locator('.facts')).toContainText('Kviz je otkazan');
+  await expect(page.locator('.facts')).not.toContainText('slobodnih mjesta');
+  await expect(page.locator('.evd')).not.toHaveClass(/is-gone/);
+});
+
+test('a cancelled quiz stays on its venue page as cancelled and leaves the events list', async ({ page }) => {
+  const live = await openEvent(page);
+  test.skip(!live?.locationUrl, 'no quiz is open for registration');
+  await withEvent(page, live!.id, { isCancelled: true, cancellationReason: 'Bolest voditelja' });
+  await open(page, live!.locationUrl!);
+  const card = page.locator(`[data-live="events"] [data-event-id="${live!.id}"]`);
+  await expect(card).toHaveClass(/is-cancelled/);
+  await expect(card.locator('.chip-status')).toHaveText('Otkazano');
+  await open(page, '/dogadaji/');
+  await expect(page.locator(`[data-live="events"] [data-event-id="${live!.id}"]`)).toHaveCount(0);
 });

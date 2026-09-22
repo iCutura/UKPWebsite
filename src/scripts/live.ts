@@ -196,6 +196,9 @@ async function refresh() {
       const kind = box.dataset.live;
       if (kind === 'events') {
         let list = upcomingEvents(await load<EventItem[]>('events.json'), now);
+        // A cancelled quiz is news on its own page and on its venue's page (data-with-cancelled), and
+        // noise everywhere else: nobody browsing for a quiz to go to needs the ones that are off.
+        if (box.dataset.withCancelled !== 'true') list = list.filter(e => !e.isCancelled);
         if (box.dataset.location) list = list.filter(e => String(e.locationId) === box.dataset.location);
         if (box.dataset.city) list = list.filter(e => e.city?.name === box.dataset.city);
         const limit = parseInt(box.dataset.limit || '0'); if (limit) list = list.slice(0, limit);
@@ -217,7 +220,7 @@ async function refresh() {
     box.dataset.liveDone = '1';
   }
   document.querySelectorAll<HTMLElement>('[data-live-count]').forEach(async el => {
-    try { const list = upcomingEvents(await load<EventItem[]>('events.json'), now); el.textContent = String(list.length); } catch {}
+    try { const list = upcomingEvents(await load<EventItem[]>('events.json'), now).filter(e => !e.isCancelled); el.textContent = String(list.length); } catch {}
   });
 }
 document.addEventListener('astro:page-load', refresh);

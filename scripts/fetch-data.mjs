@@ -97,7 +97,9 @@ const detailsState = details.every(Boolean) ? 'complete' : 'partial';
 console.log(`  ${locList.length} locations, ${details.filter(Boolean).length} details (${detailsState})`);
 const today = new Date(); const from = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
 const [events, news, reasons] = await Promise.all([
-  get(`/api/pub-quiz-events?from=${from}`), get('/api/news?limit=100'), get('/api/cancellation-reasons'),
+  // includeCancelled: a cancelled quiz keeps its page and says so, instead of vanishing from the snapshot
+  // while its built page went on advertising it (event 4268, 2026-09-22). Ignored by an older API.
+  get(`/api/pub-quiz-events?from=${from}&includeCancelled=true`), get('/api/news?limit=100'), get('/api/cancellation-reasons'),
 ]);
 console.log(`  ${events.length} upcoming events, ${news.length} news, ${reasons.length} cancellation reasons`);
 
@@ -139,7 +141,7 @@ const eventsOut = await Promise.all(events.filter(e => !e.isHidden).map(async e 
     category: e.categoryName ?? null, subCategory: e.subCategoryName ?? null,
     maxTeams: e.maxTeams ?? null, registered: e.registeredTeamsCount ?? 0, spotsRemaining: e.spotsRemaining ?? null,
     registrationDeadline: e.registrationDeadline ?? null, requiresApproval: !!e.requiresApproval,
-    isCancelled: !!e.isCancelled, feeType: e.feeType ?? null, feeAmount: e.feeAmount ?? null, feeCurrency: e.feeCurrency ?? 'EUR', maxPlayersPerTeam: e.maxPlayersPerTeam ?? null,
+    isCancelled: !!e.isCancelled, cancellationReason: e.cancellationReason ?? null, feeType: e.feeType ?? null, feeAmount: e.feeAmount ?? null, feeCurrency: e.feeCurrency ?? 'EUR', maxPlayersPerTeam: e.maxPlayersPerTeam ?? null,
     resultsPublished: !!e.resultsPublished, season: e.season?.name ?? null, whatsapp: loc?.whatsapp ?? null,
   };
 }));

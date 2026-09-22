@@ -19,7 +19,8 @@ export interface EventItem {
   city: { id: number | null; name: string; country: string | null }; address: string | null; lat: number | null; lng: number | null;
   logo: Img | null; image: Img | null; date: string; startTime: string; name: string | null; category: string | null; subCategory: string | null;
   maxTeams: number | null; registered: number; spotsRemaining: number | null; registrationDeadline: string | null; requiresApproval: boolean;
-  isCancelled: boolean; feeType: string | null; feeAmount: number | null; feeCurrency: string | null; maxPlayersPerTeam: number | null; resultsPublished: boolean; season: string | null; whatsapp: string | null;
+  // cancellationReason rides beside isCancelled since 2026-09-22; a snapshot written before then has neither key, so read it as null.
+  isCancelled: boolean; cancellationReason: string | null; feeType: string | null; feeAmount: number | null; feeCurrency: string | null; maxPlayersPerTeam: number | null; resultsPublished: boolean; season: string | null; whatsapp: string | null;
 }
 export interface NewsItem {
   id: number; url: string; title: string; summary: string; content: string; image: Img | null; publishedDate: string;
