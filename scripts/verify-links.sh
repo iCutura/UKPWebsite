@@ -15,6 +15,12 @@ curl -sI "$H/.well-known/apple-app-site-association" | grep -qi "content-type: a
 chk "assetlinks" "$H/.well-known/assetlinks.json" 200 'com.injeelit.pubquiz'
 chk "team link (unknown code)" "$H/join/team/ABCD1234" 404 'og:title'
 chk "team link (bad chars)" "$H/join/team/ab%20cd" 404
+# Arena match codes are six characters from an alphabet without 0/O/1/I. A well-formed unknown code
+# reaches the PHP and the API and must come back as a 404 page that still previews (og:title); a
+# malformed one never matches the rewrite and gets the static 404 page.
+chk "arena link (unknown code)" "$H/join/arena/ABCDEF" 404 'og:title'
+chk "arena link (short code)" "$H/join/arena/abc" 404
+chk "arena link (bad chars)" "$H/join/arena/ABC-12" 404
 chk "event link" "$H/join/event/12" 302
 chk "event link (non-numeric)" "$H/join/event/x" 404
 chk "quiz link (unknown id)" "$H/play/quiz/999999" 404 'og:title'
