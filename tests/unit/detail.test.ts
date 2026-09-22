@@ -42,6 +42,20 @@ describe('placeLine', () => {
   });
 });
 
+describe('mapsUrl with a coordinate that cannot be right', () => {
+  it('sends the reader to the address rather than to France', () => {
+    // Caffe bar Charlie, Dugo Selo: the stored longitude lost its leading 6, and "Kako doci"
+    // pointed at a field near Limoges for as long as nobody checked.
+    const url = mapsUrl({
+      lat: 45.80534547198097, lng: 1.2347707491643,
+      address: 'Ul. Miroslava Krleze 7, 10370, Dugo Selo',
+      venueName: 'Caffe bar Charlie', city: { name: 'Grad Dugo Selo' },
+    });
+    expect(url).not.toContain('1.2347');
+    expect(url).toContain('Dugo%20Selo');
+  });
+});
+
 describe('deadlineText', () => {
   it('states the cut-off in Croatian day and month order', () => {
     expect(deadlineText(event())).toBe('Prijave do 14. 9. u 19:00');

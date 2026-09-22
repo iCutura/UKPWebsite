@@ -2,11 +2,14 @@
 import type { EventItem, Location, NewsItem } from './data';
 import { esc, logoTile, eventStatus, eventCardHTML, locationCardHTML, icon, storeBadgesHTML } from './render';
 import { parseApiDate, longDate, numericDate, time, fee, plural, spotsText, weekdayInstrumental } from './format';
+import { hasCoords } from './geo';
 import { seasonFor } from './seasons';
 import { SITE } from '../config';
 
 export function mapsUrl(x: { lat: number | null; lng: number | null; address: string | null; venueName: string; city: { name: string } }): string {
-  return x.lat && x.lng ? `https://www.google.com/maps/search/?api=1&query=${x.lat},${x.lng}` : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent([x.venueName, x.address, x.city?.name].filter(Boolean).join(', '))}`;
+  // hasCoords, not a truthy check: a coordinate outside the region we play in is a typo, and the
+  // address beside it is the better direction. See geo.ts.
+  return hasCoords(x) ? `https://www.google.com/maps/search/?api=1&query=${x.lat},${x.lng}` : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent([x.venueName, x.address, x.city?.name].filter(Boolean).join(', '))}`;
 }
 export function placeLine(address: string | null, city?: string | null): string {
   if (!address) return city || '';

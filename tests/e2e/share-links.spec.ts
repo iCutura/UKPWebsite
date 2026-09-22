@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { open, openEvent } from './support';
+import { open, openEvent, venueForPrijava } from './support';
 
 /**
  * Links a venue hands to its teams. Scanning a code at the bar should put someone in front of the
@@ -38,15 +38,33 @@ test('a venue link forwards to whichever quiz is next', async ({ page }) => {
   // A printed code at the bar must keep working after this week's quiz has passed, so the venue
   // link resolves at load time rather than pointing at one fixed event. Navigated directly,
   // because the helper's post-load work races the forward.
-  await page.goto('/lokacije/24-zeppelin-pub-bjelovar/?prijava', { waitUntil: 'load' });
+  const v = await venueForPrijava(page);
+  test.skip(!v, 'no venue has an open quiz next on its calendar');
+  await page.goto(`${v!.locationUrl}?prijava`, { waitUntil: 'load' });
   await page.waitForURL(/\/dogadaji\/\d+\/\?prijava/, { timeout: 10000 });
   await expect(page.locator('[data-prijava]')).toHaveAttribute('data-step', 'apps');
 });
 
 test('the venue CTA carries the registration link, not just the event page', async ({ page }) => {
-  await open(page, '/lokacije/24-zeppelin-pub-bjelovar/');
+  const v = await venueForPrijava(page);
+  test.skip(!v, 'no venue has an open quiz next on its calendar');
+  await open(page, v!.locationUrl);
   const cta = page.getByRole('link', { name: /Prijavi ekipu na sljedeći kviz/ });
   await expect(cta).toHaveAttribute('href', /\/dogadaji\/\d+\/\?prijava$/);
+});
+
+/**
+ * The other half of the same rule: a venue with nothing on its calendar must not offer a link into
+ * a registration that does not exist. This is what Zeppelin pub became, and the two tests above
+ * used to name it by hand and read its silence as a failure.
+ */
+test('a venue with no termini offers another way on, not a dead sign-up link', async ({ page }) => {
+  const list = (await (await page.request.get('/data/locations.json')).json()) as { url: string; upcomingCount: number }[];
+  const quiet = list.find(l => !l.upcomingCount);
+  test.skip(!quiet, 'every venue has a quiz scheduled');
+  await open(page, quiet!.url);
+  await expect(page.getByRole('link', { name: /Prijavi ekipu na sljedeći kviz/ })).toHaveCount(0);
+  await expect(page.getByRole('link', { name: /Pogledaj druge lokacije/ })).toBeVisible();
 });
 
 test('the hash form works too, for links that lose their query string', async ({ page }) => {

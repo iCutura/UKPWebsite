@@ -31,8 +31,34 @@ export function distanceKm(a: { lat: number; lng: number }, b: { lat: number; ln
   return 2 * R * Math.asin(Math.min(1, Math.sqrt(s)));
 }
 
+/**
+ * The corner of the world UKP plays in, and the exact rectangle `src/data/map-outline.json` was
+ * drawn to (`BOUNDS` in scripts/build-map.mjs). `tests/unit/geo.test.ts` pins the two together,
+ * because they are one claim made twice: loosen this and a pin lands off the drawing, tighten it
+ * and a real venue is thrown away for being outside a map that does contain it.
+ */
+export const REGION: Bounds = { west: 13.3, east: 19.7, south: 42.3, north: 46.7 };
+
+export function inRegion(p: { lat: number; lng: number }): boolean {
+  return p.lat >= REGION.south && p.lat <= REGION.north && p.lng >= REGION.west && p.lng <= REGION.east;
+}
+
+/**
+ * Whether a place has coordinates worth using.
+ *
+ * A number is not enough. Caffe bar Charlie in Dugo Selo was recorded with a longitude that had
+ * lost its leading 6 - 16.2347707491643 became 1.2347707491643 - which put the venue in rural
+ * France, and nothing in the site disagreed: its city pin was drawn 710 units off the left edge of
+ * a map 1063 wide, and "Kako doci" on its page sent readers to a field near Limoges. A coordinate
+ * outside the map we draw is not a venue that travelled, it is a typo, and it is worth less than
+ * the address printed next to it - so it is treated as no coordinate at all and every caller falls
+ * back to the path it already has for a venue that never had one.
+ *
+ * This hides a data error rather than fixing it, which is the right trade for a reader and the
+ * wrong one for the record: when this fires, the venue still needs correcting in the admin.
+ */
 export function hasCoords(p: Point): p is { lat: number; lng: number } {
-  return typeof p.lat === 'number' && typeof p.lng === 'number';
+  return typeof p.lat === 'number' && typeof p.lng === 'number' && inRegion({ lat: p.lat, lng: p.lng });
 }
 
 /** Croatian distance wording: under a kilometre is metres, then whole kilometres. */

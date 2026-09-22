@@ -85,6 +85,19 @@ export function initInteractiveMap() {
 
     const k = view.w / (svg.getBoundingClientRect().width || REF_WIDTH); // user units per screen px
     const need = 30 * k; // pin diameter plus a hair, in user units
+    /**
+     * A pin's own radius in user units: r=14 scaled by `--k`, which is what keeps it a constant
+     * size on screen. It is therefore huge on a narrow one - on a 348 px phone each pin is a
+     * twenty-sixth of the whole map - and a nudge that knows nothing about the edge walks a
+     * coastal city clean off the drawing: Porec was pushed 39 units west and hung 1.3 px outside
+     * the panel, clipped. The relaxation is penned in below, every round rather than once at the
+     * end, so a pin that hits the edge pushes back into the pile instead of leaving the map.
+     */
+    const r = (14 * REF_WIDTH * k) / home.w;
+    const pen = (n: { x: number; y: number; dx: number; dy: number }) => {
+      n.dx = Math.min(Math.max(n.x + n.dx, home.x + r), home.x + home.w - r) - n.x;
+      n.dy = Math.min(Math.max(n.y + n.dy, home.y + r), home.y + home.h - r) - n.y;
+    };
 
     // Relaxation, not a single pass: clearing B of A can push it into C. A dozen rounds settles
     // the Zagreb cluster, and each round moves both neighbours so nobody drifts far from home.
@@ -107,6 +120,7 @@ export function initInteractiveMap() {
           a.dx -= vx * push * (1 - share); a.dy -= vy * push * (1 - share);
         }
       }
+      for (const n of nodes) pen(n);
       if (worst < need * 0.02) break;
     }
     for (const n of nodes) {

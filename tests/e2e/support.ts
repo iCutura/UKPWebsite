@@ -94,3 +94,25 @@ export async function withEvent(page: Page, id: number | string, patch: Partial<
 
 /** Yesterday / tomorrow, as the API writes a registration deadline. */
 export const daysOut = (n: number) => new Date(Date.now() + n * 864e5).toISOString().slice(0, 19);
+
+/**
+ * A venue whose *next* quiz is one somebody can still sign up to, with that quiz.
+ *
+ * Both share-link tests used to name `/lokacije/24-zeppelin-pub-bjelovar/`. Zeppelin's season
+ * ended, the venue page correctly stopped offering a CTA, and two tests went red on a calendar
+ * rather than on a change - the same rot `openEvent()` exists to stop. The venue has to be the one
+ * the rule picks (`nextPrijavaUrl` takes a location's soonest non-cancelled termin) and that termin
+ * has to be open, or there is no panel to land on and the assertion means nothing.
+ */
+export async function venueForPrijava(page: Page): Promise<{ locationUrl: string; eventUrl: string } | null> {
+  const list = (await (await page.request.get('/data/events.json')).json()) as EventItem[];
+  const shut = ['cancelled', 'full', 'closed', 'results'];
+  const upcoming = list.filter(e => isStillUpcoming(e))
+    .sort((a, b) => `${a.date}${a.startTime}`.localeCompare(`${b.date}${b.startTime}`));
+  const nextAt = new Map<number, EventItem>();
+  for (const e of upcoming) if (!e.isCancelled && !nextAt.has(e.locationId)) nextAt.set(e.locationId, e);
+  for (const e of nextAt.values()) {
+    if (e.locationUrl && !shut.includes(eventStatus(e).key)) return { locationUrl: e.locationUrl, eventUrl: e.url };
+  }
+  return null;
+}

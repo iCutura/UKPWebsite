@@ -3,6 +3,18 @@ import { open, visibleCount } from './support';
 
 const SPLIT = { latitude: 43.5081, longitude: 16.4402 };
 
+/**
+ * A badge in kilometres, whatever unit it is written in. formatDistance() switches to metres under
+ * a kilometre ("560 m"), and reading that as a bare number says 560 km: this test asserted the
+ * nearest venue was under 60 away and failed the day a venue opened 600 m from the fixture point.
+ * Parsed once, in node, so the two readings in this file cannot disagree again.
+ */
+const badgeKm = (text: string | null): number => {
+  const t = (text ?? '').trim();
+  const n = parseFloat(t.replace(',', '.'));
+  return /(?<!k)m$/.test(t) ? n / 1000 : n;
+};
+
 test.describe('quizzes near me', () => {
   test.use({ permissions: ['geolocation'], geolocation: SPLIT });
 
@@ -25,14 +37,11 @@ test.describe('quizzes near me', () => {
     // Standing in Split, the first card should be in or very near Split.
     const first = await page.locator('[data-location-id]').first();
     await expect(first.locator('.nearby-badge')).toBeVisible();
-    const km = parseFloat((await first.locator('.nearby-badge').textContent())!.replace(',', '.'));
-    expect(km).toBeLessThan(60);
+    const km = badgeKm(await first.locator('.nearby-badge').textContent());
+    expect(km, 'the nearest venue to Split is not near Split').toBeLessThan(60);
 
     // Distances must not decrease down the list.
-    const order = await page.evaluate(() => [...document.querySelectorAll('.nearby-badge')].map(b => {
-      const t = b.textContent!.trim();
-      return t.endsWith('m') && !t.endsWith('km') ? parseFloat(t) / 1000 : parseFloat(t.replace(',', '.'));
-    }));
+    const order = (await page.locator('.nearby-badge').allTextContents()).map(badgeKm);
     for (let i = 1; i < order.length; i++) expect(order[i]).toBeGreaterThanOrEqual(order[i - 1] - 0.01);
   });
 
