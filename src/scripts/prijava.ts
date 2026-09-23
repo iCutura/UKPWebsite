@@ -23,6 +23,7 @@ const MSG: Record<string, string> = {
   too_many_attempts: 'Previše pogrešnih pokušaja. Zatraži novi kod.',
   resend_cooldown: 'Pričekaj minutu prije nego zatražiš novi kod.',
   rate_limited: 'Previše zahtjeva. Pokušaj za koju minutu.',
+  spam_suspected: 'Prijava nije prošla provjeru. Pokušaj ponovno bez automatskog popunjavanja ili nas nazovi.',
   disabled: 'Prijave putem weba trenutno nisu uključene. Prijavi se kroz aplikaciju.',
   network: 'Prijava trenutno nije moguća. Pokušaj kroz aplikaciju ili nas nazovi.',
 };
@@ -160,6 +161,9 @@ export function bindPrijava() {
       else { resendBtn.disabled = false; resendBtn.textContent = 'Pošalji novi kod'; state.timer = null; }
     };
     const started = (j: { requestId: number; maskedEmail: string; resendAvailableAt: string }) => {
+      // A start that names no request has sent no code. Moving on to the code step anyway is how a
+      // player ended up waiting for an e-mail that was never going to come (F-21).
+      if (!(j.requestId > 0)) throw Object.assign(new Error(MSG.network), { code: 'network' });
       state.requestId = j.requestId; state.resendAt = new Date(j.resendAvailableAt).getTime();
       panel.querySelector<HTMLElement>('[data-masked-email]')!.textContent = j.maskedEmail;
       show('code'); if (state.timer) clearTimeout(state.timer); tickResend();
@@ -197,7 +201,7 @@ export function bindPrijava() {
       form.querySelectorAll('.input.is-invalid').forEach(el => el.classList.remove('is-invalid'));
       busy(form, true, 'Šaljemo kod…');
       try {
-        const j = await call({ action: 'start', eventId, teamName: d.teamName, contactName: d.contactName, contactEmail: d.contactEmail, contactPhone: d.contactPhone, playerCount: d.playerCount ? Number(d.playerCount) : null, website: d.website || '' });
+        const j = await call({ action: 'start', eventId, teamName: d.teamName, contactName: d.contactName, contactEmail: d.contactEmail, contactPhone: d.contactPhone, playerCount: d.playerCount ? Number(d.playerCount) : null, ukp_x9: d.ukp_x9 || '' });
         started(j);
       } catch (e) { msg(form, (e as Error).message, 'error'); }
       finally { busy(form, false, 'Pošalji kod za potvrdu'); }

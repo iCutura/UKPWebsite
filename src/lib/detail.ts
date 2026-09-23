@@ -145,7 +145,7 @@ export function registrationPanelHTML(e: EventItem, enabled: boolean): string {
       <div class="field"><label for="p-email">E-mail</label><input id="p-email" name="contactEmail" class="input" type="email" required autocomplete="email" placeholder="ti@primjer.hr"></div>
       <div class="field"><label for="p-phone">Mobitel</label><input id="p-phone" name="contactPhone" class="input" type="tel" required minlength="6" autocomplete="tel" inputmode="tel" placeholder="+385 9x xxx xxxx"></div>
       <div class="field"><label for="p-count">Broj igrača <span class="muted">(nije obavezno)</span></label><select id="p-count" name="playerCount" class="input"><option value="">Još ne znamo</option>${opts}</select></div>
-      <input type="text" name="website" class="hp" tabindex="-1" autocomplete="off" aria-hidden="true">
+      <input type="text" name="ukp_x9" class="hp" tabindex="-1" autocomplete="off" aria-hidden="true">
       <label class="consent"><input type="checkbox" name="consent" required> <span>Slažem se da UKP koristi ove podatke za prijavu na kviz, kako je opisano u <a href="/pravila-privatnosti/">pravilima privatnosti</a>.</span></label>
       <button class="btn btn-accent btn-lg btn-block" type="submit">Pošalji kod za potvrdu</button>
       <button class="link-btn" type="button" data-step-go="apps">Natrag na aplikaciju</button>

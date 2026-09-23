@@ -15,6 +15,10 @@ $base = rtrim($cfg['api_base'], '/') . "/api/pub-quiz-events/{$eventId}/external
 switch ($action) {
   case 'start':
     ukp_throttle('prijava-start', 6, 600);
+    if ($hp = ukp_honeypot($d)) {
+      ukp_log_honeypot('prijava', $hp, ['eventId' => $eventId, 'email' => ukp_mask_email(ukp_str($d, 'contactEmail', 200))]);
+      ukp_fail_honeypot('Prijava nije prošla provjeru. Pokušaj ponovno bez automatskog popunjavanja ili nas nazovi.');
+    }
     $url = $base;
     $payload = [
       'teamName' => ukp_str($d, 'teamName', 100), 'contactName' => ukp_str($d, 'contactName', 100),
