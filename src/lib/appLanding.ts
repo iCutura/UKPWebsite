@@ -33,7 +33,7 @@ export const LANDING_COPY: Record<Lang, LandingCopy> = {
     privacy: 'Pravila privatnosti',
     cookies: 'Kolačići',
     home: 'Urbana kviz priča, naslovna',
-    shots: 'UKP Quiz na iPhoneu: početni ekran i pitanje u kvizu',
+    shots: 'UKP Quiz na iPhoneu: liga, početni ekran i pitanje u kvizu',
   },
   en: {
     eyebrow: 'UKP Quiz',
@@ -43,7 +43,7 @@ export const LANDING_COPY: Record<Lang, LandingCopy> = {
     privacy: 'Privacy policy',
     cookies: 'Cookies',
     home: 'Urbana kviz priča, home',
-    shots: 'UKP Quiz on iPhone: the home screen and a question in play',
+    shots: 'UKP Quiz on iPhone: a league, the home screen and a question in play',
   },
 };
 

@@ -47,18 +47,20 @@ const boot = `(function(){var h=document.documentElement;try{`
             <span class="app-brand-line">kviz priča</span>
           </span>
         </a>
-        <span class="app-host">kvizovi.hr</span>
+        <span class="eyebrow app-eyebrow">{hr.eyebrow}</span>
       </header>
 
       <div class="app-main">
         <div class="app-copy">
-          <p class="eyebrow">{hr.eyebrow}</p>
           <h1 class="app-h1">
             <span data-lang="hr">{hr.headline}</span><span data-lang="en">{en.headline}</span>
           </h1>
           <p class="app-sub">
             <span data-lang="hr">{hr.sub}</span><span data-lang="en">{en.sub}</span>
           </p>
+        </div>
+
+        <div class="app-cta">
           <div class="app-badges">
             <StoreBadge store="ios" event="AppStoreClick" bilingual />
             <StoreBadge store="android" event="GooglePlayClick" bilingual />
@@ -68,9 +70,12 @@ const boot = `(function(){var h=document.documentElement;try{`
           </p>
         </div>
 
+        <!-- After the call to action in the source (headline first for readers and crawlers); on a
+             phone CSS lifts it to the top. Not lazy: on a phone it is the first thing on screen. -->
         <div class="app-shots">
-          <img class="shot shot-quiz" src="/img/promo/quiz-framed.webp" width="640" height="1308" alt="" loading="lazy" decoding="async" />
-          <img class="shot shot-home" src="/img/promo/home-framed.webp" width="640" height="1308" alt={hr.shots} loading="lazy" decoding="async" />
+          <img class="shot shot-league" src="/img/promo/league-framed.webp" width="640" height="1308" alt="" />
+          <img class="shot shot-quiz" src="/img/promo/quiz-framed.webp" width="640" height="1308" alt="" />
+          <img class="shot shot-home" src="/img/promo/home-framed.webp" width="640" height="1308" alt={hr.shots} />
         </div>
       </div>
 
@@ -101,20 +106,31 @@ const boot = `(function(){var h=document.documentElement;try{`
 </script>
 
 <style>
+  /* "Phone first" (design canvas option B, 2026-09-29). On a phone: the app fanned out on top, the
+     headline centred under it, both store badges side by side in a panel near the thumb. On a
+     desktop the same pieces in reading order: headline, badges, and the phones rising from the
+     bottom edge.
+
+     The page must fit one screen, whatever the screen. A campaign visitor lands inside Facebook's
+     or Instagram's in-app browser, where the chrome eats a fifth of an already short phone. So the
+     rhythm and the headline scale with the viewport's height, and the phones take only the height
+     the rest leaves over (a size container), cropped and faded at its foot. */
   .app {
+    --vgap: clamp(12px, 3dvh, 28px);
     position: relative; min-height: 100dvh; overflow: clip; color: var(--on-dark);
-    background: linear-gradient(160deg, var(--night-0) 0%, var(--night-1) 55%, var(--night-2) 100%);
+    background: linear-gradient(180deg, var(--night-0) 0%, var(--night-1) 60%, var(--night-2) 100%);
   }
   .app-glow {
-    position: absolute; right: -8%; top: 6%; width: min(720px, 92vw); aspect-ratio: 1; border-radius: 50%;
-    background: radial-gradient(closest-side, var(--warm-1), transparent 72%); opacity: .5; filter: blur(30px); pointer-events: none;
+    position: absolute; left: 50%; top: clamp(40px, 12dvh, 160px); translate: -50% 0;
+    width: min(760px, 100vw); aspect-ratio: 1; border-radius: 50%;
+    background: radial-gradient(closest-side, var(--warm-1), transparent 72%); opacity: .45; filter: blur(30px); pointer-events: none;
   }
   .app-inner {
-    position: relative; display: flex; flex-direction: column; gap: 32px; min-height: 100dvh; box-sizing: border-box;
+    position: relative; display: flex; flex-direction: column; gap: var(--vgap); min-height: 100dvh; box-sizing: border-box;
     width: min(100% - 2 * var(--gutter), var(--container)); margin-inline: auto;
     /* viewport-fit=cover, so the notch and the home bar are ours to keep clear. */
-    padding: max(40px, calc(env(safe-area-inset-top) + 16px)) 0
-             calc(max(28px, env(safe-area-inset-bottom) + 16px) + var(--cc-space, 0px));
+    padding: max(clamp(12px, 3dvh, 40px), calc(env(safe-area-inset-top) + 12px)) 0
+             calc(max(clamp(12px, 2.6dvh, 28px), env(safe-area-inset-bottom) + 10px) + var(--cc-space, 0px));
   }
 
   .app-top { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
@@ -122,33 +138,80 @@ const boot = `(function(){var h=document.documentElement;try{`
   .app-brand img { width: 40px; height: 40px; box-sizing: border-box; padding: 5px; border-radius: var(--r-md); background: rgb(255 255 255 / .16); }
   .app-brand-text { display: flex; flex-direction: column; font-weight: 800; font-size: .95rem; line-height: 1; letter-spacing: -.02em; text-transform: uppercase; }
   .app-brand-line + .app-brand-line { margin-top: 3px; font-weight: 600; opacity: .8; font-size: .78rem; letter-spacing: .02em; }
-  .app-host { font-size: var(--fs-small); font-weight: 600; color: var(--on-dark-md); }
 
-  .app-main { flex-grow: 1; display: grid; gap: 28px; align-items: center; }
-  @media (min-width: 900px) { .app-main { grid-template-columns: minmax(0, 1.02fr) minmax(0, .98fr); gap: 48px; } }
-  .app-copy { display: flex; flex-direction: column; align-items: flex-start; }
-  .app-h1 { margin-top: 14px; padding-top: .1em; font-size: clamp(2.5rem, 1.7rem + 3.4vw, 4.875rem); max-width: 13ch; }
-  .app-sub { margin-top: 20px; font-size: var(--fs-lead); line-height: 1.45; color: var(--on-dark-md); max-width: 44ch; }
-  .app-badges { display: flex; flex-wrap: wrap; align-items: center; gap: 14px; margin-top: 32px; --bh: 56px; }
+  .app-main { flex-grow: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: var(--vgap); text-align: center; }
+  .app-copy { display: flex; flex-direction: column; align-items: center; }
+  .app-h1 {
+    padding-top: .1em; max-width: 13ch;
+    font-size: min(clamp(2.5rem, 1.7rem + 3.4vw, 4.875rem), max(1.75rem, 8dvh));
+  }
+  .app-sub { margin-top: clamp(8px, 2dvh, 20px); font-size: var(--fs-lead); line-height: 1.45; color: var(--on-dark-md); max-width: 40ch; }
+
+  .app-cta { display: flex; flex-direction: column; align-items: center; gap: clamp(8px, 1.4dvh, 14px); }
+  /* Both stores side by side at one height, the visitor's own first (global.css orders it). The
+     height follows the width so the pair always fits one line: together the two badges run about
+     6.6 of their height wide, in either language. */
+  .app-badges { display: flex; flex-wrap: nowrap; justify-content: center; align-items: center; gap: 12px; }
+  .app-badges :global(.badge) {
+    --bh: clamp(36px, calc((min(100vw - 2 * var(--gutter), 560px) - 40px) / 6.6), 56px);
+  }
   /* --on-dark-lo is the faint tier; tests/e2e/contrast.spec.ts forbids text under half ink. */
-  .app-note { margin-top: 20px; font-size: var(--fs-small); color: var(--on-dark-md); }
+  .app-note { margin: 0; font-size: var(--fs-small); color: var(--on-dark-md); }
 
-  /* A phone can install exactly one of these, so there they stack with the usable one on top and
-     larger (global.css sizes them). A desktop can install neither: both stay equal, side by side. */
-  :global(html[data-platform="ios"]) .app-badges,
-  :global(html[data-platform="android"]) .app-badges { flex-direction: column; align-items: flex-start; }
+  /* The fan: the home screen in front, the league and a quiz question tilted behind it. Everything
+     is measured in --u, a hundredth of the box's height (or less, when the box is too narrow for
+     the fan's 120 units), and the home phone runs past the box's foot, where it fades out. */
+  .app-shots {
+    order: -1; align-self: stretch; position: relative; flex: 1 1 0; min-height: 0; max-height: 540px;
+    container: shots / size; overflow: clip;
+    /* No drop-shadow, on the phones or on this box: with the mask, Chromium laid a phone out and then
+       never painted it, at some sizes and not others (2026-09-29). The fade carries the depth. */
+    -webkit-mask-image: linear-gradient(to bottom, #000 60%, transparent); mask-image: linear-gradient(to bottom, #000 60%, transparent);
+  }
+  .shot {
+    --u: min(1cqh, .83cqw);
+    position: absolute; height: auto;
+  }
+  .shot-home { z-index: 2; left: calc(50% - 28 * var(--u)); top: 0; width: calc(56 * var(--u)); }
+  .shot-league { right: calc(50% + 12 * var(--u)); top: calc(10 * var(--u)); width: calc(46 * var(--u)); rotate: -8deg; }
+  .shot-quiz { left: calc(50% + 12 * var(--u)); top: calc(10 * var(--u)); width: calc(46 * var(--u)); rotate: 8deg; }
+  @container shots (max-height: 110px) { .shot { display: none; } }
 
-  .app-shots { position: relative; display: flex; justify-content: center; }
-  .shot { width: 168px; height: auto; filter: drop-shadow(0 22px 30px rgb(0 0 0 / .55)); }
-  .shot-quiz { display: none; }
-  @media (min-width: 900px) {
-    .app-shots { display: block; height: 640px; }
-    .shot { position: absolute; width: auto; }
-    .shot-quiz { display: block; right: 2%; top: 74px; width: 40%; transform: rotate(6deg); z-index: 1; }
-    .shot-home { left: 15%; top: 18px; width: 47%; z-index: 2; }
+  /* On a phone the badges sit in a panel of their own, where the thumb is. */
+  @media (max-width: 899px) {
+    .app-cta { align-self: stretch; padding: 14px; border-radius: 22px; background: rgb(20 12 6 / .42); border: 1px solid rgb(255 240 228 / .12); }
   }
 
-  .app-legal { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 18px; font-size: var(--fs-caption); color: var(--on-dark-md); }
+  /* The shortest phones (iPhone SE, or any phone once an in-app browser has taken its bar). */
+  @media (max-width: 899px) and (max-height: 600px) {
+    .app { --vgap: 10px; }
+    .app-sub { font-size: .9375rem; line-height: 1.4; }
+    .app-cta { padding: 10px; }
+    .app-legal a { padding: 4px 0; }
+  }
+
+  /* The badges already say iPhone and Android; on a short phone the fan needs the line's height more. */
+  @media (max-width: 899px) and (max-height: 680px) {
+    .app-note { display: none; }
+  }
+
+  /* A phone on its side: no room for the fan, and just enough for the rest. */
+  @media (max-height: 440px) {
+    .app { --vgap: 8px; }
+    .app-note { display: none; }
+  }
+
+  /* Desktop: reading order, the headline on one line, and bigger phones rising from the bottom. */
+  @media (min-width: 900px) {
+    .app-glow { top: 42%; }
+    .app-h1 { max-width: none; }
+    .app-shots { order: 0; max-height: none; }
+    .shot-home { left: calc(50% - 36 * var(--u)); width: calc(72 * var(--u)); }
+    .shot-league { right: calc(50% + 16 * var(--u)); top: calc(12 * var(--u)); width: calc(58 * var(--u)); rotate: -9deg; }
+    .shot-quiz { left: calc(50% + 16 * var(--u)); top: calc(12 * var(--u)); width: calc(58 * var(--u)); rotate: 9deg; }
+  }
+
+  .app-legal { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 2px 18px; font-size: var(--fs-caption); color: var(--on-dark-md); }
   .app-legal a { color: var(--on-dark-md); text-decoration: underline; text-underline-offset: 3px; padding: 6px 0; }
   .app-legal a:hover { color: var(--on-dark); }
 </style>

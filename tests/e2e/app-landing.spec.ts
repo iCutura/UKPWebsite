@@ -119,13 +119,13 @@ test.describe('the campaign landing page', () => {
 test.describe('on an iPhone', () => {
   test.use({ userAgent: IPHONE });
 
-  test('the App Store button is the loud one and Google Play stays available', async ({ page }) => {
+  test('the App Store button comes first, beside Google Play at the same height', async ({ page }) => {
     await open(page, '/app/');
     await expect(page.locator('html')).toHaveAttribute('data-platform', 'ios');
     const [ios, android] = [await box(page, 'ios'), await box(page, 'android')];
-    expect(ios.height, 'the App Store badge is not promoted on an iPhone').toBeGreaterThan(android.height);
-    expect(ios.width).toBeGreaterThan(android.width);
-    expect(ios.y, 'the promoted badge is not first').toBeLessThan(android.y);
+    expect(Math.abs(ios.height - android.height), 'the pair is one height').toBeLessThanOrEqual(1);
+    expect(Math.abs(ios.y - android.y), 'the pair is one row, not stacked').toBeLessThanOrEqual(2);
+    expect(ios.x, 'the visitor\'s own store is not first').toBeLessThan(android.x);
     await expect(page.locator('[data-store-badge="android"]')).toBeVisible();
   });
 });
@@ -133,13 +133,13 @@ test.describe('on an iPhone', () => {
 test.describe('on an Android phone', () => {
   test.use({ userAgent: ANDROID });
 
-  test('Google Play is the loud one and the App Store stays available', async ({ page }) => {
+  test('Google Play comes first, beside the App Store at the same height', async ({ page }) => {
     await open(page, '/app/');
     await expect(page.locator('html')).toHaveAttribute('data-platform', 'android');
     const [ios, android] = [await box(page, 'ios'), await box(page, 'android')];
-    expect(android.height, 'the Google Play badge is not promoted on Android').toBeGreaterThan(ios.height);
-    expect(android.width).toBeGreaterThan(ios.width);
-    expect(android.y, 'the promoted badge is not first').toBeLessThan(ios.y);
+    expect(Math.abs(ios.height - android.height), 'the pair is one height').toBeLessThanOrEqual(1);
+    expect(Math.abs(ios.y - android.y), 'the pair is one row, not stacked').toBeLessThanOrEqual(2);
+    expect(android.x, 'the visitor\'s own store is not first').toBeLessThan(ios.x);
     await expect(page.locator('[data-store-badge="ios"]')).toBeVisible();
   });
 });
@@ -215,4 +215,30 @@ test.describe('the pixel on /app', () => {
     await page.waitForTimeout(600);
     expect(hits, 'a click before consent loaded the pixel').toEqual([]);
   });
+});
+
+/**
+ * Campaign traffic lands inside Facebook's and Instagram's in-app browsers, where the page used to
+ * run 250 to 500 px past the fold on every phone (2026-09-29) and hid its screenshot and legal links.
+ * It has to fit one screen, from an iPhone SE to a short laptop and a phone on its side.
+ */
+test.describe('the campaign landing page fits one screen', () => {
+  const SIZES: [string, number, number][] = [
+    ['iPhone SE', 320, 568], ['small Android', 360, 640], ['iPhone in Safari', 393, 659],
+    ['Android in the Facebook browser', 412, 780], ['iPad', 820, 1180],
+    ['phone on its side', 844, 390], ['short laptop', 1366, 657], ['desktop', 1440, 900],
+  ];
+  for (const [name, width, height] of SIZES) {
+    test(`${name} (${width}x${height})`, async ({ page }) => {
+      await page.setViewportSize({ width, height });
+      await open(page, '/app/');
+      await page.locator('[data-cookie-consent]').evaluate(el => el.remove()).catch(() => {});
+      const { sh, sw } = await page.evaluate(() => ({
+        sh: document.documentElement.scrollHeight, sw: document.documentElement.scrollWidth,
+      }));
+      expect(sh, 'no vertical scroll').toBeLessThanOrEqual(height);
+      expect(sw, 'no horizontal scroll').toBeLessThanOrEqual(width);
+      await expect(page.locator('.app-legal a[href="/kolacici/"]')).toBeInViewport();
+    });
+  }
 });
