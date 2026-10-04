@@ -4,10 +4,9 @@ require __DIR__ . '/_common.php';
 $cfg = ukp_config();
 $d = ukp_input();
 ukp_throttle('kontakt', 5, 600);
-if ($hp = ukp_honeypot($d)) {
-  ukp_log_honeypot('kontakt', $hp, ['email' => ukp_mask_email(ukp_str($d, 'email', 120))]);
-  ukp_fail_honeypot('Poruka nije prošla provjeru. Pokušaj ponovno bez automatskog popunjavanja ili nam piši na ' . $cfg['mail_to'] . '.');
-}
+$verdict = ukp_spam_verdict($d);
+ukp_log_spam('kontakt', $verdict, ['email' => ukp_mask_email(ukp_str($d, 'email', 120))]);
+if ($verdict['reject']) ukp_fail_spam('Poruka nije prošla provjeru. Pričekaj trenutak i pokušaj ponovno, ili nam piši na ' . $cfg['mail_to'] . '.');
 
 $ime = ukp_str($d, 'ime', 80); $email = ukp_str($d, 'email', 120); $poruka = ukp_str($d, 'poruka', 3000); $tema = ukp_str($d, 'tema', 40);
 if ($ime === '' || $poruka === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)) ukp_fail(422, 'Ispuni ime, ispravan e-mail i poruku.');

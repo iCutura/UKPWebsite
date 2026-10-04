@@ -23,7 +23,7 @@ const MSG: Record<string, string> = {
   too_many_attempts: 'Previše pogrešnih pokušaja. Zatraži novi kod.',
   resend_cooldown: 'Pričekaj minutu prije nego zatražiš novi kod.',
   rate_limited: 'Previše zahtjeva. Pokušaj za koju minutu.',
-  spam_suspected: 'Prijava nije prošla provjeru. Pokušaj ponovno bez automatskog popunjavanja ili nas nazovi.',
+  spam_suspected: 'Prijava nije prošla provjeru. Pričekaj trenutak i pokušaj ponovno.',
   disabled: 'Prijave putem weba trenutno nisu uključene. Prijavi se kroz aplikaciju.',
   network: 'Prijava trenutno nije moguća. Pokušaj kroz aplikaciju ili nas nazovi.',
 };
@@ -50,6 +50,14 @@ export function bindPrijava() {
     const codeForm = panel.querySelector<HTMLFormElement>('form[data-step-panel="code"]')!;
     const resendBtn = panel.querySelector<HTMLButtonElement>('[data-resend]')!;
     const state: { requestId: number | null; resendAt: number; timer: number | null } = { requestId: null, resendAt: 0, timer: null };
+    /**
+     * When this panel was bound. The start reports the time since as `ukp_t`, and the server refuses
+     * one that arrives within three seconds of it: posting that fast is the one thing a script does
+     * and a person cannot. It replaced a hidden trap input that Instagram's in-app browser filled on
+     * behalf of 65 real teams in eleven days (tests/unit/spam-check.test.ts has the story). Never
+     * reset: a reader who comes back from the code step to fix a typo has been here longer, not shorter.
+     */
+    const boundAt = performance.now();
 
     /**
      * A link an organiser sends to their teams (/dogadaji/3145/?prijava, or #prijava): land on the
@@ -201,7 +209,7 @@ export function bindPrijava() {
       form.querySelectorAll('.input.is-invalid').forEach(el => el.classList.remove('is-invalid'));
       busy(form, true, 'Šaljemo kod…');
       try {
-        const j = await call({ action: 'start', eventId, teamName: d.teamName, contactName: d.contactName, contactEmail: d.contactEmail, contactPhone: d.contactPhone, playerCount: d.playerCount ? Number(d.playerCount) : null, ukp_x9: d.ukp_x9 || '' });
+        const j = await call({ action: 'start', eventId, teamName: d.teamName, contactName: d.contactName, contactEmail: d.contactEmail, contactPhone: d.contactPhone, playerCount: d.playerCount ? Number(d.playerCount) : null, ukp_t: Math.round(performance.now() - boundAt) });
         started(j);
       } catch (e) { msg(form, (e as Error).message, 'error'); }
       finally { busy(form, false, 'Pošalji kod za potvrdu'); }

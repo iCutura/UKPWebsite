@@ -21,16 +21,33 @@ function ukp_input(): array {
   return $d;
 }
 /**
- * The anti-spam trap: a field no human sees. It used to be called `website` and answer a fake
- * `ok:true`, but browser autofill fills a field of that name, so real players were told "code sent"
- * for a request that was never made, and nothing anywhere recorded it (F-21). The field is now
- * `ukp_x9` (no autofill heuristic knows it; not even `hp`, which is "phone" in some locales), and `website` is still read so a page cached before the rename is judged the same way.
- * Returns the name of the field that fired, or null. The caller answers with a visible error.
+ * The spam check for a public form post, which is a question of time, not of a trap field.
+ *
+ * The forms used to carry a text input no person could see (`website`, then `ukp_x9`), and a value
+ * in it meant a bot. Twice that judged people instead. First the trap answered a fake `ok:true`, so
+ * autofilled players waited for a code that never left (F-21, 2026-09-23). Then it answered a
+ * visible refusal, and its log showed who it refused over the eleven days that followed: 242 of 245
+ * lines were people, 65 of them in Instagram's in-app browser on Android, which fills every text
+ * input in a form whether it is on screen or not, and not one line was a bot. The input is gone
+ * from both forms. What the browser sends instead is `ukp_t`, the milliseconds between the page
+ * binding the form and the submit: a person needs seconds to type a team name and tick the consent
+ * box, a script posts the instant the page is parsed.
+ *
+ * A request without a readable `ukp_t` (an older page, another client) is let through and logged,
+ * so the gap can be watched. The old trap names are still read, as a signal for the log only;
+ * nothing is ever refused on them again.
+ *
+ * @return array{reject: bool, elapsedMs: ?int, trap: ?string}
  */
-const UKP_HONEYPOT_FIELDS = ['ukp_x9', 'website'];
-function ukp_honeypot(array $d): ?string {
-  foreach (UKP_HONEYPOT_FIELDS as $k) if (isset($d[$k]) && trim((string)$d[$k]) !== '') return $k;
-  return null;
+const UKP_MIN_FILL_MS = 3000;
+const UKP_LEGACY_TRAP_FIELDS = ['ukp_x9', 'website'];
+function ukp_spam_verdict(array $d): array {
+  $t = $d['ukp_t'] ?? null;
+  $readable = (is_int($t) || is_float($t) || (is_string($t) && is_numeric($t))) && (float)$t >= 0;
+  $elapsed = $readable ? (int)min((float)$t, 86_400_000.0) : null;
+  $trap = null;
+  foreach (UKP_LEGACY_TRAP_FIELDS as $k) if (isset($d[$k]) && trim((string)$d[$k]) !== '') { $trap = $k; break; }
+  return ['reject' => $elapsed !== null && $elapsed < UKP_MIN_FILL_MS, 'elapsedMs' => $elapsed, 'trap' => $trap];
 }
 /** "ana.anic@x.hr" -> "a***@x.hr": enough to match a player's complaint, not enough to leak the address. */
 function ukp_mask_email(string $email): string {
@@ -38,15 +55,26 @@ function ukp_mask_email(string $email): string {
   if ($at === false || $at === 0) return $email === '' ? '' : '***';
   return mb_substr($email, 0, 1) . '***' . substr($email, $at);
 }
-/** One line per dropped request, next to ukp-config.php (outside the web root), trimmed before it grows past 256 KB. */
-function ukp_log_honeypot(string $endpoint, string $field, array $context): void {
+/**
+ * One line per request worth a second look, next to ukp-config.php (outside the web root), trimmed
+ * before it grows past 256 KB. Every refusal is logged; an accepted request only when it carried a
+ * signal (a filled legacy trap field, or no timing at all), so a normal start leaves no line. The
+ * file keeps its old name so the history since 2026-09-23 stays in one place.
+ */
+function ukp_log_spam(string $endpoint, array $verdict, array $context): void {
+  $reason = $verdict['reject'] ? 'too_fast' : ($verdict['trap'] !== null ? 'trap_filled' : ($verdict['elapsedMs'] === null ? 'no_timing' : null));
+  if ($reason === null) return;
   $f = dirname(__DIR__, 2) . '/ukp-honeypot.log';
   if (is_file($f) && filesize($f) > 262144) @file_put_contents($f, implode('', array_slice(file($f) ?: [], -500)));
-  $line = gmdate('c') . ' ' . json_encode(['endpoint' => $endpoint, 'field' => $field, 'ip' => $_SERVER['REMOTE_ADDR'] ?? '', 'ua' => mb_substr((string)($_SERVER['HTTP_USER_AGENT'] ?? ''), 0, 200)] + $context, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) . "\n";
+  $line = gmdate('c') . ' ' . json_encode([
+    'endpoint' => $endpoint, 'verdict' => $verdict['reject'] ? 'rejected' : 'accepted', 'reason' => $reason,
+    'elapsedMs' => $verdict['elapsedMs'], 'trap' => $verdict['trap'],
+    'ip' => $_SERVER['REMOTE_ADDR'] ?? '', 'ua' => mb_substr((string)($_SERVER['HTTP_USER_AGENT'] ?? ''), 0, 200),
+  ] + $context, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) . "\n";
   @file_put_contents($f, $line, FILE_APPEND | LOCK_EX);
 }
-/** Refuse a request the trap caught, visibly: a human who reads this can try again, a bot learns nothing new. */
-function ukp_fail_honeypot(string $message): never {
+/** Refuse a request the check caught, visibly: a person who reads this can try again, a bot learns nothing new. */
+function ukp_fail_spam(string $message): never {
   http_response_code(422);
   echo json_encode(['ok' => false, 'code' => 'spam_suspected', 'message' => $message], JSON_UNESCAPED_UNICODE);
   exit;

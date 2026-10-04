@@ -30,7 +30,6 @@
    it does not double up. Scoped to the stack, because the same rule was flattening the gap under
    the QR tiles and gluing "Nemam aplikaciju" to them. */
 .prijava-panel .stack .btn-block { margin-top: 4px; }
-.prijava .hp { position: absolute; left: -9999px; width: 1px; height: 1px; opacity: 0; }
 .consent { display: flex; gap: 10px; align-items: flex-start; font-size: var(--fs-caption); color: var(--on-dark-md); }
 .consent input { width: 20px; height: 20px; margin: 1px 0 0; accent-color: var(--accent); flex: none; }
 .prijava-msg { padding: 12px 14px; border-radius: var(--r-md); font-size: var(--fs-small); background: rgb(255 255 255 / .08); }
