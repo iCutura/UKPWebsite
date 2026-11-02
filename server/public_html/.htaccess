@@ -27,6 +27,7 @@ ErrorDocument 404 /404.html
   RewriteRule ^join/arena/([A-Za-z0-9]{6})/?$ /api/link.php?kind=arena&code=$1 [L,QSA]
   RewriteRule ^join/event/(\d+)/?$ /dogadaji/$1/?prijava [R=302,L]
   RewriteRule ^play/quiz/(\d+)/?$ /api/link.php?kind=quiz&id=$1 [L,QSA]
+  RewriteRule ^news/(\d+)/?$ /api/link.php?kind=news&id=$1 [L,QSA]
   RewriteRule ^get/?$ /api/link.php?kind=get [L]
 
   # Add trailing slash to directory-style URLs (Astro build.format=directory)

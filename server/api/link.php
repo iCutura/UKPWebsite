@@ -1,6 +1,6 @@
 <?php
 // Landing page for app invite links when the app is not installed (or on desktop).
-// Rewritten to by .htaccess: /join/team/{code}, /join/arena/{code}, /play/quiz/{id}, /get. Fills
+// Rewritten to by .htaccess: /join/team/{code}, /join/arena/{code}, /play/quiz/{id}, /news/{id}, /get. Fills
 // the built /link/index.html template with the team, match or quiz the visitor was sent to, using
 // the API's api/links metadata with the website key. Never called by the browser directly.
 declare(strict_types=1);
@@ -92,6 +92,27 @@ if ($kind === 'team') {
       $qd = trim((string)($quiz['description'] ?? ''));
       $desc = $qd !== '' ? $qd : 'Otvori Urbanu kviz priču i zaigraj ovaj kviz.';
       $image = isset($quiz['imageUrl']) && is_string($quiz['imageUrl']) && $quiz['imageUrl'] !== '' ? $quiz['imageUrl'] : null;
+    }
+  }
+} elseif ($kind === 'news') {
+  $id = (int)($_GET['id'] ?? 0);
+  if ($id <= 0) {
+    $status = 404;
+    $title = 'Ova vijest više nije dostupna';
+    $desc = 'Vijest ne postoji ili je uklonjena. U aplikaciji te čekaju sve ostale.';
+  } else {
+    $open = "https://api.injeel-it.hr/news/$id";
+    $canonical = "https://kvizovi.hr/news/$id";
+    $news = ukp_api_cached("/api/links/news/$id", $cfg);
+    if ($news === null) {
+      $status = 404;
+      $title = 'Ova vijest više nije dostupna';
+      $desc = 'Vijest ne postoji ili je uklonjena. U aplikaciji te čekaju sve ostale.';
+    } else {
+      $title = (string)($news['title'] ?? 'Vijest');
+      $nd = trim((string)($news['summary'] ?? ''));
+      $desc = $nd !== '' ? $nd : 'Otvori Urbanu kviz priču i pročitaj vijest.';
+      $image = isset($news['imageUrl']) && is_string($news['imageUrl']) && $news['imageUrl'] !== '' ? $news['imageUrl'] : null;
     }
   }
 }

@@ -24,6 +24,7 @@ chk "arena link (bad chars)" "$H/join/arena/ABC-12" 404
 chk "event link" "$H/join/event/12" 302
 chk "event link (non-numeric)" "$H/join/event/x" 404
 chk "quiz link (unknown id)" "$H/play/quiz/999999" 404 'og:title'
+chk "news link (unknown id)" "$H/news/999999" 404 'og:title'
 chk "get" "$H/get" 200 'Otvori u UKP Quiz'
 # SiteGround's front-end serves static files before Apache's www redirect runs, so www may answer
 # 200 with the file itself; Apple only asks the apex host, so either answer is fine.

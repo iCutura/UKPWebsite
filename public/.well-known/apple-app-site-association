@@ -2,7 +2,7 @@
   "applinks": {
     "apps": [],
     "details": [
-      { "appID": "X6P3LG956W.injeel.PubQuiz", "paths": ["/join/*", "/play/*", "/get"] }
+      { "appID": "X6P3LG956W.injeel.PubQuiz", "paths": ["/join/*", "/play/*", "/news/*", "/get"] }
     ]
   }
 }
