@@ -124,6 +124,9 @@ if ($kind === 'team') {
   $path = $kind === 'top10' && $code === 'TODAY' ? 'top10/today' : "$kind/$code";
   $open = "https://api.injeel-it.hr/$path";
   $canonical = "https://kvizovi.hr/$path";
+  // A Top 10 link shows its own picture in a chat's preview (2026-11-16): the ten rows, some found,
+  // some "?", never an answer. The other two keep the season's picture.
+  if ($kind === 'top10') $image = 'https://kvizovi.hr/og/top10.png';
   if ($kind === 'top10' && $code === 'TODAY') {
     $title = 'Današnji dnevni izazov';
     $desc = 'Deset odgovora, pet srca. Otvori UKP Quiz aplikaciju i zaigraj.';
