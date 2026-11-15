@@ -1,6 +1,7 @@
 <?php
 // Landing page for app invite links when the app is not installed (or on desktop).
-// Rewritten to by .htaccess: /join/team/{code}, /join/arena/{code}, /play/quiz/{id}, /news/{id}, /get. Fills
+// Rewritten to by .htaccess: /join/team/{code}, /join/arena/{code}, /play/quiz/{id}, /news/{id}, /get, and
+// the friends links /top10/{code}, /add/{code}, /seat/{code} (fixed copy, no API call). Fills
 // the built /link/index.html template with the team, match or quiz the visitor was sent to, using
 // the API's api/links metadata with the website key. Never called by the browser directly.
 declare(strict_types=1);
@@ -114,6 +115,27 @@ if ($kind === 'team') {
       $desc = $nd !== '' ? $nd : 'Otvori Urbanu kviz priču i pročitaj vijest.';
       $image = isset($news['imageUrl']) && is_string($news['imageUrl']) && $news['imageUrl'] !== '' ? $news['imageUrl'] : null;
     }
+  }
+} elseif ($kind === 'top10' || $kind === 'add' || $kind === 'seat') {
+  // Friends and sharing (2026-11-15). These pages name nobody and show no answer, so they need
+  // nothing from the API: the copy is fixed, and the button opens the same path on the API host,
+  // which the apps also claim. "today" is the QR on the stage slide at quiz nights.
+  $code = strtoupper(preg_replace('/[^A-Za-z0-9]/', '', (string)($_GET['code'] ?? '')) ?? '');
+  $path = $kind === 'top10' && $code === 'TODAY' ? 'top10/today' : "$kind/$code";
+  $open = "https://api.injeel-it.hr/$path";
+  $canonical = "https://kvizovi.hr/$path";
+  if ($kind === 'top10' && $code === 'TODAY') {
+    $title = 'Današnji dnevni izazov';
+    $desc = 'Deset odgovora, pet srca. Otvori UKP Quiz aplikaciju i zaigraj.';
+  } elseif ($kind === 'top10') {
+    $title = 'Stigao ti je dnevni izazov';
+    $desc = 'Odigraj isti izazov u UKP Quiz aplikaciji. Odgovori se ovdje ne prikazuju.';
+  } elseif ($kind === 'add') {
+    $title = 'Poziv u prijatelje';
+    $desc = 'Otvori UKP Quiz aplikaciju i prihvati poziv, pa igrajte zajedno.';
+  } else {
+    $title = 'Slobodno mjesto na kvizu';
+    $desc = 'Ekipa ima jedno slobodno mjesto. Otvori UKP Quiz aplikaciju i zauzmi ga.';
   }
 }
 

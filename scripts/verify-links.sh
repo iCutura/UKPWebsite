@@ -26,6 +26,13 @@ chk "event link (non-numeric)" "$H/join/event/x" 404
 chk "quiz link (unknown id)" "$H/play/quiz/999999" 404 'og:title'
 chk "news link (unknown id)" "$H/news/999999" 404 'og:title'
 chk "get" "$H/get" 200 'Otvori u UKP Quiz'
+# Friends and sharing (2026-11-15): fixed pages that name nobody; the apps claim the three paths.
+chk "top10 link" "$H/top10/ABCDEFGH2345" 200 'Stigao ti je dnevni izazov'
+chk "top10 today (stage QR)" "$H/top10/today" 200 'Današnji dnevni izazov'
+chk "add link" "$H/add/ABCD2345" 200 'Poziv u prijatelje'
+chk "seat link" "$H/seat/ABCDEFGH23" 200 'Slobodno mjesto na kvizu'
+chk "top10 link (bad chars)" "$H/top10/AB-CD" 404
+grep -q '"/top10/\*"' <(curl -sS --max-time 20 "$H/.well-known/apple-app-site-association") && echo "✓ AASA lists the friends paths" || { echo "✗ AASA lacks /top10/*"; fail=1; }
 # SiteGround's front-end serves static files before Apache's www redirect runs, so www may answer
 # 200 with the file itself; Apple only asks the apex host, so either answer is fine.
 www=$(curl -sS -o /dev/null -w "%{http_code}" --max-time 20 "https://www.kvizovi.hr/.well-known/apple-app-site-association")
