@@ -10,10 +10,10 @@ const wk = (f: string) => readFileSync(new URL(`../../public/.well-known/${f}`, 
 
 describe('apple-app-site-association', () => {
   const aasa = JSON.parse(wk('apple-app-site-association'));
-  it('names the app and the three link families', () => {
+  it('names the app and the link families', () => {
     const detail = aasa.applinks.details[0];
     expect(detail.appID).toBe('X6P3LG956W.injeel.PubQuiz');
-    expect(detail.paths).toEqual(['/join/*', '/play/*', '/get']);
+    expect(detail.paths).toEqual(['/join/*', '/play/*', '/news/*', '/get', '/top10/*', '/add/*', '/seat/*']);
     expect(aasa.applinks.apps).toEqual([]);
   });
 });

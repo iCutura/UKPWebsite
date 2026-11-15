@@ -29,6 +29,12 @@ ErrorDocument 404 /404.html
   RewriteRule ^play/quiz/(\d+)/?$ /api/link.php?kind=quiz&id=$1 [L,QSA]
   RewriteRule ^news/(\d+)/?$ /api/link.php?kind=news&id=$1 [L,QSA]
   RewriteRule ^get/?$ /api/link.php?kind=get [L]
+  # Friends and sharing (2026-11-15): a request for help or a challenge on a daily top 10 (twelve
+  # characters, or "today" for the QR on the stage slide), a player's "add me" link and a free seat
+  # at a quiz night. The page names nobody and shows no answer.
+  RewriteRule ^top10/([A-Za-z0-9]{5,12})/?$ /api/link.php?kind=top10&code=$1 [L,QSA]
+  RewriteRule ^add/([A-Za-z0-9]{6,12})/?$ /api/link.php?kind=add&code=$1 [L,QSA]
+  RewriteRule ^seat/([A-Za-z0-9]{6,16})/?$ /api/link.php?kind=seat&code=$1 [L,QSA]
 
   # Add trailing slash to directory-style URLs (Astro build.format=directory)
   RewriteCond %{REQUEST_FILENAME} -d

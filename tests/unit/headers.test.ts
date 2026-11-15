@@ -48,6 +48,10 @@ describe('production headers', () => {
     expect(htaccess).toMatch(/RewriteRule \^join\/arena\/\(\[A-Za-z0-9\]\{6\}\)\/\?\$ \/api\/link\.php\?kind=arena&code=\$1 \[L,QSA\]/);
     expect(htaccess).toMatch(/RewriteRule \^play\/quiz\/\(\\d\+\)\/\?\$ \/api\/link\.php\?kind=quiz&id=\$1 \[L,QSA\]/);
     expect(htaccess).toMatch(/RewriteRule \^get\/\?\$ \/api\/link\.php\?kind=get \[L\]/);
+    // Friends and sharing (2026-11-15): the three friends links reach the same landing script.
+    expect(htaccess).toContain('RewriteRule ^top10/([A-Za-z0-9]{5,12})/?$ /api/link.php?kind=top10&code=$1 [L,QSA]');
+    expect(htaccess).toContain('RewriteRule ^add/([A-Za-z0-9]{6,12})/?$ /api/link.php?kind=add&code=$1 [L,QSA]');
+    expect(htaccess).toContain('RewriteRule ^seat/([A-Za-z0-9]{6,16})/?$ /api/link.php?kind=seat&code=$1 [L,QSA]');
   });
 
   it('routes arena invite links before the trailing-slash redirect can touch them', () => {
