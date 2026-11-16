@@ -39,6 +39,13 @@ export const SITE = {
    * track() call a no-op without touching the pages that fire events.
    */
   metaPixelId: '936573106036970',
+  /**
+   * Google Tag Manager container for the Google Ads conversion tags (marketing owns its contents).
+   * Loaded only after a visitor accepts marketing cookies (src/scripts/gtm.ts); an empty string is
+   * the kill switch, as with the pixel. A Google Analytics tag does not belong in this container
+   * until the site has an analytics consent category and the legal text for it.
+   */
+  gtmId: 'GTM-5SGW4MGG',
   partners: [
     { name: 'OTP banka', img: '/img/partners/otp-icon-1.webp' },
     { name: 'Jungle', img: '/img/partners/jungle.webp' },

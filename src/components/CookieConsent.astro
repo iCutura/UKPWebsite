@@ -3,7 +3,7 @@
  * The cookie banner: a bar at the foot of the page, never a full-screen wall.
  *
  * Two categories only. Nužni is the site's own localStorage and is not negotiable; Marketing is the
- * Meta Pixel and starts off. A third, empty category for analytics would be a promise the site does
+ * Meta Pixel plus the Google Ads tags (through Google Tag Manager) and starts off. A third, empty category for analytics would be a promise the site does
  * not keep, so it is not here until an analytics tool is.
  *
  * Odbij sve and Prihvati sve are both `.btn-light`: same size, same fill, same weight. Equal
@@ -22,7 +22,7 @@
       <div class="cc-text">
         <p class="eyebrow">Kolačići</p>
         <h2 class="cc-h">Nužni kolačići, a marketinški samo ako dopustiš.</h2>
-        <p class="cc-p muted">Nužni pamte tvoje postavke na ovom uređaju. Marketinške (Meta Pixel) postavljamo samo uz tvoj pristanak, kako bismo vidjeli koji oglasi dovode ljude na kviz. <a href="/kolacici/">Više u Kolačićima</a></p>
+        <p class="cc-p muted">Nužni pamte tvoje postavke na ovom uređaju. Marketinške (Meta Pixel i Google Ads) postavljamo samo uz tvoj pristanak, kako bismo vidjeli koji oglasi dovode ljude na kviz. <a href="/kolacici/">Više u Kolačićima</a></p>
       </div>
       <div class="cc-actions">
         <div class="cc-row">
@@ -58,8 +58,8 @@
               <label class="cc-cat-name" for="cc-marketing">Marketing</label>
               <span class="chip" data-cc-state>Isključeno</span>
             </div>
-            <p class="cc-p muted" id="cc-marketing-desc">Meta Pixel, za Facebook i Instagram oglase. Mjeri koliko ljudi s oglasa preuzme aplikaciju ili prijavi ekipu i omogućuje da oglas pokažemo sličnoj publici.</p>
-            <p class="hint">_fbp · _fbc · primatelj: Meta Platforms Ireland Ltd.</p>
+            <p class="cc-p muted" id="cc-marketing-desc">Meta Pixel, za oglase na Facebooku i Instagramu, i Google Ads, za oglase na Googleu. Mjere koliko ljudi s oglasa preuzme aplikaciju ili prijavi ekipu i omogućuju da oglas pokažemo sličnoj publici.</p>
+            <p class="hint">_fbp · _fbc · _gcl_au · primatelji: Meta Platforms Ireland Ltd., Google Ireland Ltd.</p>
           </div>
           <input type="checkbox" class="cc-switch" role="switch" id="cc-marketing" aria-describedby="cc-marketing-desc" data-cc-marketing />
         </div>

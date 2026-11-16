@@ -91,6 +91,10 @@ const boot = `(function(){var h=document.documentElement;try{`
 
 <script>
   import { track, trackCustom } from '../scripts/pixel';
+  import { trackEvent } from '../scripts/gtm';
+
+  /** The Google twins of the pixel's AppStoreClick / GooglePlayClick, named by the badge's store. */
+  const GOOGLE_EVENT: Record<string, string> = { ios: 'app_store_click', android: 'google_play_click' };
 
   document.addEventListener('astro:page-load', () => {
     // Queued until the visitor accepts marketing cookies, then sent; dropped if they refuse.
@@ -98,9 +102,12 @@ const boot = `(function(){var h=document.documentElement;try{`
     document.querySelectorAll<HTMLElement>('[data-pixel-event]').forEach(el => {
       if (el.dataset.pixelBound) return;
       el.dataset.pixelBound = '1';
-      el.addEventListener('click', () => trackCustom(el.dataset.pixelEvent!, {
-        platform: document.documentElement.dataset.platform || 'unknown',
-      }));
+      el.addEventListener('click', () => {
+        const platform = document.documentElement.dataset.platform || 'unknown';
+        trackCustom(el.dataset.pixelEvent!, { platform });
+        const google = GOOGLE_EVENT[el.dataset.storeBadge || ''];
+        if (google) trackEvent(google, { platform });
+      });
     });
   });
 </script>

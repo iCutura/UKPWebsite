@@ -1,5 +1,6 @@
 import gsap from 'gsap';
 import { trackCustom } from './pixel';
+import { trackEvent } from './gtm';
 /**
  * Website team registration (people without the app): apps step -> form -> e-mail code -> done.
  * Talks only to the same-origin PHP proxy (/api/prijava.php), which holds the API key and forwards to
@@ -186,6 +187,7 @@ export function bindPrijava() {
        */
       if (b.dataset.stepGo === 'form' && b.closest<HTMLElement>('[data-step-panel]')?.dataset.stepPanel === 'apps') {
         trackCustom('WebRegistration', { event_id: eventId });
+        trackEvent('web_registration', { event_id: eventId });
       }
       show(b.dataset.stepGo!);
     }));
@@ -232,6 +234,7 @@ export function bindPrijava() {
         // The bottom of the funnel, and the only event that means a team is actually on the list.
         // Campaigns optimise towards this one; the click above only says the form was opened.
         trackCustom('WebRegistrationComplete', { event_id: eventId, status: j.status });
+        trackEvent('web_registration_complete', { event_id: eventId, status: j.status });
       } catch (e) {
         const err = e as Error & { code?: string }; msg(codeForm, err.message, 'error');
         // A wrong code should leave the boxes ready for another try, not make the reader clear
