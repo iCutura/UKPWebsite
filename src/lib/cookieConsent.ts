@@ -1,5 +1,6 @@
 /**
- * Whether the visitor lets the Meta Pixel load, and nothing else.
+ * Whether the visitor lets the marketing tags load (the Meta Pixel and the Google Ads tags through
+ * Google Tag Manager), and nothing else.
  *
  * The shape deliberately copies `consent.ts` (the location decision): one key, one decision, one
  * timestamp. Nothing about the person is written, and the record is small enough to read on the
@@ -14,11 +15,15 @@
  * the visitor is simply asked once more.
  */
 export const CONSENT_KEY = 'ukp-consent';
-export const CONSENT_VERSION = 1;
+/** 2 since Google Ads joined the Meta Pixel (2026-11-16): a v1 answer covered Meta only. */
+export const CONSENT_VERSION = 2;
 export const CONSENT_TTL_DAYS = 365;
 
 /** Cookies the Meta Pixel sets on this domain. First-party, both of them, which is why the site can delete them itself. */
 export const META_COOKIES = ['_fbp', '_fbc'] as const;
+
+/** Cookies the Google Ads tags (conversion linker) set on this domain. First-party too, for the same reason. */
+export const GOOGLE_COOKIES = ['_gcl_au', '_gcl_aw', '_gcl_gb', '_gcl_gs'] as const;
 
 export interface Consent { v: number; marketing: boolean; t: number }
 
@@ -64,19 +69,28 @@ export function registrableDomain(hostname: string): string | null {
 }
 
 /**
- * The `document.cookie` writes that remove the pixel's cookies on withdrawal.
+ * The `document.cookie` writes that remove a tag's cookies on withdrawal.
  *
  * Two per cookie: the browser only deletes a cookie when the delete matches the domain it was set
- * for, and `fbevents.js` sets them on the registrable domain, not on the exact host. Missing the
- * dotted variant leaves `_fbp` alive on a page that has just promised to delete it.
+ * for, and both `fbevents.js` and Google's tags set them on the registrable domain, not on the exact
+ * host. Missing the dotted variant leaves `_fbp` or `_gcl_au` alive on a page that has just promised
+ * to delete it.
  */
-export function metaCookieClearing(hostname: string): string[] {
+export function cookieClearing(names: readonly string[], hostname: string): string[] {
   const dead = 'expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/';
   const base = registrableDomain(hostname);
   const out: string[] = [];
-  for (const name of META_COOKIES) {
+  for (const name of names) {
     out.push(`${name}=; ${dead}`);
     if (base) out.push(`${name}=; ${dead}; domain=.${base}`);
   }
   return out;
+}
+
+export function metaCookieClearing(hostname: string): string[] {
+  return cookieClearing(META_COOKIES, hostname);
+}
+
+export function googleCookieClearing(hostname: string): string[] {
+  return cookieClearing(GOOGLE_COOKIES, hostname);
 }

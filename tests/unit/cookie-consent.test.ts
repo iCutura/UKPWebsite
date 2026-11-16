@@ -1,8 +1,8 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import {
   readConsent, writeConsent, forgetConsent, consentState, marketingAllowed,
-  registrableDomain, metaCookieClearing,
-  CONSENT_KEY, CONSENT_VERSION, CONSENT_TTL_DAYS, META_COOKIES,
+  registrableDomain, metaCookieClearing, googleCookieClearing,
+  CONSENT_KEY, CONSENT_VERSION, CONSENT_TTL_DAYS, META_COOKIES, GOOGLE_COOKIES,
 } from '../../src/lib/cookieConsent';
 
 const store = new Map<string, string>();
@@ -63,6 +63,15 @@ describe('what gets stored', () => {
     expect(marketingAllowed()).toBe(false);
   });
 
+  it('asks again everyone who answered before Google Ads joined the list', () => {
+    // v1 covered the Meta Pixel only; a yes to that is not a yes to Google.
+    expect(CONSENT_VERSION).toBe(2);
+    for (const marketing of [true, false]) {
+      store.set(CONSENT_KEY, JSON.stringify({ v: 1, marketing, t: Date.now() }));
+      expect(consentState(), String(marketing)).toBe('unknown');
+    }
+  });
+
   it('survives junk in storage without throwing, and never reads it as consent', () => {
     for (const junk of ['not json', '{}', '[]', 'null', JSON.stringify({ v: 1, marketing: 'yes', t: 1 }), JSON.stringify({ v: 1, marketing: true })]) {
       store.set(CONSENT_KEY, junk);
@@ -108,5 +117,32 @@ describe('deleting the pixel cookies on withdrawal', () => {
     expect(registrableDomain('staging.www.kvizovi.hr')).toBe('kvizovi.hr');
     expect(registrableDomain('localhost')).toBeNull();
     expect(registrableDomain('127.0.0.1')).toBeNull();
+  });
+});
+
+describe('deleting the Google Ads cookies on withdrawal', () => {
+  it('names every _gcl cookie on the exact host and on the registrable domain', () => {
+    expect([...GOOGLE_COOKIES]).toEqual(['_gcl_au', '_gcl_aw', '_gcl_gb', '_gcl_gs']);
+    const writes = googleCookieClearing('www.kvizovi.hr');
+    expect(writes).toHaveLength(GOOGLE_COOKIES.length * 2);
+    for (const name of GOOGLE_COOKIES) {
+      expect(writes).toContain(`${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/`);
+      expect(writes).toContain(`${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/; domain=.kvizovi.hr`);
+    }
+  });
+
+  it('skips the domain form where there is none to name', () => {
+    for (const host of ['localhost', '127.0.0.1', '']) {
+      const writes = googleCookieClearing(host);
+      expect(writes, host).toHaveLength(GOOGLE_COOKIES.length);
+      expect(writes.join(' '), host).not.toContain('domain=');
+    }
+  });
+
+  it('leaves the Meta cookies to the pixel, and the other way round', () => {
+    const google = googleCookieClearing('kvizovi.hr').join(' ');
+    const meta = metaCookieClearing('kvizovi.hr').join(' ');
+    expect(google).not.toMatch(/_fb[pc]=/);
+    expect(meta).not.toMatch(/_gcl_/);
   });
 });

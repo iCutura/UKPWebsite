@@ -9,16 +9,26 @@ import { open } from './support';
 const IPHONE = 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Mobile/15E148 Safari/604.1';
 const ANDROID = 'Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Mobile Safari/537.36';
 const PIXEL = /connect\.facebook\.net/;
+const GTM = /googletagmanager\.com/;
 
-/** Stub the pixel so a test never contacts Meta, and keep every fbq() call readable in fbq.queue. */
+/**
+ * Stub the pixel and Tag Manager so a test never contacts Meta or Google, and keep every fbq() call
+ * readable in fbq.queue (and every data layer message in dataLayer). Hits count both.
+ */
 async function watchPixel(page: Page): Promise<string[]> {
   const hits: string[] = [];
-  await page.route(PIXEL, route => {
-    hits.push(route.request().url());
-    return route.fulfill({ status: 200, contentType: 'application/javascript', body: '' });
-  });
+  for (const url of [PIXEL, GTM]) {
+    await page.route(url, route => {
+      hits.push(route.request().url());
+      return route.fulfill({ status: 200, contentType: 'application/javascript', body: '' });
+    });
+  }
   return hits;
 }
+
+/** The Custom Events pushed to the data layer. */
+const events = (page: Page) => page.evaluate(() =>
+  ((window as unknown as { dataLayer?: { event?: string }[] }).dataLayer ?? []).map(m => m?.event).filter(Boolean));
 
 /** Every fbq() call the page made. With the stub in place nothing sets callMethod, so all of them stay queued. */
 const calls = (page: Page) => page.evaluate(() => {
@@ -202,6 +212,18 @@ test.describe('the pixel on /app', () => {
 
     await page.locator('[data-store-badge="ios"]').click();
     await expect.poll(() => calls(page)).toContain('trackCustom AppStoreClick');
+    await expect.poll(() => events(page)).toContain('app_store_click');
+  });
+
+  test('reports a Google Play click to Tag Manager under its own name', async ({ page }) => {
+    await blockStoreNavigation(page);
+    await watchPixel(page);
+    await open(page, '/app/');
+    await accept(page);
+
+    await page.locator('[data-store-badge="android"]').click();
+    await expect.poll(() => events(page)).toContain('google_play_click');
+    expect(await events(page)).not.toContain('app_store_click');
   });
 
   test('does not report a click made before consent', async ({ page }) => {
@@ -213,7 +235,7 @@ test.describe('the pixel on /app', () => {
     // working while the question stands, and the event still must not be sent.
     await page.locator('[data-store-badge="android"]').click({ force: true });
     await page.waitForTimeout(600);
-    expect(hits, 'a click before consent loaded the pixel').toEqual([]);
+    expect(hits, 'a click before consent loaded a marketing tag').toEqual([]);
   });
 });
 

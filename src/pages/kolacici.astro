@@ -9,6 +9,11 @@ import { SITE } from '../config';
  * first half of that stops being true with the pixel; the second is a promise being kept here. The
  * third-party sentence was always literally true and stays true, because `_fbp` and `_fbc` are set
  * by a script on this domain, so it is spelled out rather than quietly dropped.
+ *
+ * Google Ads joined on 2026-11-16 (Google Tag Manager, `SITE.gtmId`, `scripts/gtm.ts`), with
+ * `CONSENT_VERSION` 2 in the same commit. Its `_gcl_*` cookies are first-party for the same reason.
+ * The container serves ads only: "Analitiku ne koristimo" stays true as long as nobody adds an
+ * analytics tag to it, which would need its own consent category first.
  */
 ---
 <Base title="Kolačići" description="Koje kolačiće i pohranu koristi web stranica kvizovi.hr, i kako promijeniti pristanak.">
@@ -36,18 +41,32 @@ import { SITE } from '../config';
         </ul>
 
         <h2>Marketinški kolačići</h2>
-        <p>Ako pristanete na marketinške kolačiće, na stranicu se učitava Meta Pixel (identifikator {SITE.metaPixelId}). Meta je tvrtka koja stoji za Facebookom i Instagramom, gdje objavljujemo oglase za svoje kvizove i aplikaciju.</p>
+        <p>Ako pristanete na marketinške kolačiće, na stranicu se učitavaju dva alata za mjerenje oglasa: Meta Pixel i oznake za Google Ads. Bez pristanka ne učitavamo nijedan od njih.</p>
+
+        <h3>Meta Pixel</h3>
+        <p>Na stranicu se učitava Meta Pixel (identifikator {SITE.metaPixelId}). Meta je tvrtka koja stoji za Facebookom i Instagramom, gdje objavljujemo oglase za svoje kvizove i aplikaciju.</p>
         <p>Pixel nam pokazuje koliko je ljudi s pojedinog oglasa došlo na stranicu, preuzelo aplikaciju ili prijavilo ekipu, i omogućuje da oglas pokažemo publici sličnoj našim posjetiteljima. Ne šaljemo mu vaše ime, e-mail adresu ni broj telefona.</p>
         <ul>
           <li><code>_fbp</code>: identifikator vašeg preglednika, kojim Meta povezuje posjet s oglasom. Traje do 90 dana.</li>
           <li><code>_fbc</code>: zapis o oglasu s kojeg ste došli. Postavlja se samo ako ste na stranicu došli klikom na oglas. Traje do 90 dana.</li>
         </ul>
-        <p>Oba su kolačići prve strane: postavlja ih skripta na domeni kvizovi.hr, a čita ih Meta. Osim njih, drugih kolačića na stranici nema.</p>
+        <p>Oba su kolačići prve strane: postavlja ih skripta na domeni kvizovi.hr, a čita ih Meta.</p>
         <p>Primatelj je Meta Platforms Ireland Limited, Merrion Road, Dublin 4, Irska, koja podatke obrađuje i za svoje potrebe, prema svojim pravilima. Podaci se pri tome mogu prenositi i u Sjedinjene Američke Države, na temelju okvira EU-US Data Privacy Framework. Detalje o tome kako Meta koristi kolačiće nalazite u <a href="https://www.facebook.com/policies/cookies/" rel="noopener" target="_blank">Metinim pravilima o kolačićima</a>.</p>
         <p>Pravna osnova za postavljanje ovih kolačića je vaš pristanak: članak 6. stavak 1. točka (a) Opće uredbe o zaštiti podataka i Zakon o elektroničkim komunikacijama. Pristanak možete povući u svakom trenutku i bez posljedica. Kad ga povučete, prestajemo učitavati Pixel i brišemo kolačiće <code>_fbp</code> i <code>_fbc</code>.</p>
 
+        <h3>Google Ads</h3>
+        <p>Na stranicu se učitava Google Tag Manager (spremnik {SITE.gtmId}), a kroz njega oznake za Google Ads, gdje objavljujemo oglase na Googleovoj tražilici i partnerskim stranicama. Spremnik služi isključivo za oglase: u njemu nema alata za analitiku posjeta.</p>
+        <p>Oznake nam pokazuju koliko je ljudi s pojedinog oglasa došlo na stranicu, preuzelo aplikaciju ili prijavilo ekipu, i omogućuju da oglas pokažemo publici sličnoj našim posjetiteljima. Ne šaljemo im vaše ime, e-mail adresu ni broj telefona.</p>
+        <ul>
+          <li><code>_gcl_au</code>: identifikator vašeg preglednika, kojim Google povezuje posjet s oglasom. Traje do 90 dana.</li>
+          <li><code>_gcl_aw</code>, <code>_gcl_gb</code>, <code>_gcl_gs</code>: zapis o oglasu s kojeg ste došli. Postavljaju se samo ako ste na stranicu došli klikom na Googleov oglas. Traju do 90 dana.</li>
+        </ul>
+        <p>Svi su kolačići prve strane: postavlja ih skripta na domeni kvizovi.hr, a čita ih Google. Osim kolačića Mete i Googlea navedenih ovdje, drugih kolačića na stranici nema.</p>
+        <p>Primatelj je Google Ireland Limited, Gordon House, Barrow Street, Dublin 4, Irska. Podaci se pri tome mogu prenositi i u Sjedinjene Američke Države, na temelju okvira EU-US Data Privacy Framework. Detalje o tome kako Google koristi podatke s web stranica koje koriste njegove usluge nalazite na <a href="https://policies.google.com/technologies/partner-sites?hl=hr" rel="noopener" target="_blank">Googleovoj stranici o partnerskim web stranicama</a>.</p>
+        <p>Pravna osnova je i ovdje vaš pristanak, koji možete povući u svakom trenutku i bez posljedica. Kad ga povučete, Googleu javljamo da pristanka više nema, prestajemo učitavati Google Tag Manager i brišemo kolačiće <code>_gcl_au</code>, <code>_gcl_aw</code>, <code>_gcl_gb</code> i <code>_gcl_gs</code>.</p>
+
         <h2>Analitiku ne koristimo</h2>
-        <p>Google Analytics ni sličan alat za mjerenje posjeta ne koristimo. Ako se to promijeni, ova će stranica biti ažurirana, a u zahtjevu za pristanak pojavit će se nova kategorija za koju ćemo posebno pitati.</p>
+        <p>Google Analytics ni sličan alat za mjerenje posjeta ne koristimo. Google Tag Manager na ovoj stranici služi samo za oznake Google Ads opisane gore. Ako se to promijeni, ova će stranica biti ažurirana, a u zahtjevu za pristanak pojavit će se nova kategorija za koju ćemo posebno pitati.</p>
 
         <h2>Lokacija</h2>
         <p>Ako zatražite prikaz najbližih kvizova, preglednik nas pita za dopuštenje i tek nam tada javlja vaš približan položaj. Položaj se koristi isključivo na vašem uređaju kako bi se popis poredao po udaljenosti. Ne šaljemo ga našim poslužiteljima, ne spremamo ga i ne dijelimo ni s kim.</p>
